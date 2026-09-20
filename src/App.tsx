@@ -1,9 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { HomePage } from "./pages/HomePage";
-import { ProjectPage } from "./pages/ProjectPage";
+import { HomePage, ProjectPage } from "./pages";
 
 import "./styles/global.css";
-
 
 // main как общую страницу header + footer + contacts + project section
 // залить на сервер
@@ -13,9 +11,6 @@ import "./styles/global.css";
 // название?
 // дизайн код палитры
 // ссылка и redirect на телегу
-
-
-
 
 function App() {
   return (
