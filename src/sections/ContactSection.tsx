@@ -1,15 +1,10 @@
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { useState } from "react";
-import ReactPhoneInputImport from "react-phone-input-2";
+import PhoneInput from "react-phone-input-2";
 
 import { policyMsg, siteConfig } from "../lib";
 
 import "react-phone-input-2/lib/style.css";
-
-const PhoneInput =
-  "default" in ReactPhoneInputImport
-    ? ReactPhoneInputImport.default
-    : ReactPhoneInputImport;
 
 export function ContactSection() {
   const [phone, setPhone] = useState("");
