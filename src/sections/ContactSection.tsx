@@ -1,25 +1,27 @@
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
-import { type ComponentType, useState } from "react";
-import PhoneInputModule, { type PhoneInputProps } from "react-phone-input-2";
+import { useState } from "react";
 
 import { policyMsg, siteConfig } from "../lib";
 
-import "react-phone-input-2/lib/style.css";
+function formatPhone(value: string) {
+  const digits = value.replace(/\D/g, "").replace(/^8/, "7").slice(0, 11);
+  const localNumber = digits.startsWith("7") ? digits.slice(1) : digits;
 
-const PhoneInput = (
-  (PhoneInputModule as unknown as {
-    default?: ComponentType<PhoneInputProps>;
-  }).default ?? PhoneInputModule
-) as ComponentType<PhoneInputProps>;
+  if (!localNumber) return "";
+  if (localNumber.length <= 3) return `+7 (${localNumber}`;
+  if (localNumber.length <= 6) return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3)}`;
+  if (localNumber.length <= 8) return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6)}`;
+  return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6, 8)}-${localNumber.slice(8)}`;
+}
 
 export function ContactSection() {
   const [phone, setPhone] = useState("");
 
-  const handlePhoneChange = (value: string) => {
-    setPhone(value);
+  const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setPhone(formatPhone(event.target.value));
   };
 
-  const handleSubmit = (event: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
 
@@ -66,23 +68,17 @@ export function ContactSection() {
 
           <label>
             Телефон *
-            <PhoneInput
-              country="ru"
+            <input
+              type="tel"
               value={phone}
               onChange={handlePhoneChange}
-              countryCodeEditable={false}
-              onlyCountries={["ru"]}
-              disableDropdown
-              inputProps={{
-                name: "phone",
-                required: true,
-                autoComplete: "tel",
-              }}
-              inputStyle={{
-                color: "#000",
-              }}
-              containerClass="phone-input"
-              inputClass="phone-input__field"
+              name="phone"
+              placeholder="+7 (___) ___-__-__"
+              pattern="\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}"
+              required
+              autoComplete="tel"
+              inputMode="tel"
+              aria-label="Телефон"
             />
           </label>
 
