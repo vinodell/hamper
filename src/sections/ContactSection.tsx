@@ -57,7 +57,7 @@ export function ContactSection() {
                 <Phone size={18} />
                 {siteConfig.phone2}
               </a>
-              <a href="https://t.me/lifescrip">
+              <a href="https://t.me/hamper_vlad">
                 <TgLogo />
               </a>
             </div>
@@ -100,29 +100,24 @@ export function ContactSection() {
               aria-label="Телефон"
             />
           </label>
-
           <label>
             Интересующий участок
             <select name="plot" defaultValue="">
               <option value="" disabled>
                 Выберите объект
               </option>
-
               <option>Ойнелово парк</option>
               <option>Другие участки</option>
             </select>
           </label>
-
           <label>
             Комментарий
             <textarea name="comment" rows={3} placeholder="Ваш вопрос" />
           </label>
-
           <button className="button button-gold" type="submit">
             Отправить заявку
             <ArrowUpRight size={17} />
           </button>
-
           <small>{policyMsg}</small>
         </form>
       </div>

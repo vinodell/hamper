@@ -26,7 +26,7 @@ export function InfoSections() {
           </div>
         </div>
       </section> */}
-      <section className="section-paper">
+      <section className="section section-paper">
         <div className="container">
           <div className="section-heading centered">
             <p className="eyebrow">ИНФРАСТРУКТУРА РАЙОНА</p>

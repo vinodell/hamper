@@ -1,17 +1,20 @@
 @font-face {
-  font-family: 'hamper-regular'; /* Задайте любое удобное имя для шрифта */
-  src: url('../../public/fonts/Andika-Regular.ttf') format('opentype'); /* Укажите правильный путь к файлу */
+  font-family: "hamper-regular"; /* Задайте любое удобное имя для шрифта */
+  src: url("../../public/fonts/Andika-Regular.ttf") format("opentype"); /* Укажите правильный путь к файлу */
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: 'hamper-bold'; /* Задайте любое удобное имя для шрифта */
-  src: url('../../public/fonts/Andika-Bold.ttf') format('opentype'); /* Укажите правильный путь к файлу */
+  font-family: "hamper-bold"; /* Задайте любое удобное имя для шрифта */
+  src: url("../../public/fonts/Andika-Bold.ttf") format("opentype"); /* Укажите правильный путь к файлу */
   font-weight: normal;
   font-style: normal;
 }
 
+.body {
+  font-family: "hamper-regular", sans-serif;
+}
 
 :root {
   --bg: #f3f1e9;
@@ -173,7 +176,10 @@ img {
   background: var(--paper);
   box-shadow: 0 12px 30px rgba(37, 43, 34, 0.14);
   transform: translateY(-5px);
-  transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease,
+    visibility 0.2s ease;
 }
 .projects-dropdown.is-open {
   visibility: visible;
@@ -305,7 +311,7 @@ p {
 }
 h1,
 h2 {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: "hamper-bold", Georgia, serif;
   font-weight: 400;
   line-height: 0.98;
 }
@@ -439,7 +445,7 @@ h2 em {
   padding: 32px;
 }
 .format-content h3 {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: "hamper-regular", Georgia, serif;
   font-size: 33px;
   font-weight: 400;
   margin-bottom: 10px;
@@ -506,7 +512,7 @@ h2 em {
 }
 .feature h3,
 .utility h3 {
-  font-family: "DM Serif Display", Georgia, serif;
+  font-family: "hamper-regular", Georgia, serif;
   font-size: 25px;
   font-weight: 400;
   margin-bottom: 10px;
@@ -877,7 +883,7 @@ td {
   }
   .brand {
     min-width: 0;
-    cursor: pointer
+    cursor: pointer;
   }
   .header-contact,
   .header-cta {
@@ -1115,17 +1121,17 @@ td {
 }
 
 .mobile-contacts {
-    display: flex;
-    align-items: center;
-    > a {
-        padding-left: 1rem;
-    }
+  display: flex;
+  align-items: center;
+  > a {
+    padding-left: 1rem;
+  }
 }
 
 .my-text-bold {
-    font-family: 'hamper-bold', sans-serif;
+  font-family: "hamper-bold", sans-serif;
 }
 
 .my-text-regular {
-    font-family: 'hamper-bold', sans-serif;
+  font-family: "hamper-bold", sans-serif;
 }
