@@ -13,8 +13,8 @@ export function FormatSection() {
             <em>выберите подходящий формат</em>
           </h2>
         </div>
-            <div className="format-grid">
-              {settlementFormats.map((format, index) => (
+        <div className="format-grid">
+          {settlementFormats.map((format, index) => (
             <article className="format-card" key={format.title}>
               <div
                 className="format-image"

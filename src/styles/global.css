@@ -312,7 +312,7 @@ p {
 }
 h1,
 h2 {
-  font-family: "hamper-bold", Georgia, serif;
+  font-family: "hamper-bold", sans-serif;
   font-weight: 400;
   line-height: 0.98;
 }
@@ -446,7 +446,7 @@ h2 em {
   padding: 32px;
 }
 .format-content h3 {
-  font-family: "hamper-regular", Georgia, serif;
+  font-family: "hamper-regular", sans-serif;
   font-size: 33px;
   font-weight: 400;
   margin-bottom: 10px;
@@ -551,6 +551,7 @@ h2 em {
   gap: 17px;
   border-top: 1px solid rgba(255, 255, 255, 0.24);
   padding-top: 20px;
+  align-items: center;
 }
 .utility > svg {
   color: #dfbc81;

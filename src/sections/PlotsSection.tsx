@@ -27,8 +27,8 @@ export function PlotsSection({ initialFilter }: PlotsSectionProps) {
             Выберите <em>свой участок</em>
           </h2>
           <p>
-            Актуальный список доступных предложений в мини-посёлках «У Пяти
-            Холмов».
+            Актуальный список доступных предложений в мини-посёлке «Ойнеловские
+            дали».
           </p>
         </div>
         <div className="sale-banner">

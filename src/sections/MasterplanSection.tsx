@@ -8,9 +8,10 @@ interface MasterplanSectionProps {
 
 export function MasterplanSection({ selectedPlan }: MasterplanSectionProps) {
   const [activePlan, setActivePlan] = useState<0 | 1>(selectedPlan ?? 0);
-  const visiblePlans = selectedPlan === undefined
-    ? masterplans.map((plan, index) => ({ plan, index }))
-    : [{ plan: masterplans[selectedPlan], index: selectedPlan }];
+  const visiblePlans =
+    selectedPlan === undefined
+      ? masterplans.map((plan, index) => ({ plan, index }))
+      : [{ plan: masterplans[selectedPlan], index: selectedPlan }];
 
   return (
     <section className="section masterplan" id="genplan">

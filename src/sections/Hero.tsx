@@ -13,7 +13,7 @@ export function Hero() {
         </h1>
         <p className="hero-copy my-text-bold">
           Надёжный девелопер с 5-летней историей. Новый камерный посёлок
-          комфорт-класса.ы
+          комфорт-класса
         </p>
         <div className="hero-facts">
           {heroFacts.map(({ icon: Icon, text }) => (
