@@ -192,9 +192,34 @@ img {
   font-size: 14px;
 }
 .project-heading {
+  position: relative;
   padding: 68px 0 76px;
-  background: var(--pine);
+  background: url("../../public/bg-pic-oinelovo.png") center / cover;
   color: white;
+}
+
+.project-heading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+
+  background: linear-gradient(
+    to right,
+    #293a31 0%,
+    #293a31,
+    20%,
+    transparent 30%,
+    transparent 70%,
+    #293a31 90%,
+    #293a31 100%
+  );
+
+  pointer-events: none;
+}
+
+.project-heading > * {
+  position: relative;
+  z-index: 1;
 }
 .project-heading h1 {
   max-width: 900px;
@@ -1125,7 +1150,8 @@ td {
   > a {
     padding-left: 1rem;
   }
-}.email-container {
+}
+.email-container {
   height: 55px;
 }
 
@@ -1138,11 +1164,11 @@ td {
 }
 
 .telephones {
-   > a {
+  > a {
     padding: 0.1rem 0;
-   }
+  }
 }
 
 .phone-icon {
-    margin-top: 0.3rem;
+  margin-top: 0.3rem;
 }
