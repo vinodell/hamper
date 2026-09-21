@@ -18,7 +18,7 @@ function formatPhone(value: string) {
   return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6, 8)}-${localNumber.slice(8)}`;
 }
 
-export function ContactSection() {
+export const ContactSection = () => {
   const navigate = useNavigate();
   const [phone, setPhone] = useState("");
 

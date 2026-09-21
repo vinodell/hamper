@@ -120,7 +120,7 @@ export const infrastructure: InfoItem[] = [
   {
     icon: ShoppingBag,
     title: "Магазины и сервисы",
-    text: "В 5–10 минутах езды находятся супермаркеты, аптеки и пункты выдачи заказов.",
+    text: "В 5–10 мин езды находятся супермаркеты, аптеки и пункты выдачи заказов.",
   },
   {
     icon: Factory,
@@ -130,7 +130,7 @@ export const infrastructure: InfoItem[] = [
   {
     icon: Sparkles,
     title: "Активный отдых",
-    text: "Рядом «Охта Парк», базы отдыха, конно-спортивные клубы и веломаршруты.",
+    text: "Рядом «Охта Парк», базы отдыха, конно-спортивные клубы и веломаршруты. [update description]",
   },
 ];
 
@@ -147,7 +147,7 @@ export const masterplans = [
     image: "https://u5hills.ru/img/52556357_1920_q70.webp",
   },
   {
-    label: "другие участки",
+    label: "Другие участки",
     image: "https://u5hills.ru/img/52556327_1920_q70.jpg",
   },
 ] as const;
@@ -196,14 +196,14 @@ export const plots: Plot[] = [
   },
   {
     id: "2-01",
-    settlement: "другие участки",
+    settlement: "Другие участки",
     area: "8.12 сот.",
     status: "Свободен",
     price: "1 800 000 ₽",
   },
   {
     id: "2-02",
-    settlement: "другие участки",
+    settlement: "Другие участки",
     area: "7.40 сот.",
     status: "Свободен",
     price: "1 650 000 ₽",

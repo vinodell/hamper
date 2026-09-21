@@ -2,7 +2,7 @@ import { settlementFormats } from "../lib";
 import { Link } from "react-router-dom";
 import { projectRoutes } from "../lib";
 
-export function FormatSection() {
+export const FormatSection = () => {
   return (
     <section className="section section-paper" id="poselki">
       <div className="container">

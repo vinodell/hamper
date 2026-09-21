@@ -11,7 +11,7 @@ interface PlotsSectionProps {
   initialFilter?: Exclude<PlotFilter, "Все">;
 }
 
-export function PlotsSection({ initialFilter }: PlotsSectionProps) {
+export const PlotsSection = ({ initialFilter }: PlotsSectionProps) => {
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
   const visibleFilters = initialFilter ? [initialFilter] : plotFilters;
   const filteredPlots =
@@ -108,4 +108,4 @@ export function PlotsSection({ initialFilter }: PlotsSectionProps) {
       </div>
     </section>
   );
-}
+};

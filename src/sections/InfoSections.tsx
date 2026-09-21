@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { advantages, infrastructure, utilities } from "../lib";
 
-export function InfoSections() {
+export const InfoSections = () => {
   return (
     <>
       {/* <section className="section section-cream">
@@ -57,7 +57,7 @@ export function InfoSections() {
               Внутренняя инфраструктура <em>посёлков</em>
             </h2>
             <p>
-              Всё необходимое для автономной и безопасной жизни в собственном
+              Всё необходимое для автономной и комфортной жизни в собственном
               доме.
             </p>
           </div>

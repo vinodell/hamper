@@ -1,7 +1,7 @@
 import { ArrowDown } from "lucide-react";
 import { chooseZemli, heroFacts } from "../lib";
 
-export function Hero() {
+export const Hero = () => {
   return (
     <section className="hero" id="top">
       <div className="hero-inner container">
