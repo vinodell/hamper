@@ -9,12 +9,11 @@ export function Hero() {
         <h1 className="my-text-bold">
           Мини-посёлки
           <br />
-          <em>«У Пяти Холмов»</em>
+          <em>Hamper village</em>
         </h1>
         <p className="hero-copy my-text-bold">
-          Надёжный девелопер с 10-летней историей представляет продолжение
-          легендарного КП «Пять Холмов». Два новых камерных посёлка
-          комфорт-класса.
+          Надёжный девелопер с 5-летней историей. Новый камерный посёлок
+          комфорт-класса.ы
         </p>
         <div className="hero-facts">
           {heroFacts.map(({ icon: Icon, text }) => (
