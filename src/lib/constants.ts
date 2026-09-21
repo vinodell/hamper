@@ -65,6 +65,10 @@ export interface SettlementFormat {
   facts: FormatFact[];
 }
 
+export interface PlotsSectionProps {
+  initialFilter?: Exclude<PlotFilter, "Все">;
+}
+
 export const heroFacts: HeroFact[] = [
   { icon: MapPinned, text: "75 участков" },
   { icon: CarFront, text: "22 км от КАД" },
@@ -235,8 +239,10 @@ export const projectPageConfig: Record<
   },
 };
 
-export const offertaMsg = "Предложение не является публичной офертой согласно п.1 ст. 437 ГК РФ"
-export const closeMenuMsg = "Закрыть меню"
-export const openMenuMsg = "Открыть меню"
-export const chooseZemli = "Выбрать участок"
-export const policyMsg = "Нажимая на кнопку, вы соглашаетесь с политикой конфиденциальности"
+export const offertaMsg =
+  "Предложение не является публичной офертой согласно п.1 ст. 437 ГК РФ";
+export const closeMenuMsg = "Закрыть меню";
+export const openMenuMsg = "Открыть меню";
+export const chooseZemli = "Выбрать участок";
+export const policyMsg =
+  "Нажимая на кнопку, вы соглашаетесь с политикой конфиденциальности";

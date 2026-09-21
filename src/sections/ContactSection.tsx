@@ -1,37 +1,17 @@
-import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { useState } from "react";
-
+import { ArrowUpRight, Mail, Phone } from "lucide-react";
+import { formatPhone } from "../hooks";
 import { TgLogo } from "../images";
-import { useNavigate } from "react-router-dom";
 import { policyMsg, siteConfig } from "../lib";
 
-function formatPhone(value: string) {
-  const digits = value.replace(/\D/g, "").replace(/^8/, "7").slice(0, 11);
-  const localNumber = digits.startsWith("7") ? digits.slice(1) : digits;
-
-  if (!localNumber) return "";
-  if (localNumber.length <= 3) return `+7 (${localNumber}`;
-  if (localNumber.length <= 6)
-    return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3)}`;
-  if (localNumber.length <= 8)
-    return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6)}`;
-  return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6, 8)}-${localNumber.slice(8)}`;
-}
-
 export const ContactSection = () => {
-  const navigate = useNavigate();
   const [phone, setPhone] = useState("");
-
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(event.target.value));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-  };
-
-  const redirectToTg = () => {
-    navigate("https://t.me/vinodell");
   };
 
   return (
@@ -123,4 +103,4 @@ export const ContactSection = () => {
       </div>
     </section>
   );
-}
+};

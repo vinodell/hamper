@@ -1,7 +1,6 @@
 export const TgLogo = () => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
-    // xmlns:xlink="http://www.w3.org/1999/xlink"
     width="55"
     height="55"
     viewBox="0 0 240.1 240.1"
@@ -14,10 +13,7 @@ export const TgLogo = () => (
       x2="-838.041"
       y2="660.3427"
       gradientTransform="matrix(1000 0 0 -1000 838161 660581)"
-    >
-      {/* <stop offset="0" style="stop-color:#2AABEE" /> */}
-      {/* <stop offset="1" style="stop-color:#229ED9" /> */}
-    </linearGradient>
+    ></linearGradient>
     <circle
       fillRule="evenodd"
       clipRule="evenodd"

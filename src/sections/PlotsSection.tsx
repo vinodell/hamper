@@ -1,23 +1,22 @@
+import { useState } from "react";
 import {
   ArrowUpRight,
   BadgePercent,
   Check,
   CircleDollarSign,
 } from "lucide-react";
-import { useState } from "react";
-import { plotFilters, plots, type PlotFilter } from "../lib";
+import { plotFilters, plots, PlotsSectionProps, type PlotFilter } from "../lib";
 
-interface PlotsSectionProps {
-  initialFilter?: Exclude<PlotFilter, "Все">;
-}
-
-export const PlotsSection = ({ initialFilter }: PlotsSectionProps) => {
+export const PlotsSection = ({
+  initialFilter,
+}: PlotsSectionProps) => {
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
   const visibleFilters = initialFilter ? [initialFilter] : plotFilters;
   const filteredPlots =
     filter === "Все"
       ? plots
       : plots.filter((plot) => plot.settlement === filter);
+
   return (
     <section className="section section-paper plots" id="uchastki">
       <div className="container">

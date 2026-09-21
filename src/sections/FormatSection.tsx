@@ -1,6 +1,5 @@
-import { settlementFormats } from "../lib";
 import { Link } from "react-router-dom";
-import { projectRoutes } from "../lib";
+import { settlementFormats, projectRoutes } from "../lib";
 
 export const FormatSection = () => {
   return (

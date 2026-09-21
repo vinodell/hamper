@@ -1,7 +1,6 @@
 import { Menu, Phone, X } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-
 import { useMobileMenu } from "../hooks";
 import { Logo } from "../images";
 import {
@@ -13,18 +12,25 @@ import {
   projectRoutes,
 } from "../lib";
 
-export function Header() {
-  const navigate = useNavigate();
+export const Header = () => {
   const menu = useMobileMenu();
+  const navigate = useNavigate();
   const [projectsOpen, setProjectsOpen] = useState(false);
 
-  const onClick = () => {
+  const handleProjectNavigation = (project: string) => {
+    console.log('project', project)
+    menu.close(); 
+    setProjectsOpen(false);
+    // setSelectedProject(project);
+  }
+
+  const goMainPage = () => {
     navigate("/projects/");
   }
 
   return (
     <header className="site-header">
-      <div className="brand" aria-label="Hamper" onClick={onClick}>
+      <div className="brand" aria-label="Hamper" onClick={goMainPage}>
           <Logo />
           <span className="brand-name">
             {siteConfig.brand}
@@ -49,7 +55,7 @@ export function Header() {
               </button>
               <div className={`projects-dropdown ${projectsOpen ? "is-open" : ""}`}>
                 {projectRoutes.map((project) => (
-                  <Link key={project.path} to={project.path} onClick={() => { menu.close(); setProjectsOpen(false); }}>
+                  <Link key={project.path} to={project.path} onClick={() => handleProjectNavigation(project.label)}>
                     {project.label}
                   </Link>
                 ))}
