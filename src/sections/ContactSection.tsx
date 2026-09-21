@@ -1,6 +1,8 @@
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { useState } from "react";
 
+import { TgLogo } from "../images";
+import { useNavigate } from "react-router-dom";
 import { policyMsg, siteConfig } from "../lib";
 
 function formatPhone(value: string) {
@@ -9,12 +11,15 @@ function formatPhone(value: string) {
 
   if (!localNumber) return "";
   if (localNumber.length <= 3) return `+7 (${localNumber}`;
-  if (localNumber.length <= 6) return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3)}`;
-  if (localNumber.length <= 8) return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6)}`;
+  if (localNumber.length <= 6)
+    return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3)}`;
+  if (localNumber.length <= 8)
+    return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6)}`;
   return `+7 (${localNumber.slice(0, 3)}) ${localNumber.slice(3, 6)}-${localNumber.slice(6, 8)}-${localNumber.slice(8)}`;
 }
 
 export function ContactSection() {
+  const navigate = useNavigate();
   const [phone, setPhone] = useState("");
 
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +28,10 @@ export function ContactSection() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+  };
+
+  const redirectToTg = () => {
+    navigate("https://t.me/vinodell");
   };
 
   return (
@@ -43,20 +52,30 @@ export function ContactSection() {
           </p>
 
           <div className="contact-details">
-            <a href={siteConfig.phoneHref}>
-              <Phone size={18} />
-              {siteConfig.phone2}
-            </a>
-
-            <a href={siteConfig.phoneHref}>
-              <Phone size={18} />
-              {siteConfig.phone}
-            </a>
-
-            <a href={`mailto:${siteConfig.email}`}>
-              <Mail size={18} />
-              {siteConfig.email}
-            </a>
+            <div className="mobile-contacts">
+              <a href={siteConfig.phoneHref}>
+                <Phone size={18} />
+                {siteConfig.phone2}
+              </a>
+              <a href="https://t.me/lifescrip">
+                <TgLogo />
+              </a>
+            </div>
+            <div className="mobile-contacts">
+              <a href={siteConfig.phoneHref}>
+                <Phone size={18} />
+                {siteConfig.phone}
+              </a>
+              <a href="https://t.me/lifescrip">
+                <TgLogo />
+              </a>
+            </div>
+            <div className="mobile-contacts">
+              <a href={`mailto:${siteConfig.email}`}>
+                <Mail size={18} />
+                {siteConfig.email}
+              </a>
+            </div>
           </div>
         </div>
 
@@ -86,7 +105,7 @@ export function ContactSection() {
             Интересующий участок
             <select name="plot" defaultValue="">
               <option value="" disabled>
-                Выберите поселок
+                Выберите объект
               </option>
 
               <option>Ойнелово парк</option>

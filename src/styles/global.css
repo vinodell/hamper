@@ -367,7 +367,7 @@ h2 em {
 }
 
 .section {
-  padding: 112px 0;
+  padding: 3rem 0;
 }
 .section-paper {
   background: var(--paper);
@@ -704,7 +704,7 @@ td {
 .contact-section {
   background: var(--pine);
   color: white;
-  padding: 110px 0;
+  padding: 3rem 0;
 }
 .contact-grid {
   display: grid;
@@ -1100,4 +1100,12 @@ td {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.mobile-contacts {
+    display: flex;
+    align-items: center;
+    > a {
+        padding-left: 1rem;
+    }
 }
