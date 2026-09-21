@@ -17,6 +17,8 @@ export const Header = () => {
   const navigate = useNavigate();
   const [projectsOpen, setProjectsOpen] = useState(false);
 
+
+  // TODO: state hook for changing the project type
   const handleProjectNavigation = (project: string) => {
     console.log("project", project);
     menu.close();
