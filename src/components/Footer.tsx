@@ -1,5 +1,5 @@
 import { Logo } from "../images";
-import { navigation, siteConfig, offertaMsg } from "../lib";
+import { navigation, offertaMsg, siteConfig } from "../lib";
 
 export function Footer() {
   return (

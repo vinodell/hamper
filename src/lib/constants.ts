@@ -16,7 +16,6 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import type { Plot } from "../types";
 
 export const siteConfig = {
   brand: "Hamper",
@@ -40,6 +39,22 @@ export const projectRoutes = [
   { label: "Ойнеловские дали", path: "/projects/oynelovskie-dali" },
   { label: "Другие участки", path: "/projects/drugie-uchastki" },
 ] as const;
+
+export type PlotStatus = 'Свободен' | 'Забронирован' | 'Продан';
+
+export interface Plot {
+  id: string;
+  settlement: string;
+  area: string;
+  status: PlotStatus;
+  price: string;
+}
+
+export interface Feature {
+  title: string;
+  text: string;
+  icon: string;
+}
 
 export interface InfoItem {
   icon: LucideIcon;

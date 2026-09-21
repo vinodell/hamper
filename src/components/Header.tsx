@@ -4,12 +4,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useMobileMenu } from "../hooks";
 import { Logo } from "../images";
 import {
-  navigation,
-  siteConfig,
-  closeMenuMsg,
-  openMenuMsg,
   chooseZemli,
+  closeMenuMsg,
+  navigation,
+  openMenuMsg,
   projectRoutes,
+  siteConfig,
 } from "../lib";
 
 export const Header = () => {
@@ -18,24 +18,23 @@ export const Header = () => {
   const [projectsOpen, setProjectsOpen] = useState(false);
 
   const handleProjectNavigation = (project: string) => {
-    console.log('project', project)
-    menu.close(); 
+    console.log("project", project);
+    menu.close();
     setProjectsOpen(false);
-    // setSelectedProject(project);
-  }
+  };
 
   const goMainPage = () => {
     navigate("/projects/");
-  }
+  };
 
   return (
     <header className="site-header">
       <div className="brand" aria-label="Hamper" onClick={goMainPage}>
-          <Logo />
-          <span className="brand-name">
-            {siteConfig.brand}
-            <small>{siteConfig.brandSubtitle}</small>
-          </span>
+        <Logo />
+        <span className="brand-name">
+          {siteConfig.brand}
+          <small>{siteConfig.brandSubtitle}</small>
+        </span>
       </div>
       <nav
         id="main-navigation"
@@ -53,16 +52,24 @@ export const Header = () => {
               >
                 {label} <span aria-hidden="true">⌄</span>
               </button>
-              <div className={`projects-dropdown ${projectsOpen ? "is-open" : ""}`}>
+              <div
+                className={`projects-dropdown ${projectsOpen ? "is-open" : ""}`}
+              >
                 {projectRoutes.map((project) => (
-                  <Link key={project.path} to={project.path} onClick={() => handleProjectNavigation(project.label)}>
+                  <Link
+                    key={project.path}
+                    to={project.path}
+                    onClick={() => handleProjectNavigation(project.label)}
+                  >
                     {project.label}
                   </Link>
                 ))}
               </div>
             </div>
           ) : (
-              <a key={`${label}-${href}`} href={href} onClick={menu.close}>{label}</a>
+            <a key={`${label}-${href}`} href={href} onClick={menu.close}>
+              {label}
+            </a>
           ),
         )}
         <a className="mobile-phone" href={siteConfig.phoneHref}>
@@ -99,4 +106,4 @@ export const Header = () => {
       </button>
     </header>
   );
-}
+};

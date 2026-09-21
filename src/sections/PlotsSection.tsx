@@ -18,7 +18,7 @@ export const PlotsSection = ({
       : plots.filter((plot) => plot.settlement === filter);
 
   return (
-    <section className="section section-paper plots" id="uchastki">
+    <section className="section section-paper" id="uchastki">
       <div className="container">
         <div className="section-heading">
           <p className="eyebrow">УЧАСТКИ И ЦЕНЫ</p>

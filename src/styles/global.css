@@ -1,13 +1,13 @@
 @font-face {
-  font-family: "hamper-regular"; /* Задайте любое удобное имя для шрифта */
-  src: url("../../public/fonts/Andika-Regular.ttf") format("opentype"); /* Укажите правильный путь к файлу */
+  font-family: "hamper-regular";
+  src: url("../../public/fonts/Andika-Regular.ttf") format("opentype");
   font-weight: normal;
   font-style: normal;
 }
 
 @font-face {
-  font-family: "hamper-bold"; /* Задайте любое удобное имя для шрифта */
-  src: url("../../public/fonts/Andika-Bold.ttf") format("opentype"); /* Укажите правильный путь к файлу */
+  font-family: "hamper-bold";
+  src: url("../../public/fonts/Andika-Bold.ttf") format("opentype");
   font-weight: normal;
   font-style: normal;
 }
@@ -640,9 +640,6 @@ h2 em {
   background: #8b9575;
 }
 
-.plots {
-  padding-top: 105px;
-}
 .sale-banner {
   background: #f6c89d;
   padding: 22px 30px;
@@ -725,7 +722,7 @@ td {
 .contact-section {
   background: var(--pine);
   color: white;
-  padding: 3rem 0;
+  padding: 1.5rem 0;
 }
 .contact-grid {
   display: grid;
@@ -792,13 +789,13 @@ td {
 .footer {
   background: #1f2a25;
   color: rgba(255, 255, 255, 0.68);
-  padding: 25px 0;
+  padding: 1.5rem 0;
 }
 .footer-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 38px;
+  padding-bottom: 1rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.16);
 }
 .brand-footer .brand-name {
@@ -1078,7 +1075,7 @@ td {
     padding: 22px;
   }
   .contact-section {
-    padding: 75px 0;
+    padding: 2rem 0;
   }
   .contact-grid {
     gap: 45px;
