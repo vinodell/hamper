@@ -70,7 +70,7 @@ export function ContactSection() {
                 <TgLogo />
               </a>
             </div>
-            <div className="mobile-contacts">
+            <div className="mobile-contacts email-container">
               <a href={`mailto:${siteConfig.email}`}>
                 <Mail size={18} />
                 {siteConfig.email}

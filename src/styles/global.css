@@ -89,6 +89,7 @@ img {
   display: inline-flex;
   align-items: center;
   gap: 11px;
+  cursor: pointer;
   min-width: 205px;
 }
 
@@ -108,7 +109,7 @@ img {
 }
 
 .brand-name {
-  font-family: Georgia, serif;
+  font-family: "hamper-bold", serif;
   font-size: 15px;
   line-height: 1.05;
   text-align: left;
@@ -118,7 +119,7 @@ img {
 .brand-name small {
   display: block;
   font:
-    7px "DM Sans",
+    7px "hamper-regular",
     sans-serif;
   letter-spacing: 1.2px;
   text-transform: uppercase;
@@ -1126,6 +1127,8 @@ td {
   > a {
     padding-left: 1rem;
   }
+}.email-container {
+  height: 55px;
 }
 
 .my-text-bold {
@@ -1134,4 +1137,14 @@ td {
 
 .my-text-regular {
   font-family: "hamper-bold", sans-serif;
+}
+
+.telephones {
+   > a {
+    padding: 0.1rem 0;
+   }
+}
+
+.phone-icon {
+    margin-top: 0.3rem;
 }

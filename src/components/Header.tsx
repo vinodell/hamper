@@ -71,8 +71,8 @@ export function Header() {
         </a>
       </nav>
       <div className="header-contact">
-        <Phone size={19} aria-hidden="true" />
-        <div>
+        <Phone className="phone-icon" size={19} aria-hidden="true" />
+        <div className="telephones">
           <a href={siteConfig.phoneHref}>{siteConfig.phone}</a>
           <a href={siteConfig.phoneHref}>{siteConfig.phone2}</a>
           <span>{siteConfig.hours}</span>
