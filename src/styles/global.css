@@ -1,3 +1,25 @@
+@font-face {
+  font-family: 'hamper-style'; /* Задайте любое удобное имя для шрифта */
+  src: url('../../public/fonts/chekhovskoy.ttf') format('opentype'); /* Укажите правильный путь к файлу */
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'hamper-regular'; /* Задайте любое удобное имя для шрифта */
+  src: url('../../public/fonts/Andika-Regular.ttf') format('opentype'); /* Укажите правильный путь к файлу */
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'hamper-bold'; /* Задайте любое удобное имя для шрифта */
+  src: url('../../public/fonts/Andika-Bold.ttf') format('opentype'); /* Укажите правильный путь к файлу */
+  font-weight: normal;
+  font-style: normal;
+}
+
+
 @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap");
 
 :root {
@@ -721,7 +743,6 @@ td {
 }
 .contact-details {
   display: grid;
-  gap: 15px;
   margin-top: 42px;
 }
 .contact-details a {
@@ -1108,4 +1129,12 @@ td {
     > a {
         padding-left: 1rem;
     }
+}
+
+.my-text-bold {
+    font-family: 'hamper-bold', sans-serif;
+}
+
+.my-text-regular {
+    font-family: 'hamper-bold', sans-serif;
 }

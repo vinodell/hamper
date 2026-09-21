@@ -38,15 +38,15 @@ export function ContactSection() {
     <section className="contact-section" id="form">
       <div className="container contact-grid">
         <div className="contact-copy">
-          <p className="eyebrow light">КОНТАКТЫ</p>
+          <p className="eyebrow light my-text-bold">КОНТАКТЫ</p>
 
-          <h2>
+          <h2 className="my-text-bold">
             Записаться
             <br />
-            <em>на просмотр</em>
+            <em className="my-text-bold">на просмотр</em>
           </h2>
 
-          <p>
+          <p className="my-text-regular">
             Оставьте заявку, и мы свяжемся с вами, чтобы рассказать о поселках и
             подобрать подходящий участок.
           </p>

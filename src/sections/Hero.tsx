@@ -6,12 +6,12 @@ export function Hero() {
     <section className="hero" id="top">
       <div className="hero-inner container">
         <p className="eyebrow light">КОМФОРТ-КЛАСС</p>
-        <h1>
+        <h1 className="my-text-bold">
           Мини-посёлки
           <br />
           <em>«У Пяти Холмов»</em>
         </h1>
-        <p className="hero-copy">
+        <p className="hero-copy my-text-bold">
           Надёжный девелопер с 10-летней историей представляет продолжение
           легендарного КП «Пять Холмов». Два новых камерных посёлка
           комфорт-класса.

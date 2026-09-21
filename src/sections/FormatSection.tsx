@@ -8,7 +8,7 @@ export function FormatSection() {
       <div className="container">
         <div className="section-heading narrow">
           <p className="eyebrow">ФОРМАТЫ ПРОЖИВАНИЯ</p>
-          <h2>
+          <h2 className="my-text-bold">
             Наши проекты —<br />
             <em>выберите подходящий формат</em>
           </h2>
