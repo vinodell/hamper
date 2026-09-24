@@ -79,7 +79,7 @@ export const Header = () => {
         </a>
         <a
           className="button button-dark mobile-cta"
-          href="#uchastki"
+          href="#poselki"
           onClick={menu.close}
         >
           {chooseZemli}
@@ -93,7 +93,7 @@ export const Header = () => {
           <span>{siteConfig.hours}</span>
         </div>
       </div>
-      <a className="button button-gold header-cta" href="#uchastki">
+      <a className="button button-gold header-cta" href="#poselki">
         {chooseZemli}
       </a>
       <button

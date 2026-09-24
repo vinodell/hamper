@@ -26,7 +26,7 @@ export const AboutUs = () => {
           ))}
         </div>
         <div className="hero-actions">
-          <a className="button button-gold" href="#uchastki">
+          <a className="button button-gold" href="#poselki">
             {chooseZemli}
           </a>
           <a className="button button-outline" href="#form">
