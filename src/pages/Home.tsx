@@ -1,21 +1,21 @@
 import { Footer, Header } from "../components";
 import { siteConfig } from "../lib";
-import { ContactSection, FormatSection, Hero } from "../sections";
+import { Contacts, Projects, AboutUs } from "../sections";
 
-export function HomePage() {
+export function Home() {
   return (
     <div className="app">
       <Header />
       <main>
-        <Hero />
+        <AboutUs />
         <div className="ticker" aria-label="Акция">
           <div>
             {siteConfig.ticker} <b>•</b> {siteConfig.ticker} <b>•</b>{" "}
             {siteConfig.ticker} <b>•</b> {siteConfig.ticker}
           </div>
         </div>
-        <FormatSection />
-        <ContactSection />
+        <Projects />
+        <Contacts />
       </main>
       <Footer />
     </div>

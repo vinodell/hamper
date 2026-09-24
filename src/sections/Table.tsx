@@ -5,11 +5,9 @@ import {
   Check,
   CircleDollarSign,
 } from "lucide-react";
-import { plotFilters, plots, PlotsSectionProps, type PlotFilter } from "../lib";
+import { plotFilters, plots, TableSectionProps, type PlotFilter } from "../lib";
 
-export const PlotsSection = ({
-  initialFilter,
-}: PlotsSectionProps) => {
+export const Table = ({ initialFilter }: TableSectionProps) => {
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
   const visibleFilters = initialFilter ? [initialFilter] : plotFilters;
   const filteredPlots =

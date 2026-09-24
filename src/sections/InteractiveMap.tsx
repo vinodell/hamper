@@ -2,11 +2,11 @@ import { useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { chooseZemli, masterplans } from "../lib";
 
-interface MasterplanSectionProps {
+interface InteractiveMap {
   selectedPlan?: 0 | 1;
 }
 
-export const MasterplanSection = ({ selectedPlan }: MasterplanSectionProps) => {
+export const InteractiveMap = ({ selectedPlan }: InteractiveMap) => {
   const [activePlan, setActivePlan] = useState<0 | 1>(selectedPlan ?? 0);
   const visiblePlans =
     selectedPlan === undefined
@@ -73,4 +73,4 @@ export const MasterplanSection = ({ selectedPlan }: MasterplanSectionProps) => {
       </div>
     </section>
   );
-}
+};

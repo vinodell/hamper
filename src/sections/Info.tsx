@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 
 import { advantages, infrastructure, utilities } from "../lib";
 
-export const InfoSections = () => {
+export const Info = () => {
   return (
     <>
       {/* <section className="section section-cream">
@@ -76,4 +76,4 @@ export const InfoSections = () => {
       </section>
     </>
   );
-}
+};

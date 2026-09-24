@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { settlementFormats, projectRoutes } from "../lib";
 
-export const FormatSection = () => {
+export const Projects = () => {
   return (
     <section className="section section-paper" id="poselki">
       <div className="container">
@@ -42,4 +42,4 @@ export const FormatSection = () => {
       </div>
     </section>
   );
-}
+};

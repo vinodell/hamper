@@ -17,11 +17,16 @@ import {
   Zap,
 } from "lucide-react";
 
+export const phoneNumbers = {
+    Vlad: "+7 (911) 920-82-96",
+    Maks: "+7 (911) 920-83-42"
+}
+
 export const siteConfig = {
   brand: "Hamper",
   brandSubtitle: "мини-поселки",
-  phone: "+7 (911) 920-83-42",
-  phone2: "+7 (911) 920-82-96",
+  phone: phoneNumbers.Maks,
+  phone2: phoneNumbers.Vlad,
   phoneHref: "tel:+79119208342",
   hours: "ежедневно с 10 до 20",
   email: "vost.vision@gmail.com",
@@ -80,15 +85,15 @@ export interface SettlementFormat {
   facts: FormatFact[];
 }
 
-export interface PlotsSectionProps {
+export interface TableSectionProps {
   initialFilter?: Exclude<PlotFilter, "Все">;
 }
 
 export const heroFacts: HeroFact[] = [
-  { icon: MapPinned, text: "75 участков" },
-  { icon: CarFront, text: "22 км от КАД" },
-  { icon: Fence, text: "Закрытая территория" },
-  { icon: TreePine, text: "Зоны отдыха" },
+  { icon: MapPinned, text: "21 участок" },
+  { icon: CarFront, text: "25 км от КАД" },
+  { icon: Fence, text: "уютная территория" },
+  { icon: TreePine, text: "общие зоны отдыха" },
 ];
 
 export const settlementFormats: SettlementFormat[] = [
@@ -214,18 +219,123 @@ export const plots: Plot[] = [
     price: "1 400 000 ₽",
   },
   {
-    id: "2-01",
-    settlement: "Другие участки",
+    id: "1-05",
+    settlement: "Ойнеловские дали",
     area: "8.12 сот.",
     status: "Свободен",
     price: "1 800 000 ₽",
   },
   {
-    id: "2-02",
-    settlement: "Другие участки",
+    id: "1-06",
+    settlement: "Ойнеловские дали",
     area: "7.40 сот.",
     status: "Свободен",
     price: "1 650 000 ₽",
+  },
+  {
+    id: "1-07",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-08",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-09",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-10",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-11",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-12",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-13",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-14",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-15",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-16",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-17",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-18",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-19",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
+  },
+  {
+    id: "1-20",
+    settlement: "Ойнеловские дали",
+    area: "7.40 сот.",
+    status: "Свободен",
+    price: "1 650 000 ₽",
+  },
+  {
+    id: "1-21",
+    settlement: "Ойнеловские дали",
+    area: "8.12 сот.",
+    status: "Свободен",
+    price: "1 800 000 ₽",
   },
 ];
 

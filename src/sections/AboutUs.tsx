@@ -1,7 +1,7 @@
 import { ArrowDown } from "lucide-react";
 import { chooseZemli, heroFacts } from "../lib";
 
-export const Hero = () => {
+export const AboutUs = () => {
   return (
     <section className="hero" id="top">
       <div className="hero-inner container">
@@ -36,4 +36,4 @@ export const Hero = () => {
       </div>
     </section>
   );
-}
+};

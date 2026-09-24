@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone } from "../hooks";
-import { TgLogo } from "../images";
+import { TgLogo, WhatsupLogo } from "../images";
 import { policyMsg, siteConfig } from "../lib";
 
-export const ContactSection = () => {
+export const Contacts = () => {
   const [phone, setPhone] = useState("");
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(event.target.value));
@@ -40,6 +40,9 @@ export const ContactSection = () => {
               <a href="https://t.me/hamper_vlad">
                 <TgLogo />
               </a>
+              <a href="https://wa.me/<номер>">
+                <WhatsupLogo />
+              </a>
             </div>
             <div className="mobile-contacts">
               <a href={siteConfig.phoneHref}>
@@ -48,6 +51,9 @@ export const ContactSection = () => {
               </a>
               <a href="https://t.me/lifescrip">
                 <TgLogo />
+              </a>
+              <a href="https://wa.me/+79119208342">
+                <WhatsupLogo />
               </a>
             </div>
             <div className="mobile-contacts email-container">

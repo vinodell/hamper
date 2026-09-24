@@ -2,9 +2,9 @@ import { ArrowLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Footer, Header } from "../components";
 import { projectPageConfig, type ProjectSlug } from "../lib";
-import { ContactSection, InfoSections, MasterplanSection, PlotsSection } from "../sections";
+import { Contacts, Info, InteractiveMap, Table } from "../sections";
 
-export function ProjectPage() {
+export function Main() {
   const { slug } = useParams<{ slug: string }>();
   const config = slug && projectPageConfig[slug as ProjectSlug];
 
@@ -25,10 +25,10 @@ export function ProjectPage() {
             <h1>{config.title}</h1>
           </div>
         </section>
-        <InfoSections />
-        <MasterplanSection selectedPlan={config.formatIndex} />
-        <PlotsSection initialFilter={config.plotFilter} />
-        <ContactSection />
+        <Info />
+        <InteractiveMap selectedPlan={config.formatIndex} />
+        <Table initialFilter={config.plotFilter} />
+        <Contacts />
       </main>
       <Footer />
     </div>
