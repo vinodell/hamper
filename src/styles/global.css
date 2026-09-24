@@ -1354,6 +1354,13 @@ td {
     }
 }
 
+.mobile-contacts .social-icon {
+    display: block;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+}
+
 .email-container {
     height: 55px;
 }
