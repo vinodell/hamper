@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
-import { policyMsg, siteConfig } from "../lib";
+import { plots, Plot, policyMsg, siteConfig } from "../lib";
 
 export const Contacts = () => {
   const [phone, setPhone] = useState("");
+  const [chosenLand] = useState<Plot[]>(plots);
+  const [chosenProject, setChosenProject] = useState<string>("");
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(event.target.value));
   };
@@ -13,6 +15,16 @@ export const Contacts = () => {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
   };
+
+  const choseProject = (event: any) => {
+    setChosenProject(event.target.value);
+  };
+
+  const filteredLand = useMemo(() => {
+    return chosenLand.filter((item) => {
+      return item.settlement === chosenProject && item.status === "Свободен";
+    });
+  }, [chosenProject, chosenLand]);
 
   return (
     <section className="contact-section" id="form">
@@ -37,10 +49,10 @@ export const Contacts = () => {
                 <Phone size={18} />
                 {siteConfig.phone2}
               </a>
-              <a href="https://t.me/hamper_vlad">
+              <a href={`https://t.me/${siteConfig.vladTelegram}`}>
                 <TgLogo />
               </a>
-              <a href="https://wa.me/<номер>">
+              <a href={`https://wa.me/${siteConfig.vladWhatsapp}`}>
                 <WhatsupLogo />
               </a>
             </div>
@@ -49,10 +61,10 @@ export const Contacts = () => {
                 <Phone size={18} />
                 {siteConfig.phone}
               </a>
-              <a href="https://t.me/lifescrip">
+              <a href={`https://t.me/${siteConfig.maksTelegram}`}>
                 <TgLogo />
               </a>
-              <a href="https://wa.me/+79119208342">
+              <a href={`https://wa.me/${siteConfig.maksWhatsapp}`}>
                 <WhatsupLogo />
               </a>
             </div>
@@ -87,13 +99,25 @@ export const Contacts = () => {
             />
           </label>
           <label>
-            Интересующий участок
-            <select name="plot" defaultValue="">
+            Интересующий объект
+            <select name="plot" value={chosenProject} onChange={choseProject}>
               <option value="" disabled>
                 Выберите объект
               </option>
-              <option>Ойнелово парк</option>
+              <option>Ойнеловские дали</option>
               <option>Другие участки</option>
+            </select>
+          </label>
+          <label>
+            Номер участка
+            <select name="plot" defaultValue="">
+              {filteredLand.length > 0 ? (
+                filteredLand.map((item, index) => (
+                  <option key={index}>{item.id}</option>
+                ))
+              ) : (
+                <option key="no-lands">Нет доступных участков</option>
+              )}
             </select>
           </label>
           <label>

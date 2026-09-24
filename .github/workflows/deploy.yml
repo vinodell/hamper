@@ -40,6 +40,15 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_PHONE_MAKS: ${{ secrets.VITE_PHONE_MAKS }}
+          VITE_PHONE_VLAD: ${{ secrets.VITE_PHONE_VLAD }}
+          VITE_PHONE_HREF: ${{ secrets.VITE_PHONE_HREF }}
+          VITE_WHATSAPP_MAKS: ${{ secrets.VITE_WHATSAPP_MAKS }}
+          VITE_WHATSAPP_VLAD: ${{ secrets.VITE_WHATSAPP_VLAD }}
+          VITE_TELEGRAM_MAKS: ${{ secrets.VITE_TELEGRAM_MAKS }}
+          VITE_TELEGRAM_VLAD: ${{ secrets.VITE_TELEGRAM_VLAD }}
+          VITE_CONTACT_EMAIL: ${{ secrets.VITE_CONTACT_EMAIL }}
 
       - name: Prepare SPA fallback
         run: cp dist/index.html dist/404.html
