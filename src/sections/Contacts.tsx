@@ -1,17 +1,24 @@
 import { usePlots } from "../hooks/usePlots";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
-import { policyMsg, siteConfig, PHONE_PATTERN } from "../lib";
+import { policyMsg, siteConfig, PHONE_PATTERN, type Plot } from "../lib";
 import { api } from "../lib/api";
 
-export const Contacts = () => {
+export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
   const [phone, setPhone] = useState("");
   const { plots: chosenLand, error: plotsError } = usePlots();
   const [chosenProject, setChosenProject] = useState<string>("");
   const [chosenPlot, setChosenPlot] = useState("");
   const [formState, setFormState] = useState<"idle" | "sending" | "success" | "error">("idle");
+  useEffect(() => {
+    if (!selectedPlot || selectedPlot.status !== "Свободен") return;
+    setChosenProject(selectedPlot.settlement);
+    setChosenPlot(selectedPlot.id);
+    setFormState("idle");
+  }, [selectedPlot]);
+
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(event.target.value));
   };
@@ -58,10 +65,10 @@ export const Contacts = () => {
 
           <div className="contact-details">
             <div className="mobile-contacts">
-              <a href={siteConfig.phoneHref}>
+              <span className="contact-phone">
                 <Phone size={18} />
                 {siteConfig.phone2}
-              </a>
+              </span>
               <a href={`https://t.me/${siteConfig.vladTelegram}`}>
                 <TgLogo />
               </a>
@@ -70,10 +77,10 @@ export const Contacts = () => {
               </a>
             </div>
             <div className="mobile-contacts">
-              <a href={siteConfig.phoneHref}>
+              <span className="contact-phone">
                 <Phone size={18} />
                 {siteConfig.phone}
-              </a>
+              </span>
               <a href={`https://t.me/${siteConfig.maksTelegram}`}>
                 <TgLogo />
               </a>

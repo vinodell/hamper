@@ -1,14 +1,29 @@
 import { useEffect, useState } from "react";
-import { api, type AdminPlot } from "../lib/api";
-import { PLOTS_REFRESH_MS } from "../lib/constants";
+import { api } from "../lib/api";
+import { PLOTS_REFRESH_MS, type Plot } from "../lib/constants";
 
 export function usePlots() {
-  const [plots, setPlots] = useState<AdminPlot[]>([]);
+  const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
     let active = true;
+    if (
+      import.meta.env.DEV &&
+      ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)
+    ) {
+      import("../../localTest/plots")
+        .then(({ mockPlots }) => {
+          if (active) { setPlots(mockPlots); setError(""); }
+        })
+        .catch(() => {
+          if (active) setError("Не удалось загрузить локальные участки.");
+        })
+        .finally(() => { if (active) setLoading(false); });
+      return () => { active = false; };
+    }
+
     let pending = false;
     const refresh = async () => {
       if (pending) return;

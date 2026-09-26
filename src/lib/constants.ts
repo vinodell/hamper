@@ -80,6 +80,7 @@ export interface SettlementFormat {
 
 export interface TableSectionProps {
   initialFilter?: Exclude<PlotFilter, "Все">;
+  onSelectPlot?: (plot: Plot) => void;
 }
 
 export const heroFacts: IconFact[] = [

@@ -1,6 +1,6 @@
 import { usePlots } from "../hooks/usePlots";
 import { formatPlotNumber } from "../lib/plotNumbers";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ArrowUpRight,
   BadgePercent,
@@ -9,14 +9,35 @@ import {
 } from "lucide-react";
 import { plotFilters, type TableSectionProps, type PlotFilter } from "../lib";
 
-export const Table = ({ initialFilter }: TableSectionProps) => {
+export const Table = ({ initialFilter, onSelectPlot }: TableSectionProps) => {
+  const tableRef = useRef<HTMLDivElement>(null);
+  const [tableVisible, setTableVisible] = useState(false);
+
+  useEffect(() => {
+    const element = tableRef.current;
+    if (!element) return;
+    if (!("IntersectionObserver" in window)) {
+      setTableVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry.isIntersecting) {
+        setTableVisible(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0, rootMargin: "0px 0px -40px 0px" });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
   const { plots, loading, error } = usePlots();
   const activeFilter = initialFilter ?? filter;
-  const filteredPlots =
-    activeFilter === "Все"
-      ? plots
-      : plots.filter((plot) => plot.settlement === activeFilter);
+  const filteredPlots = plots.filter(
+    (plot) =>
+      (plot.status === "Свободен" || plot.status === "Забронирован") &&
+      (activeFilter === "Все" || plot.settlement === activeFilter),
+  );
 
   return (
     <section className="section section-paper" id="uchastki">
@@ -59,8 +80,8 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
         </div>}
         {loading && <p role="status">Загружаем участки…</p>}
         {error && <p role="alert">{error}</p>}
-        {!loading && !error && filteredPlots.length === 0 && <p>В этом проекте пока нет участков.</p>}
-        <div className="plots-table-wrap">
+        {!loading && !error && filteredPlots.length === 0 && <p>Свободных и забронированных участков пока нет.</p>}
+        <div ref={tableRef} className={`plots-table-wrap${tableVisible ? " plots-table-visible" : ""}`}>
           <table>
             <thead>
               <tr>
@@ -72,9 +93,22 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
                 <th />
               </tr>
             </thead>
-            <tbody>
-              {filteredPlots.map((plot) => (
-                <tr key={plot.id}>
+            <tbody key={activeFilter}>
+              {filteredPlots.map((plot, index) => (
+                <tr
+                  key={plot.id}
+                  className={plot.status === "Свободен" && onSelectPlot ? "plot-row-selectable" : undefined}
+                  style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
+                  onClick={(event) => {
+                    if (plot.status !== "Свободен" || !onSelectPlot) return;
+                    if ((event.target as HTMLElement).closest("a, button")) return;
+                    if (window.getSelection()?.toString()) return;
+                    onSelectPlot(plot);
+                    document.getElementById("form")?.scrollIntoView({
+                      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+                    });
+                  }}
+                >
                   <td>{plot.id}</td>
                   <td>{plot.settlement}</td>
                   <td>{formatPlotNumber(plot.area)}</td>
@@ -89,6 +123,8 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
                   <td>
                     {plot.status === "Свободен" && (
                       <a
+                        className="plot-booking"
+                        onClick={() => onSelectPlot?.(plot)}
                         href="#form"
                         aria-label={`Забронировать участок ${plot.id}`}
                       >

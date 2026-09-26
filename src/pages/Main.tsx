@@ -1,7 +1,8 @@
+import { useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Footer, Header } from "../components";
-import { projectPageConfig, type ProjectSlug } from "../lib";
+import { projectPageConfig, type Plot, type ProjectSlug } from "../lib";
 import { Contacts } from "../sections/Contacts";
 import { Info } from "../sections/Info";
 import { InteractiveMap } from "../sections/InteractiveMap";
@@ -9,6 +10,7 @@ import { Table } from "../sections/Table";
 
 export function Main() {
   const { slug } = useParams<{ slug: string }>();
+  const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const config = slug && projectPageConfig[slug as ProjectSlug];
 
   if (!config) {
@@ -30,8 +32,8 @@ export function Main() {
         </section>
         <Info />
         <InteractiveMap selectedPlan={config.formatIndex} />
-        <Table initialFilter={config.plotFilter} />
-        <Contacts />
+        <Table initialFilter={config.plotFilter} onSelectPlot={(plot) => setSelectedPlot({ ...plot })} />
+        <Contacts selectedPlot={selectedPlot?.settlement === config.plotFilter ? selectedPlot : null} />
       </main>
       <Footer />
     </div>

@@ -216,12 +216,13 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     )
       return json({ error: "Заполните имя и телефон" }, 400, request, env);
     const message = [
-      `Новая заявка Hamper`,
-      `Имя: ${body.name}`,
-      `Телефон: ${body.phone}`,
-      `Проект: ${body.project ?? "не указан"}`,
-      `Участок: ${body.plot ?? "не указан"}`,
-      `Комментарий: ${body.comment ?? "—"}`,
+      `📩 Новая заявка Hamper`,
+      "",
+      `👤 Имя: ${body.name}`,
+      `📞 Телефон: ${body.phone}`,
+      `🏡 Проект: ${body.project?.trim() || "не указан"}`,
+      `📍 Участок: ${body.plot?.trim() || "не указан"}`,
+      `💬 Комментарий: ${body.comment?.trim() || "—"}`,
     ].join("\n");
     const telegramResponse = await fetch(
       `${TELEGRAM_API_URL}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
