@@ -1,33 +1,15 @@
-interface Env {
-  DB: D1Database;
-  ADMIN_LOGIN: string;
-  ADMIN_PASSWORD_HASH: string;
-  SESSION_SECRET: string;
-  TELEGRAM_BOT_TOKEN: string;
-  TELEGRAM_CHAT_ID: string;
-  PUBLIC_ORIGIN?: string;
-}
-
-type PlotStatus = "Свободен" | "Забронирован" | "Продан";
-
-interface PlotRow {
-  id: string;
-  settlement: string;
-  area: string;
-  status: PlotStatus;
-  price: string;
-  street: string | null;
-  description: string | null;
-  updated_at: string;
-}
-
-const SESSION_COOKIE = "hamper_session";
-const SESSION_TTL_SECONDS = 60 * 60 * 8;
-const allowedStatuses = new Set<PlotStatus>([
-  "Свободен",
-  "Забронирован",
-  "Продан",
-]);
+import {
+  SESSION_COOKIE,
+  SESSION_TTL_SECONDS,
+  allowedStatuses,
+  PASSWORD_HASH_ITERATIONS,
+  PASSWORD_HASH_ALGORITHM,
+  CONTACT_NAME_MAX_LENGTH,
+  CONTACT_PHONE_MAX_LENGTH,
+  TELEGRAM_API_URL,
+  type PlotStatus,
+} from "./constants";
+import type { Env, PlotRow } from "./types";
 
 function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
   if (left.length !== right.length) return false;
@@ -96,7 +78,7 @@ async function hmac(value: string, secret: string) {
   const key = await crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(secret),
-    { name: "HMAC", hash: "SHA-256" },
+    { name: "HMAC", hash: PASSWORD_HASH_ALGORITHM },
     false,
     ["sign"],
   );
@@ -140,7 +122,7 @@ async function verifyPassword(password: string, encodedHash: string) {
   );
   const derived = new Uint8Array(
     await crypto.subtle.deriveBits(
-      { name: "PBKDF2", salt, iterations: 100_000, hash: "SHA-256" },
+      { name: "PBKDF2", salt, iterations: PASSWORD_HASH_ITERATIONS, hash: PASSWORD_HASH_ALGORITHM },
       key,
       expected.length * 8,
     ),
@@ -231,8 +213,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     if (
       !body.name ||
       !body.phone ||
-      body.name.length > 120 ||
-      body.phone.length > 40
+      body.name.length > CONTACT_NAME_MAX_LENGTH ||
+      body.phone.length > CONTACT_PHONE_MAX_LENGTH
     )
       return json({ error: "Заполните имя и телефон" }, 400, request, env);
     const message = [
@@ -244,7 +226,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       `Комментарий: ${body.comment ?? "—"}`,
     ].join("\n");
     const telegramResponse = await fetch(
-      `https://api.telegram.org/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+      `${TELEGRAM_API_URL}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
-import { plots, Plot, policyMsg, siteConfig } from "../lib";
+import { plots, type Plot, policyMsg, siteConfig, PHONE_PATTERN } from "../lib";
 import { api } from "../lib/api";
 
 export const Contacts = () => {
@@ -17,10 +17,11 @@ export const Contacts = () => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     setFormState("sending");
     api.sendContact({ name: String(form.get("name") ?? ""), phone, project: chosenProject, plot: chosenPlot, comment: String(form.get("comment") ?? "") })
-      .then(() => { setFormState("success"); event.currentTarget.reset(); setPhone(""); setChosenProject(""); setChosenPlot(""); })
+      .then(() => { setFormState("success"); formElement.reset(); setPhone(""); setChosenProject(""); setChosenPlot(""); })
       .catch(() => setFormState("error"));
   };
 
@@ -99,7 +100,7 @@ export const Contacts = () => {
               onChange={handlePhoneChange}
               name="phone"
               placeholder="+7 (___) ___-__-__"
-              pattern="\\+7 \\(\\d{3}\\) \\d{3}-\\d{2}-\\d{2}"
+              pattern={PHONE_PATTERN}
               required
               autoComplete="tel"
               inputMode="tel"
@@ -132,7 +133,7 @@ export const Contacts = () => {
             Комментарий
             <textarea name="comment" rows={3} placeholder="Ваш вопрос" />
           </label>
-          <button className="button button-gold" type="submit">
+          <button className="button button-gold" type="submit" disabled={formState === "sending"}>
             Отправить заявку
             <ArrowUpRight size={17} />
           </button>

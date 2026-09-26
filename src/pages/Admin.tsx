@@ -1,9 +1,7 @@
 import { LogOut, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, type AdminPlot, type PlotUpdate } from "../lib/api";
-import type { PlotStatus } from "../lib";
-
-const statuses: PlotStatus[] = ["Свободен", "Забронирован", "Продан"];
+import { ADMIN_SAVE_FEEDBACK_MS, plotStatuses, type PlotStatus } from "../lib";
 
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -65,7 +63,7 @@ export function Admin() {
         current.map((item) => (item.id === plot.id ? updated : item)),
       );
       setSavedId(plot.id);
-      window.setTimeout(() => setSavedId(null), 1800);
+      window.setTimeout(() => setSavedId(null), ADMIN_SAVE_FEEDBACK_MS);
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -188,7 +186,7 @@ export function Admin() {
                       }
                       aria-label={`Статус ${plot.id}`}
                     >
-                      {statuses.map((status) => (
+                      {plotStatuses.map((status) => (
                         <option key={status}>{status}</option>
                       ))}
                     </select>

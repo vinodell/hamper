@@ -16,7 +16,23 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { contactConfig } from "./env";
+
+const env = import.meta.env;
+
+export const contactConfig = {
+  phone: env.VITE_PHONE_MAKS,
+  phone2: env.VITE_PHONE_VLAD,
+  phoneHref: env.VITE_PHONE_HREF,
+  whatsapp: env.VITE_WHATSAPP_MAKS,
+  vladWhatsapp: env.VITE_WHATSAPP_VLAD,
+  maksWhatsapp: env.VITE_WHATSAPP_MAKS,
+  vladTelegram: env.VITE_TELEGRAM_VLAD,
+  maksTelegram: env.VITE_TELEGRAM_MAKS,
+  email: env.VITE_CONTACT_EMAIL,
+} as const;
+
+export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
+export const ADMIN_SAVE_FEEDBACK_MS = 1800;
 
 export const siteConfig = {
   brand: "Hamper",
@@ -46,7 +62,8 @@ export const projectRoutes = [
   { label: "Другие участки", path: "/projects/drugie-uchastki" },
 ] as const;
 
-export type PlotStatus = 'Свободен' | 'Забронирован' | 'Продан';
+export const plotStatuses = ["Свободен", "Забронирован", "Продан"] as const;
+export type PlotStatus = (typeof plotStatuses)[number];
 
 export interface Plot {
   id: string;
@@ -379,3 +396,5 @@ export const openMenuMsg = "Открыть меню";
 export const chooseZemli = "Выбрать участок";
 export const policyMsg =
   "Нажимая на кнопку, вы соглашаетесь с политикой конфиденциальности";
+
+export const PHONE_PATTERN = /\+7 \(\d{3}\) \d{3}-\d{2}-\d{2}/.source;
