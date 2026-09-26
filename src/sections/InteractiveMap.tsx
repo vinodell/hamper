@@ -8,6 +8,7 @@ interface InteractiveMap {
 
 export const InteractiveMap = ({ selectedPlan }: InteractiveMap) => {
   const [activePlan, setActivePlan] = useState<0 | 1>(selectedPlan ?? 0);
+  const displayedPlan = selectedPlan ?? activePlan;
   const visiblePlans =
     selectedPlan === undefined
       ? masterplans.map((plan, index) => ({ plan, index }))
@@ -40,9 +41,9 @@ export const InteractiveMap = ({ selectedPlan }: InteractiveMap) => {
         >
           {visiblePlans.map(({ plan, index }) => (
             <button
-              className={activePlan === index ? "active" : ""}
+              className={displayedPlan === index ? "active" : ""}
               role="tab"
-              aria-selected={activePlan === index}
+              aria-selected={displayedPlan === index}
               key={plan.label}
               onClick={() => setActivePlan(index as 0 | 1)}
             >
@@ -52,8 +53,10 @@ export const InteractiveMap = ({ selectedPlan }: InteractiveMap) => {
         </div>
         <div className="plan-image">
           <img
-            src={masterplans[activePlan].image}
-            alt={`Генплан ${masterplans[activePlan].label}`}
+            loading="lazy"
+            decoding="async"
+            src={masterplans[displayedPlan].image}
+            alt={`Генплан ${masterplans[displayedPlan].label}`}
           />
           <div className="plan-legend">
             <span>

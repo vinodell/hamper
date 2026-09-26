@@ -1,6 +1,8 @@
 import { Footer, Header } from "../components";
 import { siteConfig } from "../lib";
-import { Contacts, Projects, AboutUs } from "../sections";
+import { Contacts } from "../sections/Contacts";
+import { Projects } from "../sections/Projects";
+import { AboutUs } from "../sections/AboutUs";
 
 export function Home() {
   return (

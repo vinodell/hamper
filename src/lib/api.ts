@@ -1,3 +1,4 @@
+import { normalizePlotNumber } from "./plotNumbers";
 import { apiUrl, type Plot, type PlotStatus } from "./constants";
 
 export class ApiError extends Error {
@@ -48,7 +49,10 @@ export const api = {
     }),
   logout: () => request<{ ok: true }>("/api/auth/logout", { method: "POST" }),
   me: () => request<{ authenticated: boolean }>("/api/auth/me"),
-  getPlots: () => request<AdminPlot[]>("/api/plots"),
+  getPlots: async () => {
+    const plots = await request<AdminPlot[]>("/api/plots", { cache: "no-store" });
+    return plots.map((plot) => ({ ...plot, area: normalizePlotNumber(plot.area).replace(".", ","), price: normalizePlotNumber(plot.price).replace(".", ",") }));
+  },
   updatePlot: (id: string, data: PlotUpdate) =>
     request<AdminPlot>(`/api/admin/plots/${encodeURIComponent(id)}`, {
       method: "PUT",

@@ -15,10 +15,8 @@ export const Projects = () => {
         <div className="format-grid">
           {settlementFormats.map((format, index) => (
             <article className="format-card" key={format.title}>
-              <div
-                className="format-image"
-                style={{ backgroundImage: `url(${format.image})` }}
-              >
+              <div className="format-image">
+                <img src={format.image} alt={format.title} loading="lazy" decoding="async" />
                 <span>{format.label}</span>
               </div>
               <div className="format-content">

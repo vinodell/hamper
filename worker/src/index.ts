@@ -37,6 +37,7 @@ function json(data: unknown, status = 200, request?: Request, env?: Env) {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
       ...(request && env ? corsHeaders(request, env) : {}),
     },
   });
@@ -251,8 +252,14 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       description?: string;
     }>();
     if (
-      !body.area ||
-      !body.price ||
+      typeof body.area !== "string" ||
+      !/^\d+(?:[.,]\d{1,2})?$/.test(body.area) ||
+      !Number.isFinite(Number(body.area.replace(",", "."))) ||
+      Number(body.area.replace(",", ".")) <= 0 ||
+      typeof body.price !== "string" ||
+      !/^\d+(?:[.,]\d{1,2})?$/.test(body.price) ||
+      !Number.isFinite(Number(body.price.replace(",", "."))) ||
+      Number(body.price.replace(",", ".")) <= 0 ||
       !body.status ||
       !allowedStatuses.has(body.status)
     )

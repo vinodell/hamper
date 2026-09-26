@@ -1,3 +1,5 @@
+import { usePlots } from "../hooks/usePlots";
+import { formatPlotNumber } from "../lib/plotNumbers";
 import { useState } from "react";
 import {
   ArrowUpRight,
@@ -5,15 +7,16 @@ import {
   Check,
   CircleDollarSign,
 } from "lucide-react";
-import { plotFilters, plots, TableSectionProps, type PlotFilter } from "../lib";
+import { plotFilters, type TableSectionProps, type PlotFilter } from "../lib";
 
 export const Table = ({ initialFilter }: TableSectionProps) => {
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
-  const visibleFilters = initialFilter ? [initialFilter] : plotFilters;
+  const { plots, loading, error } = usePlots();
+  const activeFilter = initialFilter ?? filter;
   const filteredPlots =
-    filter === "Все"
+    activeFilter === "Все"
       ? plots
-      : plots.filter((plot) => plot.settlement === filter);
+      : plots.filter((plot) => plot.settlement === activeFilter);
 
   return (
     <section className="section section-paper" id="uchastki">
@@ -24,8 +27,7 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
             Выберите <em>свой участок</em>
           </h2>
           <p>
-            Актуальный список доступных предложений в мини-посёлке «Ойнеловские
-            дали».
+            {initialFilter ? `Актуальные участки проекта «${initialFilter}».` : "Актуальные участки всех проектов."}
           </p>
         </div>
         <div className="sale-banner">
@@ -40,12 +42,12 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
             Забронировать <ArrowUpRight size={17} />
           </a>
         </div>
-        <div
+        {!initialFilter && <div
           className="filter-tabs"
           role="tablist"
           aria-label="Фильтр участков"
         >
-          {visibleFilters.map((item) => (
+          {plotFilters.map((item) => (
             <button
               key={item}
               className={filter === item ? "active" : ""}
@@ -54,16 +56,19 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
               {item}
             </button>
           ))}
-        </div>
+        </div>}
+        {loading && <p role="status">Загружаем участки…</p>}
+        {error && <p role="alert">{error}</p>}
+        {!loading && !error && filteredPlots.length === 0 && <p>В этом проекте пока нет участков.</p>}
         <div className="plots-table-wrap">
           <table>
             <thead>
               <tr>
                 <th>№</th>
                 <th>Посёлок</th>
-                <th>Площадь</th>
+                <th>Площадь, сот.</th>
                 <th>Статус</th>
-                <th>Цена</th>
+                <th>Цена, ₽</th>
                 <th />
               </tr>
             </thead>
@@ -72,7 +77,7 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
                 <tr key={plot.id}>
                   <td>{plot.id}</td>
                   <td>{plot.settlement}</td>
-                  <td>{plot.area}</td>
+                  <td>{formatPlotNumber(plot.area)}</td>
                   <td>
                     <span
                       className={`status status-${plot.status === "Свободен" ? "free" : "muted"}`}
@@ -80,7 +85,7 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
                       {plot.status}
                     </span>
                   </td>
-                  <td className="price">{plot.price}</td>
+                  <td className="price">{formatPlotNumber(plot.price)}</td>
                   <td>
                     {plot.status === "Свободен" && (
                       <a
@@ -99,7 +104,7 @@ export const Table = ({ initialFilter }: TableSectionProps) => {
         <div className="price-note">
           <CircleDollarSign />
           <span>
-            Минимальная площадь участка — 9 соток. Возможна рассрочка и ипотека.
+            Возможна рассрочка и ипотека.
           </span>
         </div>
       </div>

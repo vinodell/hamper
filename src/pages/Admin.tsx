@@ -1,3 +1,4 @@
+import { isValidPlotNumber } from "../lib/plotNumbers";
 import { LogOut, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, ApiError, type AdminPlot, type PlotUpdate } from "../lib/api";
@@ -46,6 +47,7 @@ export function Admin() {
   };
 
   const updatePlot = (id: string, key: keyof PlotUpdate, value: string) => {
+    if ((key === "area" || key === "price") && !/^\d*(?:[.,]\d{0,2})?$/.test(value)) return;
     setPlots((current) =>
       current.map((plot) =>
         plot.id === id ? { ...plot, [key]: value } : plot,
@@ -54,6 +56,10 @@ export function Admin() {
   };
 
   const savePlot = async (plot: AdminPlot) => {
+    if (!isValidPlotNumber(plot.area) || !isValidPlotNumber(plot.price)) {
+      setError("Площадь и цена должны быть больше нуля, не более двух знаков после запятой.");
+      return;
+    }
     setSavingId(plot.id);
     setError("");
     try {
@@ -180,9 +186,9 @@ export function Admin() {
                 <thead>
                   <tr>
                     <th>Участок</th>
-                    <th>Площадь</th>
+                    <th>Площадь, сот.</th>
                     <th>Статус</th>
-                    <th>Цена</th>
+                    <th>Цена, ₽</th>
                     <th>Улица</th>
                     <th>Описание</th>
                     <th />
@@ -196,6 +202,7 @@ export function Admin() {
                       </td>
                       <td>
                         <input
+                          inputMode="decimal"
                           value={plot.area}
                           onChange={(event) =>
                             updatePlot(plot.id, "area", event.target.value)
@@ -218,6 +225,7 @@ export function Admin() {
                       </td>
                       <td>
                         <input
+                          inputMode="decimal"
                           value={plot.price}
                           onChange={(event) =>
                             updatePlot(plot.id, "price", event.target.value)

@@ -1,13 +1,14 @@
+import { usePlots } from "../hooks/usePlots";
 import { useMemo, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
-import { plots, type Plot, policyMsg, siteConfig, PHONE_PATTERN } from "../lib";
+import { policyMsg, siteConfig, PHONE_PATTERN } from "../lib";
 import { api } from "../lib/api";
 
 export const Contacts = () => {
   const [phone, setPhone] = useState("");
-  const [chosenLand] = useState<Plot[]>(plots);
+  const { plots: chosenLand, error: plotsError } = usePlots();
   const [chosenProject, setChosenProject] = useState<string>("");
   const [chosenPlot, setChosenPlot] = useState("");
   const [formState, setFormState] = useState<"idle" | "sending" | "success" | "error">("idle");
@@ -20,13 +21,14 @@ export const Contacts = () => {
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     setFormState("sending");
-    api.sendContact({ name: String(form.get("name") ?? ""), phone, project: chosenProject, plot: chosenPlot, comment: String(form.get("comment") ?? "") })
+    api.sendContact({ name: String(form.get("name") ?? ""), phone, project: chosenProject, plot: availableChosenPlot, comment: String(form.get("comment") ?? "") })
       .then(() => { setFormState("success"); formElement.reset(); setPhone(""); setChosenProject(""); setChosenPlot(""); })
       .catch(() => setFormState("error"));
   };
 
   const choseProject = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setChosenProject(event.target.value);
+    setChosenPlot("");
   };
 
   const filteredLand = useMemo(() => {
@@ -34,6 +36,8 @@ export const Contacts = () => {
       return item.settlement === chosenProject && item.status === "Свободен";
     });
   }, [chosenProject, chosenLand]);
+
+  const availableChosenPlot = filteredLand.some((plot) => plot.id === chosenPlot) ? chosenPlot : "";
 
   return (
     <section className="contact-section" id="form">
@@ -119,16 +123,18 @@ export const Contacts = () => {
           </label>
           <label>
             Номер участка
-            <select name="plot" value={chosenPlot} onChange={(event) => setChosenPlot(event.target.value)}>
+            <select name="plot" value={availableChosenPlot} onChange={(event) => setChosenPlot(event.target.value)}>
+              <option value="">Выберите участок</option>
               {filteredLand.length > 0 ? (
-                filteredLand.map((item, index) => (
-                  <option key={index}>{item.id}</option>
+                filteredLand.map((item) => (
+                  <option key={item.id} value={item.id}>{item.id}</option>
                 ))
               ) : (
-                <option key="no-lands">Нет доступных участков</option>
+                <option value="" disabled key="no-lands">Нет доступных участков</option>
               )}
             </select>
           </label>
+          {plotsError && <small role="alert">{plotsError}</small>}
           <label>
             Комментарий
             <textarea name="comment" rows={3} placeholder="Ваш вопрос" />

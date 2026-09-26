@@ -1,15 +1,17 @@
 @font-face {
     font-family: "hamper-regular";
-    src: url("../../public/fonts/Andika-Regular.ttf") format("opentype");
+    src: url("../../public/fonts/Andika-Regular.ttf") format("truetype");
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
 }
 
 @font-face {
     font-family: "hamper-bold";
-    src: url("../../public/fonts/Andika-Bold.ttf") format("opentype");
+    src: url("../../public/fonts/Andika-Bold.ttf") format("truetype");
     font-weight: normal;
     font-style: normal;
+    font-display: swap;
 }
 
 .body {
@@ -217,7 +219,7 @@ img {
 .project-heading {
     position: relative;
     padding: 68px 0 76px;
-    background: url("/bg-pic-oinelovo.png") center / cover;
+    background: url("/bg-pic-oinelovo.webp") center / cover;
     color: white;
 }
 
@@ -514,6 +516,9 @@ h2 em {
 }
 
 .format-image {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
     min-height: 300px;
     background-size: cover;
     background-position: center;
@@ -1246,6 +1251,9 @@ td {
     }
 
     .format-image {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
         min-height: 230px;
     }
 
@@ -1428,3 +1436,20 @@ td {
 .admin-settlement .admin-table { width: 100%; min-width: 1000px; }
 .admin-settlement .admin-table-wrap:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: -2px; }
 .admin-empty { padding: 24px; background: var(--paper); color: var(--muted); }
+
+.format-image img {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.route-loading {
+    min-height: 60vh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+    color: var(--muted);
+    background: var(--paper);
+}
