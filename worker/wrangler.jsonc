@@ -1,0 +1,24 @@
+{
+  "$schema": "https://developers.cloudflare.com/workers/wrangler/config-schema.json",
+  "name": "hamper-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-24",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "hamper-production",
+      "database_id": "008cbfd4-85c6-4c61-a307-6663e13f535f"
+    }
+  ],
+  "secrets": {
+    "required": [
+      "ADMIN_LOGIN",
+      "ADMIN_PASSWORD_HASH",
+      "SESSION_SECRET",
+      "TELEGRAM_BOT_TOKEN",
+      "TELEGRAM_CHAT_ID"
+    ]
+  }
+}

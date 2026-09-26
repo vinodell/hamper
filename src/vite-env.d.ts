@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 interface ImportMetaEnv {
+	readonly VITE_API_URL: string;
 	readonly VITE_PHONE_MAKS: string;
 	readonly VITE_PHONE_VLAD: string;
 	readonly VITE_PHONE_HREF: string;

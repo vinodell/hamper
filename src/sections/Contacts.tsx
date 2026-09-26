@@ -3,20 +3,28 @@ import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
 import { plots, Plot, policyMsg, siteConfig } from "../lib";
+import { api } from "../lib/api";
 
 export const Contacts = () => {
   const [phone, setPhone] = useState("");
   const [chosenLand] = useState<Plot[]>(plots);
   const [chosenProject, setChosenProject] = useState<string>("");
+  const [chosenPlot, setChosenPlot] = useState("");
+  const [formState, setFormState] = useState<"idle" | "sending" | "success" | "error">("idle");
   const handlePhoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(event.target.value));
   };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setFormState("sending");
+    api.sendContact({ name: String(form.get("name") ?? ""), phone, project: chosenProject, plot: chosenPlot, comment: String(form.get("comment") ?? "") })
+      .then(() => { setFormState("success"); event.currentTarget.reset(); setPhone(""); setChosenProject(""); setChosenPlot(""); })
+      .catch(() => setFormState("error"));
   };
 
-  const choseProject = (event: any) => {
+  const choseProject = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setChosenProject(event.target.value);
   };
 
@@ -100,7 +108,7 @@ export const Contacts = () => {
           </label>
           <label>
             Интересующий объект
-            <select name="plot" value={chosenProject} onChange={choseProject}>
+            <select name="project" value={chosenProject} onChange={choseProject}>
               <option value="" disabled>
                 Выберите объект
               </option>
@@ -110,7 +118,7 @@ export const Contacts = () => {
           </label>
           <label>
             Номер участка
-            <select name="plot" defaultValue="">
+            <select name="plot" value={chosenPlot} onChange={(event) => setChosenPlot(event.target.value)}>
               {filteredLand.length > 0 ? (
                 filteredLand.map((item, index) => (
                   <option key={index}>{item.id}</option>
@@ -128,6 +136,8 @@ export const Contacts = () => {
             Отправить заявку
             <ArrowUpRight size={17} />
           </button>
+          {formState === "success" && <small className="form-success">Заявка отправлена. Мы скоро свяжемся с Вами.</small>}
+          {formState === "error" && <small className="form-error">Не удалось отправить заявку. Попробуйте еще раз.</small>}
           <small>{policyMsg}</small>
         </form>
       </div>

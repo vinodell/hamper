@@ -1012,6 +1012,40 @@ td {
     min-height: 52px;
 }
 
+.form-success { color: #9ed8a3 !important; }
+.form-error { color: #ffad9c !important; }
+
+.admin-shell {
+    min-height: 100vh;
+    padding: clamp(32px, 7vw, 90px) 20px;
+    background: var(--bg);
+}
+
+.admin-container { width: min(1380px, 100%); margin: 0 auto; }
+.admin-login {
+    width: min(460px, 100%);
+    margin: 0 auto;
+    padding: clamp(28px, 5vw, 52px);
+    background: var(--paper);
+    box-shadow: 0 20px 60px rgba(37, 43, 34, 0.12);
+}
+.admin-login__icon { display: grid; place-items: center; width: 48px; height: 48px; margin-bottom: 28px; color: var(--gold-dark); border: 1px solid var(--line); border-radius: 50%; }
+.admin-login h1, .admin-header h1 { margin-bottom: 14px; font-size: clamp(38px, 5vw, 64px); }
+.admin-login > p:not(.eyebrow), .admin-header > div > p:last-child { color: var(--muted); line-height: 1.6; }
+.admin-login label { display: grid; gap: 7px; margin-top: 21px; color: var(--gold-dark); font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; }
+.admin-login input { padding: 13px 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; outline: none; }
+.admin-login .button { width: 100%; margin-top: 28px; }
+.admin-loading { color: var(--muted); text-align: center; }
+.admin-error { margin: 18px 0; padding: 13px 16px; color: #8d2b1d; background: #f8ddd7; }
+.admin-header { display: flex; justify-content: space-between; align-items: end; gap: 28px; margin-bottom: 34px; }
+.admin-table-wrap { overflow-x: auto; background: var(--paper); box-shadow: 0 15px 45px rgba(37, 43, 34, 0.08); }
+.admin-table { min-width: 1120px; }
+.admin-table input, .admin-table select { width: 100%; min-width: 110px; padding: 10px 8px; border: 1px solid var(--line); background: transparent; color: var(--ink); }
+.admin-table select option { color: var(--ink); }
+.admin-table td { vertical-align: middle; }
+.admin-save { display: inline-flex; align-items: center; gap: 6px; padding: 10px 12px; color: white; background: var(--pine); white-space: nowrap; }
+.admin-save:disabled { opacity: .55; cursor: wait; }
+
 @media (max-width: 1050px) {
     .site-header {
         gap: 25px;
@@ -1318,6 +1352,8 @@ td {
         width: calc(100% - 28px);
         padding: 28px 22px 21px;
     }
+    .admin-header { align-items: flex-start; flex-direction: column; }
+    .admin-header .button { width: 100%; }
 
     .project-heading {
         padding: 48px 0 56px;
