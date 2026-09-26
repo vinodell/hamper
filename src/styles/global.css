@@ -1418,3 +1418,13 @@ td {
 .phone-icon {
     margin-top: 0.3rem;
 }
+/* Settlement sections keep each editing table attached to its heading. */
+.admin-settlements { display: grid; gap: 32px; min-width: 0; }
+.admin-settlement { min-width: 0; border: 1px solid var(--line); background: var(--paper); }
+.admin-settlement-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; padding: clamp(16px, 3vw, 28px); border-bottom: 1px solid var(--line); border-left: 4px solid var(--gold-dark); }
+.admin-settlement-header h2 { margin: 0; min-width: 0; overflow-wrap: anywhere; font-size: clamp(24px, 3vw, 32px); line-height: 1.2; }
+.admin-settlement-count { padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px; color: var(--pine); font-size: 13px; white-space: nowrap; }
+.admin-settlement .admin-table-wrap { box-shadow: none; }
+.admin-settlement .admin-table { width: 100%; min-width: 1000px; }
+.admin-settlement .admin-table-wrap:focus-visible { outline: 2px solid var(--gold-dark); outline-offset: -2px; }
+.admin-empty { padding: 24px; background: var(--paper); color: var(--muted); }

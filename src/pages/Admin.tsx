@@ -1,6 +1,6 @@
 import { LogOut, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { api, type AdminPlot, type PlotUpdate } from "../lib/api";
+import { api, ApiError, type AdminPlot, type PlotUpdate } from "../lib/api";
 import { ADMIN_SAVE_FEEDBACK_MS, plotStatuses, type PlotStatus } from "../lib";
 
 export function Admin() {
@@ -33,8 +33,13 @@ export function Admin() {
     setError("");
     try {
       await api.login(login, password);
-      setAuthenticated(true);
+      const session = await api.me();
+      if (!session.authenticated) {
+        throw new Error("Браузер не сохранил сессию. Разрешите cookies для сайта или попробуйте другой браузер.");
+      }
       setPlots(await api.getPlots());
+      setPassword("");
+      setAuthenticated(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось войти");
     }
@@ -65,6 +70,12 @@ export function Admin() {
       setSavedId(plot.id);
       window.setTimeout(() => setSavedId(null), ADMIN_SAVE_FEEDBACK_MS);
     } catch (reason) {
+      if (reason instanceof ApiError && reason.status === 401) {
+        setAuthenticated(false);
+        setPassword("");
+        setError("Сессия завершилась или недоступна. Войдите снова.");
+        return;
+      }
       setError(
         reason instanceof Error
           ? reason.message
@@ -80,6 +91,13 @@ export function Admin() {
     setAuthenticated(false);
     setPlots([]);
   };
+
+  const settlementGroups = new Map<string, AdminPlot[]>();
+  for (const plot of plots) {
+    const group = settlementGroups.get(plot.settlement);
+    if (group) group.push(plot);
+    else settlementGroups.set(plot.settlement, [plot]);
+  }
 
   if (loading)
     return (
@@ -148,96 +166,106 @@ export function Admin() {
             {error}
           </div>
         )}
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Участок</th>
-                <th>Проект</th>
-                <th>Площадь</th>
-                <th>Статус</th>
-                <th>Цена</th>
-                <th>Улица</th>
-                <th>Описание</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {plots.map((plot) => (
-                <tr key={plot.id}>
-                  <td>
-                    <strong>{plot.id}</strong>
-                  </td>
-                  <td>{plot.settlement}</td>
-                  <td>
-                    <input
-                      value={plot.area}
-                      onChange={(event) =>
-                        updatePlot(plot.id, "area", event.target.value)
-                      }
-                      aria-label={`Площадь ${plot.id}`}
-                    />
-                  </td>
-                  <td>
-                    <select
-                      value={plot.status}
-                      onChange={(event) =>
-                        updatePlot(plot.id, "status", event.target.value)
-                      }
-                      aria-label={`Статус ${plot.id}`}
-                    >
-                      {plotStatuses.map((status) => (
-                        <option key={status}>{status}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input
-                      value={plot.price}
-                      onChange={(event) =>
-                        updatePlot(plot.id, "price", event.target.value)
-                      }
-                      aria-label={`Цена ${plot.id}`}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      value={plot.street ?? ""}
-                      onChange={(event) =>
-                        updatePlot(plot.id, "street", event.target.value)
-                      }
-                      aria-label={`Улица ${plot.id}`}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      value={plot.description ?? ""}
-                      onChange={(event) =>
-                        updatePlot(plot.id, "description", event.target.value)
-                      }
-                      aria-label={`Описание ${plot.id}`}
-                    />
-                  </td>
-                  <td>
-                    <button
-                      className="admin-save"
-                      type="button"
-                      disabled={savingId === plot.id}
-                      onClick={() => savePlot(plot)}
-                    >
-                      {savedId === plot.id ? (
-                        "Сохранено"
-                      ) : (
-                        <>
-                          <Save size={16} /> Сохранить
-                        </>
-                      )}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        {plots.length === 0 && <p className="admin-empty">Участков пока нет.</p>}
+        <div className="admin-settlements">
+        {Array.from(settlementGroups, ([settlement, settlementPlots], index) => (
+          <section className="admin-settlement" key={settlement} aria-labelledby={`settlement-${index}`}>
+            <header className="admin-settlement-header">
+              <h2 id={`settlement-${index}`}>{settlement || "Без посёлка"}</h2>
+              <span className="admin-settlement-count">Участков: {settlementPlots.length}</span>
+            </header>
+            <div className="admin-table-wrap" role="region" aria-labelledby={`settlement-${index}`} tabIndex={0}>
+              <table className="admin-table" aria-labelledby={`settlement-${index}`}>
+
+                <thead>
+                  <tr>
+                    <th>Участок</th>
+                    <th>Площадь</th>
+                    <th>Статус</th>
+                    <th>Цена</th>
+                    <th>Улица</th>
+                    <th>Описание</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {settlementPlots.map((plot) => (
+                    <tr key={plot.id}>
+                      <td>
+                        <strong>{plot.id}</strong>
+                      </td>
+                      <td>
+                        <input
+                          value={plot.area}
+                          onChange={(event) =>
+                            updatePlot(plot.id, "area", event.target.value)
+                          }
+                          aria-label={`Площадь ${plot.id}`}
+                        />
+                      </td>
+                      <td>
+                        <select
+                          value={plot.status}
+                          onChange={(event) =>
+                            updatePlot(plot.id, "status", event.target.value)
+                          }
+                          aria-label={`Статус ${plot.id}`}
+                        >
+                          {plotStatuses.map((status) => (
+                            <option key={status}>{status}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td>
+                        <input
+                          value={plot.price}
+                          onChange={(event) =>
+                            updatePlot(plot.id, "price", event.target.value)
+                          }
+                          aria-label={`Цена ${plot.id}`}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          value={plot.street ?? ""}
+                          onChange={(event) =>
+                            updatePlot(plot.id, "street", event.target.value)
+                          }
+                          aria-label={`Улица ${plot.id}`}
+                        />
+                      </td>
+                      <td>
+                        <input
+                          value={plot.description ?? ""}
+                          onChange={(event) =>
+                            updatePlot(plot.id, "description", event.target.value)
+                          }
+                          aria-label={`Описание ${plot.id}`}
+                        />
+                      </td>
+                      <td>
+                        <button
+                          className="admin-save"
+                          type="button"
+                          disabled={savingId === plot.id}
+                          onClick={() => savePlot(plot)}
+                        >
+                          {savedId === plot.id ? (
+                            "Сохранено"
+                          ) : (
+                            <>
+                              <Save size={16} /> Сохранить
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+        ))}
         </div>
       </div>
     </main>

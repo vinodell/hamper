@@ -1,5 +1,6 @@
 import {
   SESSION_COOKIE,
+  SESSION_COOKIE_ATTRIBUTES,
   SESSION_TTL_SECONDS,
   allowedStatuses,
   PASSWORD_HASH_ITERATIONS,
@@ -178,7 +179,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders(request, env),
-        "Set-Cookie": `${SESSION_COOKIE}=${encodeURIComponent(session)}; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=${SESSION_TTL_SECONDS}`,
+        "Set-Cookie": `${SESSION_COOKIE}=${encodeURIComponent(session)}; ${SESSION_COOKIE_ATTRIBUTES}; Max-Age=${SESSION_TTL_SECONDS}`,
       },
     });
   }
@@ -188,7 +189,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       headers: {
         "Content-Type": "application/json",
         ...corsHeaders(request, env),
-        "Set-Cookie": `${SESSION_COOKIE}=; HttpOnly; Secure; SameSite=None; Path=/; Max-Age=0`,
+        "Set-Cookie": `${SESSION_COOKIE}=; ${SESSION_COOKIE_ATTRIBUTES}; Max-Age=0`,
       },
     });
   }

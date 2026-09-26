@@ -1,4 +1,5 @@
 export const SESSION_COOKIE = "hamper_session";
+export const SESSION_COOKIE_ATTRIBUTES = "HttpOnly; Secure; SameSite=None; Partitioned; Path=/";
 export const SESSION_TTL_SECONDS = 60 * 60 * 8;
 export const PASSWORD_HASH_ITERATIONS = 100_000;
 export const PASSWORD_HASH_ALGORITHM = "SHA-256";

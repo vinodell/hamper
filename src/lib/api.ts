@@ -1,5 +1,12 @@
 import { apiUrl, type Plot, type PlotStatus } from "./constants";
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${apiUrl}${path}`, {
     ...options,
@@ -7,7 +14,7 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...options?.headers },
   });
   const payload = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(payload.error ?? "Ошибка запроса");
+  if (!response.ok) throw new ApiError(payload.error ?? "Ошибка запроса", response.status);
   return payload as T;
 }
 
