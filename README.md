@@ -55,9 +55,11 @@ npx wrangler deploy --config worker/wrangler.jsonc
 
 Then set `VITE_API_URL` to the deployed Worker URL in GitHub repository secrets and redeploy the Pages frontend.
 
-The Worker deploy workflow also needs these GitHub secrets:
+The Worker deploy workflow uses the `github-pages` GitHub Environment (the same environment as the Pages deployment). Add these values under **Settings → Environments → github-pages**:
 
-- `CLOUDFLARE_API_TOKEN` with Workers deploy permissions
-- `CLOUDFLARE_ACCOUNT_ID`
+- Environment secret `CLOUDFLARE_API_TOKEN` with Workers deploy permissions
+- Environment variable `CLOUDFLARE_ACCOUNT_ID` (or an Environment secret with the same name)
+
+Repository-level secrets/variables with these names also work. The workflow validates both values before invoking Wrangler.
 
 The D1 schema and seed are intentionally separate from Worker deploy. Run them once after creating the database, then use `/admin` at `https://vinodell.github.io/hamper/admin`.
