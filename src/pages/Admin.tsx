@@ -2,7 +2,7 @@ import { isValidPlotNumber } from "../lib/plotNumbers";
 import { LogOut, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, ApiError, type AdminPlot, type PlotUpdate } from "../lib/api";
-import { ADMIN_SAVE_FEEDBACK_MS, plotStatuses, type PlotStatus } from "../lib";
+import { ADMIN_SAVE_FEEDBACK_MS, plotStatuses } from "../lib";
 
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);

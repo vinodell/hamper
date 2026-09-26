@@ -6,7 +6,6 @@ import {
   Factory,
   Fence,
   House,
-  Leaf,
   Map,
   MapPinned,
   ShieldCheck,
@@ -19,34 +18,21 @@ import {
 
 const env = import.meta.env;
 
-export const contactConfig = {
-  phone: env.VITE_PHONE_MAKS,
-  phone2: env.VITE_PHONE_VLAD,
-  phoneHref: env.VITE_PHONE_HREF,
-  whatsapp: env.VITE_WHATSAPP_MAKS,
-  vladWhatsapp: env.VITE_WHATSAPP_VLAD,
-  maksWhatsapp: env.VITE_WHATSAPP_MAKS,
-  vladTelegram: env.VITE_TELEGRAM_VLAD,
-  maksTelegram: env.VITE_TELEGRAM_MAKS,
-  email: env.VITE_CONTACT_EMAIL,
-} as const;
-
 export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
 export const ADMIN_SAVE_FEEDBACK_MS = 1800;
 
 export const siteConfig = {
   brand: "Hamper",
   brandSubtitle: "мини-поселки",
-  phone: contactConfig.phone,
-  phone2: contactConfig.phone2,
-  phoneHref: contactConfig.phoneHref,
-  whatsapp: contactConfig.whatsapp,
-  vladWhatsapp: contactConfig.vladWhatsapp,
-  maksWhatsapp: contactConfig.maksWhatsapp,
-  vladTelegram: contactConfig.vladTelegram,
-  maksTelegram: contactConfig.maksTelegram,
+  phone: env.VITE_PHONE_MAKS,
+  phone2: env.VITE_PHONE_VLAD,
+  phoneHref: env.VITE_PHONE_HREF,
+  vladWhatsapp: env.VITE_WHATSAPP_VLAD,
+  maksWhatsapp: env.VITE_WHATSAPP_MAKS,
+  vladTelegram: env.VITE_TELEGRAM_VLAD,
+  maksTelegram: env.VITE_TELEGRAM_MAKS,
   hours: "ежедневно с 10 до 20",
-  email: contactConfig.email,
+  email: env.VITE_CONTACT_EMAIL,
   ticker: "Осенние скидки до 10%!",
   copyright: "© 2026 Hamper",
 } as const;
@@ -73,26 +59,15 @@ export interface Plot {
   price: string;
 }
 
-export interface Feature {
-  title: string;
-  text: string;
-  icon: string;
-}
-
 export interface InfoItem {
   icon: LucideIcon;
   title: string;
   text: string;
 }
 
-export interface HeroFact {
+interface IconFact {
   icon: LucideIcon;
   text: string;
-}
-
-export interface FormatFact {
-  text: string;
-  icon: LucideIcon;
 }
 
 export interface SettlementFormat {
@@ -100,14 +75,14 @@ export interface SettlementFormat {
   title: string;
   copy: string;
   image: string;
-  facts: FormatFact[];
+  facts: IconFact[];
 }
 
 export interface TableSectionProps {
   initialFilter?: Exclude<PlotFilter, "Все">;
 }
 
-export const heroFacts: HeroFact[] = [
+export const heroFacts: IconFact[] = [
   { icon: MapPinned, text: "21 участок" },
   { icon: CarFront, text: "25 км от КАД" },
   { icon: Fence, text: "уютная территория" },
@@ -140,24 +115,6 @@ export const settlementFormats: SettlementFormat[] = [
   },
 ];
 
-export const advantages: InfoItem[] = [
-  {
-    icon: Car,
-    title: "Транспортная доступность",
-    text: "30 минут от пр. Просвещения и Парнаса через Новоприозерское шоссе.",
-  },
-  {
-    icon: Droplets,
-    title: "Близость к озёрам",
-    text: "15 минут езды до чистых лесных озёр для купания и рыбалки.",
-  },
-  {
-    icon: Leaf,
-    title: "Хвойный лес",
-    text: "Посёлки окружены вековым хвойным лесом с чистейшим воздухом.",
-  },
-];
-
 export const infrastructure: InfoItem[] = [
   {
     icon: ShoppingBag,
@@ -172,7 +129,7 @@ export const infrastructure: InfoItem[] = [
   {
     icon: Sparkles,
     title: "Активный отдых",
-    text: "Рядом «Охта Парк», базы отдыха, конно-спортивные клубы и веломаршруты. [update description]",
+    text: "Рядом «Охта Парк», базы отдыха, конно-спортивные клубы и веломаршруты.",
   },
 ];
 
@@ -193,176 +150,6 @@ export const masterplans = [
     image: "https://u5hills.ru/img/52556327_1920_q70.jpg",
   },
 ] as const;
-
-export const constructionNews = [
-  {
-    date: "АВГУСТ 2026",
-    title: "Дороги и водоотведение внутри поселков",
-    text: "Дороги отсыпаны асфальтовой крошкой. Выполняются работы по устройству водоотведения.",
-  },
-  {
-    date: "ИЮНЬ 2026",
-    title: "Начали строить дороги",
-    text: "Ведутся работы по устройству дорожного полотна внутри посёлков.",
-  },
-] as const;
-
-export const plots: Plot[] = [
-  {
-    id: "1-01",
-    settlement: "Ойнеловские дали",
-    area: "7.00 сот.",
-    status: "Забронирован",
-    price: "1 500 000 ₽",
-  },
-  {
-    id: "1-02",
-    settlement: "Ойнеловские дали",
-    area: "6.99 сот.",
-    status: "Продан",
-    price: "1 500 000 ₽",
-  },
-  {
-    id: "1-03",
-    settlement: "Ойнеловские дали",
-    area: "6.77 сот.",
-    status: "Свободен",
-    price: "1 450 000 ₽",
-  },
-  {
-    id: "1-04",
-    settlement: "Ойнеловские дали",
-    area: "6.50 сот.",
-    status: "Свободен",
-    price: "1 400 000 ₽",
-  },
-  {
-    id: "1-05",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Свободен",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-06",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Свободен",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-07",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-08",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-09",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-10",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-11",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-12",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-13",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-14",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-15",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-16",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-17",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-18",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-19",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "1-20",
-    settlement: "Ойнеловские дали",
-    area: "7.40 сот.",
-    status: "Продан",
-    price: "1 650 000 ₽",
-  },
-  {
-    id: "1-21",
-    settlement: "Ойнеловские дали",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-  {
-    id: "2-01",
-    settlement: "Другие участки",
-    area: "8.12 сот.",
-    status: "Продан",
-    price: "1 800 000 ₽",
-  },
-];
 
 export const plotFilters = [
   "Все",

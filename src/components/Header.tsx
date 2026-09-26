@@ -1,6 +1,6 @@
 import { Menu, Phone, X } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useMobileMenu } from "../hooks";
 import { Logo } from "../images";
 import {
@@ -14,30 +14,22 @@ import {
 
 export const Header = () => {
   const menu = useMobileMenu();
-  const navigate = useNavigate();
   const [projectsOpen, setProjectsOpen] = useState(false);
 
-
-  // TODO: state hook for changing the project type
-  const handleProjectNavigation = (project: string) => {
-    console.log("project", project);
+  const handleProjectNavigation = () => {
     menu.close();
     setProjectsOpen(false);
   };
 
-  const goMainPage = () => {
-    navigate("/projects/");
-  };
-
   return (
     <header className="site-header">
-      <div className="brand" aria-label="Hamper" onClick={goMainPage}>
+      <Link className="brand" aria-label="Hamper — главная" to="/" onClick={handleProjectNavigation}>
         <Logo />
         <span className="brand-name">
           {siteConfig.brand}
           <small>{siteConfig.brandSubtitle}</small>
         </span>
-      </div>
+      </Link>
       <nav
         id="main-navigation"
         className={`main-nav ${menu.isOpen ? "is-open" : ""}`}
@@ -61,7 +53,7 @@ export const Header = () => {
                   <Link
                     key={project.path}
                     to={project.path}
-                    onClick={() => handleProjectNavigation(project.label)}
+                    onClick={handleProjectNavigation}
                   >
                     {project.label}
                   </Link>

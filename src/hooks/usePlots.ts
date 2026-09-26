@@ -15,15 +15,21 @@ export function usePlots() {
       pending = true;
       try {
         const next = await api.getPlots();
-        if (active) { setPlots(next); setError(""); }
+        if (active) {
+          setPlots(next);
+          setError("");
+        }
       } catch {
-        if (active) setError("Не удалось обновить участки. Повторяем загрузку…");
+        if (active)
+          setError("Не удалось обновить участки. Повторяем загрузку…");
       } finally {
         pending = false;
         if (active) setLoading(false);
       }
     };
-    const refreshVisible = () => { if (!document.hidden) void refresh(); };
+    const refreshVisible = () => {
+      if (!document.hidden) void refresh();
+    };
     void refresh();
     window.addEventListener("focus", refreshVisible);
     document.addEventListener("visibilitychange", refreshVisible);

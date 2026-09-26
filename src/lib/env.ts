@@ -1,1 +1,0 @@
-export { contactConfig } from "./constants";

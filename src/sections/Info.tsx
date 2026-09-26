@@ -1,31 +1,8 @@
-import { ArrowUpRight } from "lucide-react";
-
-import { advantages, infrastructure, utilities } from "../lib";
+import { infrastructure, utilities } from "../lib";
 
 export const Info = () => {
   return (
     <>
-      {/* <section className="section section-cream">
-        <div className="container">
-          <div className="section-heading">
-            <p className="eyebrow">ОКРУЖЕНИЕ И ДОСТУПНОСТЬ</p>
-            <h2>
-              Массив Ойнелово — <em>22 км от КАД</em>
-            </h2>
-          </div>
-          <div className="feature-grid">
-            {advantages.map(({ icon: Icon, title, text }) => (
-              <article className="feature" key={title}>
-                <span className="feature-icon">
-                  <Icon />
-                </span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section> */}
       <section className="section section-paper">
         <div className="container">
           <div className="section-heading centered">

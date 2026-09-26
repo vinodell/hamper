@@ -133,10 +133,6 @@ async function verifyPassword(password: string, encodedHash: string) {
   return constantTimeEqual(derived, expected);
 }
 
-async function requireSession(request: Request, env: Env) {
-  return hasValidSession(request, env);
-}
-
 function mapPlot(row: PlotRow) {
   return {
     id: row.id,
@@ -242,7 +238,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   const plotMatch = url.pathname.match(/^\/api\/admin\/plots\/([^/]+)$/);
   if (plotMatch && request.method === "PUT") {
-    if (!(await requireSession(request, env)))
+    if (!(await hasValidSession(request, env)))
       return json({ error: "Требуется авторизация" }, 401, request, env);
     const body = await request.json<{
       area?: string;
