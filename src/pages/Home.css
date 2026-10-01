@@ -1,32 +1,69 @@
 .ticker {
-    background: #f6c89d;
-    color: #161813;
-    white-space: nowrap;
+    position: relative;
     overflow: hidden;
-    font-size: 25px;
-    font-weight: 600;
-    line-height: 52px;
+    background: linear-gradient(180deg, #f9d4a4 0%, #efc58e 100%);
+    border-top: 1px solid rgba(58, 60, 43, 0.14);
+    border-bottom: 1px solid rgba(58, 60, 43, 0.14);
+    color: #1b1d18;
+    white-space: nowrap;
+    min-height: 74px;
+    display: flex;
+    align-items: center;
 }
 
-.ticker div {
-    animation: ticker 25s linear infinite;
+.ticker-track {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
     width: max-content;
+    padding-inline: 24px;
+    animation: ticker 70s linear infinite;
 }
 
-.ticker b {
-    margin: 0 27px;
+.ticker-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 18px;
+    font-size: clamp(18px, 2vw, 25px);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.35);
+}
+
+.ticker-text {
+    display: inline-block;
+    padding-top: 2px;
+}
+
+.ticker-dot {
+    color: rgba(42, 44, 34, 0.8);
+    font-size: 0.8em;
 }
 
 @keyframes ticker {
+    from {
+        transform: translateX(0);
+    }
+
     to {
         transform: translateX(-50%);
     }
 }
 
 @media (max-width: 760px) {
-
     .ticker {
-        font-size: 18px;
-        line-height: 43px;
+        min-height: 60px;
+    }
+
+    .ticker-item {
+        gap: 12px;
+        letter-spacing: 0.04em;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ticker-track {
+        animation: none;
     }
 }

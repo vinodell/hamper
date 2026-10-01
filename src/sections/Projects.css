@@ -6,6 +6,11 @@
 
 .format-card {
     background: var(--bg);
+    overflow: hidden;
+}
+
+.format-card:hover .format-image img {
+    transform: scale(1.04);
 }
 
 .format-image {
@@ -18,14 +23,61 @@
     padding: 23px;
     display: flex;
     align-items: flex-end;
+    background:
+        linear-gradient(135deg, rgba(208, 210, 180, 0.7), rgba(176, 170, 143, 0.9));
+}
+
+.format-image-skeleton {
+    position: absolute;
+    inset: 0;
+    background:
+        linear-gradient(120deg, rgba(255, 255, 255, 0.28) 0%, rgba(255, 255, 255, 0.06) 35%, rgba(255, 255, 255, 0.28) 55%, rgba(255, 255, 255, 0.1) 100%);
+    background-size: 220% 100%;
+    animation: plot-skeleton-shimmer 1.6s linear infinite;
+}
+
+.format-image-skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 18% 12% 18% 12%;
+    border-radius: 14px;
+    border: 1px solid rgba(53, 75, 48, 0.45);
+    background:
+        linear-gradient(0deg, rgba(62, 79, 53, 0.12), rgba(62, 79, 53, 0.12)),
+        repeating-linear-gradient(
+            90deg,
+            rgba(45, 61, 42, 0.18) 0,
+            rgba(45, 61, 42, 0.18) 12%,
+            rgba(255,255,255,0.04) 12%,
+            rgba(255,255,255,0.04) 18%
+        );
+    transform: skewY(-8deg);
+    opacity: 0.7;
 }
 
 .format-image span {
+    position: relative;
+    z-index: 1;
     background: var(--pine);
     color: #e3c18e;
     font-size: 11px;
     letter-spacing: 1.4px;
     padding: 10px 14px;
+}
+
+.format-image img {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 420ms ease, transform 550ms ease;
+}
+
+.format-image img.is-loaded {
+    opacity: 1;
 }
 
 .format-content {
@@ -86,15 +138,26 @@
     }
 }
 
-.format-image img {
-    position: absolute;
-    inset: 0;
-    z-index: -1;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
 .format-grid>* {
     min-width: 0;
+}
+
+@keyframes plot-skeleton-shimmer {
+    0% {
+        background-position: 200% 50%;
+    }
+
+    100% {
+        background-position: -100% 50%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .format-image-skeleton {
+        animation: none;
+    }
+
+    .format-image img {
+        transition: none;
+    }
 }

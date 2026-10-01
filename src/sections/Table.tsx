@@ -6,7 +6,12 @@ import {
   CircleDollarSign,
 } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
-import { plotFilters, type TableSectionProps, type PlotFilter, type Plot } from "../lib";
+import {
+  plotFilters,
+  type TableSectionProps,
+  type PlotFilter,
+  type Plot,
+} from "../lib";
 import { formatPlotNumber } from "../lib/plotNumbers";
 
 import "./Table.css";
@@ -30,8 +35,10 @@ const toNumericValue = (value: string | undefined): number => {
 const comparePlots = (left: Plot, right: Plot, key: SortKey) => {
   switch (key) {
     case "id": {
-      const leftId = Number.parseFloat(String(left.id).replace(/[^\d.]/g, "")) || 0;
-      const rightId = Number.parseFloat(String(right.id).replace(/[^\d.]/g, "")) || 0;
+      const leftId =
+        Number.parseFloat(String(left.id).replace(/[^\d.]/g, "")) || 0;
+      const rightId =
+        Number.parseFloat(String(right.id).replace(/[^\d.]/g, "")) || 0;
       return leftId - rightId;
     }
     case "category": {
@@ -50,7 +57,11 @@ const comparePlots = (left: Plot, right: Plot, key: SortKey) => {
   }
 };
 
-export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSectionProps) => {
+export const Table = ({
+  initialFilter,
+  onSelectPlot,
+  sortable = false,
+}: TableSectionProps) => {
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableVisible, setTableVisible] = useState(false);
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
@@ -66,18 +77,23 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
       setTableVisible(true);
       return;
     }
-    const observer = new IntersectionObserver(([entry]) => {
-      if (entry.isIntersecting) {
-        setTableVisible(true);
-        observer.disconnect();
-      }
-    }, { threshold: 0, rootMargin: "0px 0px -40px 0px" });
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setTableVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0, rootMargin: "0px 0px -40px 0px" },
+    );
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
 
   const filteredPlots = useMemo(() => {
     const nextPlots = plots.filter((plot) => {
+      if (plot.status === "Продан") return false;
+
       const projectFilter = initialFilter ?? activeFilter;
       if (projectFilter === "Все") return true;
       return plot.settlement === projectFilter;
@@ -121,7 +137,9 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
             Выберите <em>свой участок</em>
           </h2>
           <p>
-            {initialFilter ? `Актуальные участки проекта «${initialFilter}».` : "Актуальные участки всех проектов."}
+            {initialFilter
+              ? `Актуальные участки проекта «${initialFilter}».`
+              : "Актуальные участки всех проектов."}
           </p>
         </div>
         <div className="sale-banner">
@@ -137,7 +155,11 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
           </a>
         </div>
         {!initialFilter && (
-          <div className="filter-tabs" role="tablist" aria-label="Фильтр участков">
+          <div
+            className="filter-tabs"
+            role="tablist"
+            aria-label="Фильтр участков"
+          >
             {plotFilters.map((item) => (
               <button
                 key={item}
@@ -154,13 +176,21 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
         {!loading && !error && filteredPlots.length === 0 && (
           <p>Участков с выбранными условиями пока нет.</p>
         )}
-        <div ref={tableRef} className={`plots-table-wrap${tableVisible ? " plots-table-visible" : ""}`}>
+        <div
+          ref={tableRef}
+          className={`plots-table-wrap${tableVisible ? " plots-table-visible" : ""}`}
+        >
           <table>
             <thead>
               <tr>
                 <th scope="col">
                   {sortable ? (
-                    <button type="button" className="sort-button" onClick={() => handleSort("id")} aria-label="Сортировать по номеру участка">
+                    <button
+                      type="button"
+                      className="sort-button"
+                      onClick={() => handleSort("id")}
+                      aria-label="Сортировать по номеру участка"
+                    >
                       № <span aria-hidden="true">{getSortLabel("id")}</span>
                     </button>
                   ) : (
@@ -169,8 +199,14 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
                 </th>
                 <th scope="col">
                   {sortable ? (
-                    <button type="button" className="sort-button" onClick={() => handleSort("category")} aria-label="Сортировать по категории">
-                      Категория <span aria-hidden="true">{getSortLabel("category")}</span>
+                    <button
+                      type="button"
+                      className="sort-button"
+                      onClick={() => handleSort("category")}
+                      aria-label="Сортировать по категории"
+                    >
+                      Категория{" "}
+                      <span aria-hidden="true">{getSortLabel("category")}</span>
                     </button>
                   ) : (
                     "Посёлок"
@@ -178,8 +214,14 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
                 </th>
                 <th scope="col">
                   {sortable ? (
-                    <button type="button" className="sort-button" onClick={() => handleSort("area")} aria-label="Сортировать по площади">
-                      Площадь, сот. <span aria-hidden="true">{getSortLabel("area")}</span>
+                    <button
+                      type="button"
+                      className="sort-button"
+                      onClick={() => handleSort("area")}
+                      aria-label="Сортировать по площади"
+                    >
+                      Площадь, сот.{" "}
+                      <span aria-hidden="true">{getSortLabel("area")}</span>
                     </button>
                   ) : (
                     "Площадь, сот."
@@ -187,8 +229,14 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
                 </th>
                 <th scope="col">
                   {sortable ? (
-                    <button type="button" className="sort-button" onClick={() => handleSort("status")} aria-label="Сортировать по статусу">
-                      Статус <span aria-hidden="true">{getSortLabel("status")}</span>
+                    <button
+                      type="button"
+                      className="sort-button"
+                      onClick={() => handleSort("status")}
+                      aria-label="Сортировать по статусу"
+                    >
+                      Статус{" "}
+                      <span aria-hidden="true">{getSortLabel("status")}</span>
                     </button>
                   ) : (
                     "Статус"
@@ -196,8 +244,14 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
                 </th>
                 <th scope="col">
                   {sortable ? (
-                    <button type="button" className="sort-button" onClick={() => handleSort("price")} aria-label="Сортировать по цене">
-                      Цена, ₽ <span aria-hidden="true">{getSortLabel("price")}</span>
+                    <button
+                      type="button"
+                      className="sort-button"
+                      onClick={() => handleSort("price")}
+                      aria-label="Сортировать по цене"
+                    >
+                      Цена, ₽{" "}
+                      <span aria-hidden="true">{getSortLabel("price")}</span>
                     </button>
                   ) : (
                     "Цена, ₽"
@@ -210,23 +264,38 @@ export const Table = ({ initialFilter, onSelectPlot, sortable = false }: TableSe
               {filteredPlots.map((plot, index) => (
                 <tr
                   key={plot.id}
-                  className={plot.status === "Свободен" && onSelectPlot ? "plot-row-selectable" : undefined}
+                  className={
+                    plot.status === "Свободен" && onSelectPlot
+                      ? "plot-row-selectable"
+                      : undefined
+                  }
                   style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
                   onClick={(event) => {
                     if (plot.status !== "Свободен" || !onSelectPlot) return;
-                    if ((event.target as HTMLElement).closest("a, button")) return;
+                    if ((event.target as HTMLElement).closest("a, button"))
+                      return;
                     if (window.getSelection()?.toString()) return;
                     onSelectPlot(plot);
                     document.getElementById("form")?.scrollIntoView({
-                      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth",
+                      behavior: window.matchMedia(
+                        "(prefers-reduced-motion: reduce)",
+                      ).matches
+                        ? "instant"
+                        : "smooth",
                     });
                   }}
                 >
                   <td>{plot.id}</td>
-                  <td>{sortable ? plot.category ?? "Уточняется" : plot.settlement}</td>
+                  <td>
+                    {sortable
+                      ? (plot.category ?? "Уточняется")
+                      : plot.settlement}
+                  </td>
                   <td>{formatPlotNumber(plot.area)}</td>
                   <td>
-                    <span className={`status ${plot.status === "Свободен" ? "status-free" : "status-muted"}`}>
+                    <span
+                      className={`status ${plot.status === "Свободен" ? "status-free" : "status-muted"}`}
+                    >
                       {plot.status}
                     </span>
                   </td>

@@ -53,6 +53,8 @@
     width: 100%;
     aspect-ratio: 2.12;
     object-fit: cover;
+    position: relative;
+    z-index: 1;
 }
 
 .plan-legend {
@@ -88,6 +90,22 @@
     background: #8b9575;
 }
 
+@keyframes plan-skeleton-shimmer {
+    0% {
+        background-position: 200% 50%;
+    }
+
+    100% {
+        background-position: -100% 50%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .plan-image::before,
+    .plan-image::after {
+        animation: none;
+    }
+}
 @media (max-width: 760px) {
 
     .masterplan h2 {

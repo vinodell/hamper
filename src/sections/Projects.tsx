@@ -1,7 +1,28 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { settlementFormats, projectRoutes } from "../lib";
 
 import "./Projects.css";
+
+const ProjectImage = ({ src, alt, label }: { src: string; alt: string; label: string }) => {
+  const [loaded, setLoaded] = useState(false);
+
+  return (
+    <div className={`format-image ${loaded ? "is-loaded" : ""}`}>
+      {!loaded && <div className="format-image-skeleton" aria-hidden="true" />}
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+        onLoad={() => setLoaded(true)}
+        onError={() => setLoaded(true)}
+        className={loaded ? "is-loaded" : ""}
+      />
+      <span>{label}</span>
+    </div>
+  );
+};
 
 export const Projects = () => {
   return (
@@ -17,10 +38,7 @@ export const Projects = () => {
         <div className="format-grid">
           {settlementFormats.map((format, index) => (
             <article className="format-card" key={format.title}>
-              <div className="format-image">
-                <img src={format.image} alt={format.title} loading="lazy" decoding="async" />
-                <span>{format.label}</span>
-              </div>
+              <ProjectImage src={format.image} alt={format.title} label={format.label} />
               <div className="format-content">
                 <h3>{format.title}</h3>
                 <p>{format.copy}</p>
