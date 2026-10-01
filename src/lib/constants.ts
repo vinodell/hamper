@@ -1,3 +1,4 @@
+import type { IndividualPlotDetails } from "../data/individualPlots";
 import type { LucideIcon } from "lucide-react";
 import {
   Car,
@@ -52,6 +53,9 @@ export const plotStatuses = ["Свободен", "Забронирован", "П
 export type PlotStatus = (typeof plotStatuses)[number];
 
 export interface Plot {
+  category?: IndividualPlotDetails["category"];
+  photos?: IndividualPlotDetails["photos"];
+  title?: string;
   id: string;
   settlement: string;
   area: string;
@@ -81,6 +85,7 @@ export interface SettlementFormat {
 export interface TableSectionProps {
   initialFilter?: Exclude<PlotFilter, "Все">;
   onSelectPlot?: (plot: Plot) => void;
+  sortable?: boolean;
 }
 
 export const heroFacts: IconFact[] = [
@@ -140,17 +145,6 @@ export const utilities: InfoItem[] = [
   { icon: ShieldCheck, title: "Прописка", text: "Регистрация с пропиской" },
   { icon: Map, title: "Дороги", text: "Широкие и доступные проезды" },
 ];
-
-export const masterplans = [
-  {
-    label: "Ойнеловские дали",
-    image: "https://u5hills.ru/img/52556357_1920_q70.webp",
-  },
-  {
-    label: "Другие участки",
-    image: "https://u5hills.ru/img/52556327_1920_q70.jpg",
-  },
-] as const;
 
 export const plotFilters = [
   "Все",

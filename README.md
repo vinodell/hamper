@@ -63,3 +63,34 @@ The Worker deploy workflow uses the `github-pages` GitHub Environment (the same 
 Repository-level secrets/variables with these names also work. The workflow validates both values before invoking Wrangler.
 
 The D1 schema and seed are intentionally separate from Worker deploy. Run them once after creating the database, then use `/admin` at `https://vinodell.github.io/hamper/admin`.
+
+## Individual plots (Другие участки)
+
+The public page reads prices, areas, availability and IDs from the existing plots API.
+Add photos and categories in `src/data/individualPlots.ts`, keyed by the exact plot ID
+shown in the admin panel:
+
+```ts
+"2-01": {
+  title: "Участок у леса",
+  category: "ИЖС", // or "Дачка"
+  photos: [
+    { src: "images/plots/2-01/01.webp", alt: "Вид участка со стороны дороги" },
+    { src: "images/plots/2-01/02.webp", alt: "Вид участка со стороны леса" },
+    { src: "images/plots/2-01/03.webp", alt: "Подъезд к участку" },
+  ],
+},
+```
+
+Place these image files under `public/images/plots/2-01/`. Paths are resolved against
+Vite's base URL, including `/hamper/` on GitHub Pages. Absolute HTTPS image URLs are
+also supported. Add three or more photos as available; the carousel also handles
+missing photos and loading failures. Unknown categories display as «Уточняется»;
+no legal land category is inferred from other fields. Deploy the frontend after
+editing this catalog. Prices and statuses continue to be managed through the admin panel.
+
+Local fixtures in `localTest/plots.ts` include demonstration categories and photos.
+They are used only by the development server on localhost and excluded from production.
+
+Component styles live beside their TSX files. `src/styles/global.css` contains shared
+tokens, fonts, resets, typography, layout primitives and accessible motion defaults.

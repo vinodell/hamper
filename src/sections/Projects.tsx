@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 import { settlementFormats, projectRoutes } from "../lib";
 
+import "./Projects.css";
+
 export const Projects = () => {
   return (
     <section className="section section-paper" id="poselki">

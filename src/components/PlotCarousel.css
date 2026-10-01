@@ -1,0 +1,159 @@
+.plot-carousel {
+    position: relative;
+    min-width: 0;
+    background: var(--bg);
+}
+
+.plot-carousel-slide,
+.plot-carousel-empty {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: #e8e8df;
+}
+
+.plot-carousel-slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 250ms ease;
+}
+
+.plot-carousel-slide img.is-ready {
+    opacity: 1;
+}
+
+.plot-carousel-message {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 24px;
+    text-align: center;
+    color: var(--ink);
+}
+
+.plot-carousel-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    gap: 16px;
+    text-align: center;
+}
+
+.plot-carousel-empty p {
+    margin: 0;
+}
+
+.plot-carousel-controls {
+    position: absolute;
+    bottom: 24px;
+    right: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 6px;
+    background: var(--paper);
+    border-radius: 40px;
+}
+
+.plot-carousel-controls span {
+    min-width: 54px;
+    text-align: center;
+    font-variant-numeric: tabular-nums;
+}
+
+.plot-carousel-controls button {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: var(--ink);
+    background: transparent;
+    transition: background-color 180ms ease, transform 180ms ease;
+}
+
+.plot-carousel-controls button:disabled {
+    opacity: .35;
+    cursor: default;
+}
+
+.plot-carousel-pagination {
+    position: absolute;
+    bottom: 26px;
+    left: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    max-width: calc(100% - 220px);
+}
+
+.plot-carousel-pagination button {
+    width: 24px;
+    height: 44px;
+    padding: 8px;
+    background: transparent;
+}
+
+.plot-carousel-pagination span {
+    display: block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 0 0 1px rgba(15, 38, 31, .3);
+    opacity: .55;
+    transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.plot-carousel-pagination [aria-current] span {
+    opacity: 1;
+    transform: scale(1.4);
+}
+
+@media (hover:hover) {
+    .plot-carousel-controls button:not(:disabled):hover {
+        background: #e7e7da;
+        transform: translateY(-1px);
+    }
+}
+
+@media (max-width:600px) {
+
+    .plot-carousel-slide,
+    .plot-carousel-empty {
+        aspect-ratio: 4 / 3;
+    }
+
+    .plot-carousel-controls {
+        bottom: 12px;
+        right: 12px;
+    }
+
+    .plot-carousel-pagination {
+        position: static;
+        max-width: none;
+        justify-content: center;
+    }
+
+    .plot-carousel-pagination span {
+        background: var(--ink);
+    }
+
+    .plot-carousel-controls {
+        position: static;
+        justify-content: center;
+        border-radius: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .plot-carousel * {
+        transition: none;
+    }
+}

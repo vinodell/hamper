@@ -1,5 +1,7 @@
 import { infrastructure, utilities } from "../lib";
 
+import "./Info.css";
+
 export const Info = () => {
   return (
     <>

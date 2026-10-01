@@ -1,0 +1,366 @@
+.status {
+  display: inline-flex;
+  align-items: center;
+
+  width: fit-content;
+
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  background:
+    rgb(255 255 255 / 0.08);
+
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
+
+  white-space: nowrap;
+}
+
+.status[data-status='available'] {
+  background:
+    rgb(74 222 128 / 0.16);
+
+  color: rgb(134 239 172);
+}
+
+.status[data-status='reserved'] {
+  background:
+    rgb(251 191 36 / 0.16);
+
+  color: rgb(253 224 71);
+}
+
+.status[data-status='sold'] {
+  background:
+    rgb(248 113 113 / 0.16);
+
+  color: rgb(252 165 165);
+}
+
+.status[data-status='unknown'] {
+  background:
+    rgb(255 255 255 / 0.08);
+
+  color:
+    rgb(255 255 255 / 0.65);
+}
+
+.modal {
+  width:
+    min(520px,
+      calc(100vw - 32px));
+
+  max-height:
+    min(720px,
+      calc(100dvh - 32px));
+
+  margin: auto;
+
+  padding: 0;
+
+  border: 0;
+  border-radius: 22px;
+
+  background: transparent;
+
+  color: inherit;
+
+  overflow: visible;
+}
+
+.modal::backdrop {
+  background:
+    rgb(0 0 0 / 0.58);
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.modal[open] {
+  animation:
+    modal-enter 220ms cubic-bezier(0.22,
+      1,
+      0.36,
+      1);
+}
+
+.modalContent {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+
+  padding: 28px;
+
+  border:
+    1px solid rgb(255 255 255 / 0.1);
+
+  border-radius: inherit;
+
+  background:
+    rgb(20 20 20 / 0.97);
+
+  box-shadow:
+    0 30px 100px rgb(0 0 0 / 0.45);
+
+  color: #fff;
+}
+
+.modalClose {
+  position: absolute;
+
+  top: 16px;
+  right: 16px;
+
+  display: grid;
+  place-items: center;
+
+  width: 38px;
+  height: 38px;
+
+  padding: 0;
+
+  border:
+    1px solid rgb(255 255 255 / 0.1);
+
+  border-radius: 50%;
+
+  background:
+    rgb(255 255 255 / 0.06);
+
+  color: #fff;
+
+  font: inherit;
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.modalClose:hover {
+  background:
+    rgb(255 255 255 / 0.12);
+
+  transform: scale(1.04);
+}
+
+.modalClose:focus-visible {
+  outline:
+    2px solid rgb(255 255 255 / 0.9);
+
+  outline-offset: 3px;
+}
+
+.modalHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+
+  padding-right: 48px;
+}
+
+.modalEyebrow {
+  color:
+    rgb(255 255 255 / 0.48);
+
+  font-size: 12px;
+  font-weight: 600;
+
+  letter-spacing: 0.08em;
+
+  text-transform: uppercase;
+}
+
+.modalTitle {
+  margin: 0;
+
+  font-size:
+    clamp(28px,
+      5vw,
+      40px);
+
+  font-weight: 600;
+  line-height: 1.05;
+
+  letter-spacing: -0.035em;
+}
+
+.modalDetails {
+  display: grid;
+  grid-template-columns:
+    repeat(2,
+      minmax(0, 1fr));
+
+  gap: 12px;
+}
+
+.modalDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  padding: 16px;
+
+  border:
+    1px solid rgb(255 255 255 / 0.08);
+
+  border-radius: 14px;
+
+  background:
+    rgb(255 255 255 / 0.04);
+}
+
+.modalDetailLabel {
+  color:
+    rgb(255 255 255 / 0.45);
+
+  font-size: 12px;
+}
+
+.modalDetailValue {
+  color: #fff;
+
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.modalDescription {
+  margin: 0;
+
+  color:
+    rgb(255 255 255 / 0.65);
+
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.modalActions {
+  display: flex;
+  gap: 10px;
+}
+
+.primaryButton,
+.secondaryButton {
+  min-height: 48px;
+
+  padding:
+    0 18px;
+
+  border-radius: 12px;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    background 160ms ease,
+    color 160ms ease;
+}
+
+.primaryButton {
+  flex: 1;
+
+  border: 0;
+
+  background: #fff;
+
+  color: #111;
+}
+
+.primaryButton:hover {
+  transform:
+    translateY(-1px);
+}
+
+.secondaryButton {
+  border:
+    1px solid rgb(255 255 255 / 0.12);
+
+  background:
+    rgb(255 255 255 / 0.06);
+
+  color: #fff;
+}
+
+.secondaryButton:hover {
+  background:
+    rgb(255 255 255 / 0.1);
+}
+
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible {
+  outline:
+    2px solid #fff;
+
+  outline-offset: 3px;
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+
+    transform:
+      translateY(10px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+
+    transform:
+      translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+
+  .modal {
+    width:
+      calc(100vw - 20px);
+
+    max-height:
+      calc(100dvh - 20px);
+  }
+
+  .modalContent {
+    gap: 20px;
+
+    padding: 22px;
+  }
+
+  .modalDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .modalActions {
+    flex-direction: column;
+  }
+
+  .primaryButton,
+.secondaryButton {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .modalClose,
+.primaryButton,
+.secondaryButton {
+    transition: none;
+  }
+
+  .modal[open] {
+    animation: none;
+  }
+}

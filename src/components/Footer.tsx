@@ -1,7 +1,9 @@
 import { Logo } from "../images";
 import { navigation, offertaMsg, siteConfig } from "../lib";
 
-export function Footer() {
+import "./Footer.css";
+
+export const Footer = () => {
   return (
     <footer className="footer">
       <div className="container footer-top">

@@ -1,0 +1,32 @@
+.ticker {
+    background: #f6c89d;
+    color: #161813;
+    white-space: nowrap;
+    overflow: hidden;
+    font-size: 25px;
+    font-weight: 600;
+    line-height: 52px;
+}
+
+.ticker div {
+    animation: ticker 25s linear infinite;
+    width: max-content;
+}
+
+.ticker b {
+    margin: 0 27px;
+}
+
+@keyframes ticker {
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@media (max-width: 760px) {
+
+    .ticker {
+        font-size: 18px;
+        line-height: 43px;
+    }
+}

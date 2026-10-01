@@ -1,0 +1,123 @@
+.masterplan h2 {
+    font-size: clamp(40px, 5vw, 65px);
+    margin-bottom: 24px;
+}
+
+.masterplan {
+    background: var(--bg);
+}
+
+.masterplan-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: end;
+    gap: 30px;
+    margin-bottom: 45px;
+}
+
+.masterplan-head>div {
+    max-width: 600px;
+}
+
+.masterplan-head p:last-child {
+    color: var(--muted);
+    line-height: 1.6;
+}
+
+.plan-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 21px;
+}
+
+.plan-tabs button {
+    padding: 12px 18px;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--muted);
+}
+
+.plan-tabs button.active {
+    background: var(--pine);
+    color: white;
+    border-color: var(--pine);
+}
+
+.plan-image {
+    background: #ece8dc;
+    position: relative;
+    overflow: hidden;
+}
+
+.plan-image img {
+    width: 100%;
+    aspect-ratio: 2.12;
+    object-fit: cover;
+}
+
+.plan-legend {
+    display: flex;
+    gap: 26px;
+    padding: 15px 20px;
+    background: white;
+    font-size: 12px;
+    color: var(--muted);
+}
+
+.plan-legend span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plan-legend i {
+    width: 12px;
+    height: 12px;
+    display: inline-block;
+}
+
+.legend-green {
+    background: #b8c795;
+}
+
+.legend-road {
+    background: #b7b3a4;
+}
+
+.legend-olive {
+    background: #8b9575;
+}
+
+@media (max-width: 760px) {
+
+    .masterplan h2 {
+        font-size: 43px;
+    }
+
+    .masterplan-head {
+        display: block;
+    }
+
+    .masterplan-head .button {
+        margin-top: 13px;
+    }
+
+    .plan-tabs {
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .plan-tabs button {
+        white-space: nowrap;
+    }
+
+    .plan-image img {
+        aspect-ratio: 0.9;
+        object-fit: cover;
+    }
+
+    .plan-legend {
+        flex-wrap: wrap;
+        gap: 10px 16px;
+    }
+}

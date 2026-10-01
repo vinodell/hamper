@@ -1,0 +1,250 @@
+body.menu-open {
+    overflow: hidden;
+}
+
+.site-header {
+    height: 122px;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    gap: 46px;
+    padding: 0 max(32px, calc((100vw - var(--container)) / 2));
+    position: relative;
+    z-index: 5;
+}
+
+.main-nav {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex: 1;
+    font-weight: 600;
+    font-size: 17px;
+}
+
+.main-nav a,
+.header-contact a {
+    transition: color 0.2s ease;
+}
+
+.main-nav a:hover,
+.main-nav a:focus-visible,
+.header-contact a:hover {
+    color: var(--gold-dark);
+}
+
+.projects-menu {
+    position: relative;
+}
+
+.projects-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0;
+    color: inherit;
+    background: transparent;
+    font-weight: 600;
+}
+
+.projects-trigger span {
+    font-size: 18px;
+    line-height: 1;
+    transition: transform 0.2s ease;
+}
+
+.projects-menu:has(.is-open) .projects-trigger span {
+    transform: rotate(180deg);
+}
+
+.projects-dropdown {
+    position: absolute;
+    top: calc(100% + 18px);
+    left: -18px;
+    display: grid;
+    min-width: 220px;
+    padding: 8px;
+    visibility: hidden;
+    opacity: 0;
+    background: var(--paper);
+    box-shadow: 0 12px 30px rgba(37, 43, 34, 0.14);
+    transform: translateY(-5px);
+    transition:
+        opacity 0.2s ease,
+        transform 0.2s ease,
+        visibility 0.2s ease;
+}
+
+.projects-dropdown.is-open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.projects-dropdown a {
+    padding: 12px 10px;
+    font-size: 14px;
+}
+
+.header-contact {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    font-size: 16px;
+}
+
+.header-contact a {
+    display: block;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+}
+
+.header-contact span {
+    display: block;
+    text-align: right;
+    font-size: 14px;
+    margin-top: 7px;
+}
+
+.header-cta {
+    min-width: 276px;
+}
+
+.menu-toggle,
+.mobile-phone,
+.mobile-cta {
+    display: none;
+}
+
+@media (max-width: 1050px) {
+    .site-header {
+        gap: 25px;
+    }
+
+    .main-nav {
+        gap: 19px;
+        font-size: 14px;
+    }
+
+    .header-contact {
+        font-size: 13px;
+    }
+
+    .header-cta {
+        min-width: 190px;
+        padding: 0 15px;
+    }
+}
+
+@media (max-width: 1024px) {
+
+    .site-header {
+        height: 84px;
+        padding: 0 20px;
+        justify-content: space-between;
+    }
+
+    .header-contact,
+.header-cta {
+        display: none;
+    }
+
+    .menu-toggle {
+        display: grid;
+        place-items: center;
+        background: none;
+        color: var(--ink);
+        padding: 7px;
+    }
+
+    .menu-toggle svg {
+        width: 25px;
+        height: 25px;
+    }
+
+    .main-nav {
+        display: none;
+        position: fixed;
+        inset: 84px 0 0;
+        background: var(--paper);
+        flex-direction: column;
+        align-items: stretch;
+        padding: 45px 28px;
+        gap: 0;
+        z-index: 4;
+        font-size: 25px;
+    }
+
+    .projects-menu {
+        border-bottom: 1px solid var(--line);
+    }
+
+    .projects-trigger {
+        width: 100%;
+        justify-content: space-between;
+        padding: 17px 0;
+        font-size: 25px;
+    }
+
+    .projects-dropdown {
+        position: static;
+        display: none;
+        visibility: visible;
+        opacity: 1;
+        min-width: 0;
+        padding: 0 0 8px 14px;
+        box-shadow: none;
+        transform: none;
+    }
+
+    .projects-dropdown.is-open {
+        display: grid;
+    }
+
+    .projects-dropdown a {
+        font-size: 17px;
+        border: 0;
+    }
+
+    .main-nav.is-open {
+        display: flex;
+    }
+
+    .main-nav a {
+        padding: 17px 0;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .main-nav .mobile-phone {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 16px;
+        margin-top: 20px;
+    }
+
+    .main-nav .mobile-cta {
+        display: inline-flex;
+        margin-top: 20px;
+        font-size: 16px;
+        border-bottom: 0;
+    }
+}
+
+.telephones {
+    >a {
+        padding: 0.1rem 0;
+    }
+}
+
+.phone-icon {
+    margin-top: 0.3rem;
+}
+
+@media (max-width: 1024px) {
+    .main-nav { overflow-y: auto; justify-content: flex-start; padding-bottom: max(28px, env(safe-area-inset-bottom)); }
+    .projects-trigger { margin-top: 0; }
+    .menu-toggle { min-width: 44px; min-height: 44px; }
+}

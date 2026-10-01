@@ -4,13 +4,15 @@ import { Link } from "react-router-dom";
 import { useMobileMenu } from "../hooks";
 import { Logo } from "../images";
 import {
-  chooseZemli,
-  closeMenuMsg,
-  navigation,
-  openMenuMsg,
-  projectRoutes,
-  siteConfig,
+    chooseZemli,
+    closeMenuMsg,
+    navigation,
+    openMenuMsg,
+    projectRoutes,
+    siteConfig,
 } from "../lib";
+
+import "./Header.css";
 
 export const Header = () => {
   const menu = useMobileMenu();
@@ -68,13 +70,6 @@ export const Header = () => {
         )}
         <a className="mobile-phone" href={siteConfig.phoneHref}>
           <Phone size={17} /> {siteConfig.phone}
-        </a>
-        <a
-          className="button button-dark mobile-cta"
-          href="#poselki"
-          onClick={menu.close}
-        >
-          {chooseZemli}
         </a>
       </nav>
       <div className="header-contact">

@@ -1,8 +1,9 @@
+import { individualPlots } from "../data/individualPlots";
 import { useEffect, useState } from "react";
 import { api } from "../lib/api";
 import { PLOTS_REFRESH_MS, type Plot } from "../lib/constants";
 
-export function usePlots() {
+export const usePlots = () => {
   const [plots, setPlots] = useState<Plot[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,7 +32,7 @@ export function usePlots() {
       try {
         const next = await api.getPlots();
         if (active) {
-          setPlots(next);
+          setPlots(next.map((plot) => ({ ...plot, ...individualPlots[plot.id] })));
           setError("");
         }
       } catch {

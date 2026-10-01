@@ -1,17 +1,20 @@
-import { usePlots } from "../hooks/usePlots";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
-import { formatPhone } from "../hooks";
+import { formatPhone, usePlots } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
 import { policyMsg, siteConfig, PHONE_PATTERN, type Plot } from "../lib";
 import { api } from "../lib/api";
+
+import "./Contacts.css";
 
 export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
   const [phone, setPhone] = useState("");
   const { plots: chosenLand, error: plotsError } = usePlots();
   const [chosenProject, setChosenProject] = useState<string>("");
   const [chosenPlot, setChosenPlot] = useState("");
-  const [formState, setFormState] = useState<"idle" | "sending" | "success" | "error">("idle");
+  const [formState, setFormState] = useState<
+    "idle" | "sending" | "success" | "error"
+  >("idle");
   useEffect(() => {
     if (!selectedPlot || selectedPlot.status !== "Свободен") return;
     setChosenProject(selectedPlot.settlement);
@@ -28,8 +31,21 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     setFormState("sending");
-    api.sendContact({ name: String(form.get("name") ?? ""), phone, project: chosenProject, plot: availableChosenPlot, comment: String(form.get("comment") ?? "") })
-      .then(() => { setFormState("success"); formElement.reset(); setPhone(""); setChosenProject(""); setChosenPlot(""); })
+    api
+      .sendContact({
+        name: String(form.get("name") ?? ""),
+        phone,
+        project: chosenProject,
+        plot: availableChosenPlot,
+        comment: String(form.get("comment") ?? ""),
+      })
+      .then(() => {
+        setFormState("success");
+        formElement.reset();
+        setPhone("");
+        setChosenProject("");
+        setChosenPlot("");
+      })
       .catch(() => setFormState("error"));
   };
 
@@ -44,7 +60,11 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
     });
   }, [chosenProject, chosenLand]);
 
-  const availableChosenPlot = filteredLand.some((plot) => plot.id === chosenPlot) ? chosenPlot : "";
+  const availableChosenPlot = filteredLand.some(
+    (plot) => plot.id === chosenPlot,
+  )
+    ? chosenPlot
+    : "";
 
   return (
     <section className="contact-section" id="form">
@@ -69,10 +89,16 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
                 <Phone size={18} />
                 {siteConfig.phone2}
               </span>
-              <a href={`https://t.me/${siteConfig.vladTelegram}`}>
+              <a
+                className="social-logo"
+                href={`https://t.me/${siteConfig.vladTelegram}`}
+              >
                 <TgLogo />
               </a>
-              <a href={`https://wa.me/${siteConfig.vladWhatsapp}`}>
+              <a
+                className="social-logo"
+                href={`https://wa.me/${siteConfig.vladWhatsapp}`}
+              >
                 <WhatsupLogo />
               </a>
             </div>
@@ -81,10 +107,16 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
                 <Phone size={18} />
                 {siteConfig.phone}
               </span>
-              <a href={`https://t.me/${siteConfig.maksTelegram}`}>
+              <a
+                className="social-logo"
+                href={`https://t.me/${siteConfig.maksTelegram}`}
+              >
                 <TgLogo />
               </a>
-              <a href={`https://wa.me/${siteConfig.maksWhatsapp}`}>
+              <a
+                className="social-logo"
+                href={`https://wa.me/${siteConfig.maksWhatsapp}`}
+              >
                 <WhatsupLogo />
               </a>
             </div>
@@ -120,7 +152,11 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
           </label>
           <label>
             Интересующий объект
-            <select name="project" value={chosenProject} onChange={choseProject}>
+            <select
+              name="project"
+              value={chosenProject}
+              onChange={choseProject}
+            >
               <option value="" disabled>
                 Выберите объект
               </option>
@@ -130,14 +166,22 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
           </label>
           <label>
             Номер участка
-            <select name="plot" value={availableChosenPlot} onChange={(event) => setChosenPlot(event.target.value)}>
+            <select
+              name="plot"
+              value={availableChosenPlot}
+              onChange={(event) => setChosenPlot(event.target.value)}
+            >
               <option value="">Выберите участок</option>
               {filteredLand.length > 0 ? (
                 filteredLand.map((item) => (
-                  <option key={item.id} value={item.id}>{item.id}</option>
+                  <option key={item.id} value={item.id}>
+                    {item.id}
+                  </option>
                 ))
               ) : (
-                <option value="" disabled key="no-lands">Нет доступных участков</option>
+                <option value="" disabled key="no-lands">
+                  Нет доступных участков
+                </option>
               )}
             </select>
           </label>
@@ -146,12 +190,24 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
             Комментарий
             <textarea name="comment" rows={3} placeholder="Ваш вопрос" />
           </label>
-          <button className="button button-gold" type="submit" disabled={formState === "sending"}>
+          <button
+            className="button button-gold"
+            type="submit"
+            disabled={formState === "sending"}
+          >
             Отправить заявку
             <ArrowUpRight size={17} />
           </button>
-          {formState === "success" && <small className="form-success">Заявка отправлена. Мы скоро свяжемся с Вами.</small>}
-          {formState === "error" && <small className="form-error">Не удалось отправить заявку. Попробуйте еще раз.</small>}
+          {formState === "success" && (
+            <small className="form-success">
+              Заявка отправлена. Мы скоро свяжемся с Вами.
+            </small>
+          )}
+          {formState === "error" && (
+            <small className="form-error">
+              Не удалось отправить заявку. Попробуйте еще раз.
+            </small>
+          )}
           <small>{policyMsg}</small>
         </form>
       </div>

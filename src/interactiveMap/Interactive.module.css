@@ -1,0 +1,127 @@
+.map {
+  position: relative;
+
+  width: min(100%, 760px);
+  margin-inline: auto;
+
+  /**
+   * Нужен на случай, если карта
+   * используется внутри flex/grid.
+   */
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+
+  /**
+   * У SVG примерно такой ratio:
+   * 674 / 1027
+   */
+  aspect-ratio: 674.05331 / 1027.2666;
+
+  user-select: none;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.zone {
+  /*
+   * НЕ использовать fill: none.
+   *
+   * Нам нужно, чтобы вся площадь полигона
+   * принимала pointer events.
+   */
+  fill: rgb(255 255 255 / 0.001);
+
+  stroke: rgb(255 255 255 / 0.72);
+  stroke-width: 1.25;
+
+  cursor: pointer;
+
+  outline: none;
+
+  transition:
+    fill 180ms ease,
+    stroke 180ms ease,
+    stroke-width 180ms ease,
+    filter 180ms ease;
+
+  pointer-events: all;
+}
+.zone:hover,
+.zone[data-hovered='true'] {
+  fill: rgb(255 255 255 / 0.2);
+
+  stroke: rgb(255 255 255 / 1);
+  stroke-width: 2;
+
+  filter:
+    drop-shadow(0 0 4px rgb(255 255 255 / 0.35));
+}
+.zone:focus-visible {
+  fill: rgb(255 255 255 / 0.25);
+
+  stroke: rgb(255 255 255 / 1);
+  stroke-width: 2.5;
+
+  filter:
+    drop-shadow(0 0 5px rgb(255 255 255 / 0.6));
+}
+.zone[data-selected='true'] {
+  fill: rgb(255 255 255 / 0.3);
+
+  stroke: rgb(255 255 255 / 1);
+  stroke-width: 2.5;
+}
+
+.zone[data-status='available'] {
+  fill: rgb(78 255 152 / 0.08);
+  stroke: rgb(171 255 207 / 0.9);
+}
+
+.zone[data-status='available']:hover,
+.zone[data-status='available'][data-hovered='true'] {
+  fill: rgb(78 255 152 / 0.35);
+  stroke: rgb(185 255 215);
+}
+
+.zone[data-status='reserved'] {
+  fill: rgb(255 186 73 / 0.08);
+  stroke: rgb(255 211 142 / 0.9);
+}
+
+.zone[data-status='reserved']:hover,
+.zone[data-status='reserved'][data-hovered='true'] {
+  fill: rgb(255 186 73 / 0.35);
+  stroke: rgb(255 223 170);
+}
+
+.zone[data-status='sold'] {
+  fill: rgb(255 83 83 / 0.08);
+  stroke: rgb(255 166 166 / 0.8);
+}
+
+.zone[data-status='sold']:hover,
+.zone[data-status='sold'][data-hovered='true'] {
+  fill: rgb(255 83 83 / 0.3);
+  stroke: rgb(255 184 184);
+}
+
+@media (max-width: 640px) {
+  .map {
+    width: 100%;
+  }
+  .zone {
+    stroke-width: 1.5;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .zone {
+    transition: none;
+  }
+}

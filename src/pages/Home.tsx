@@ -4,7 +4,9 @@ import { Contacts } from "../sections/Contacts";
 import { Projects } from "../sections/Projects";
 import { AboutUs } from "../sections/AboutUs";
 
-export function Home() {
+import "./Home.css";
+
+export const Home = () => {
   return (
     <div className="app">
       <Header />
@@ -22,4 +24,4 @@ export function Home() {
       <Footer />
     </div>
   );
-}
+};

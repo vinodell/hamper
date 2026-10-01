@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { api, ApiError, type AdminPlot, type PlotUpdate } from "../lib/api";
 import { ADMIN_SAVE_FEEDBACK_MS, plotStatuses } from "../lib";
 
+import "./Admin.css";
+
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [login, setLogin] = useState("");

@@ -2,13 +2,14 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Home } from "./pages/Home";
 
+import "./styles/global.css";
+import "./App.css";
+
 const Main = lazy(() => import("./pages/Main").then((module) => ({ default: module.Main })));
 const Admin = lazy(() => import("./pages/Admin").then((module) => ({ default: module.Admin })));
 
-import "./styles/global.css";
 
-
-function App() {
+const App = () => {
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense fallback={<main className="route-loading" role="status">Загружаем страницу…</main>}>

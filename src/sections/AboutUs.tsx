@@ -2,8 +2,13 @@ import { preload } from "react-dom";
 import { ArrowDown } from "lucide-react";
 import { chooseZemli, heroFacts } from "../lib";
 
+import "./AboutUs.css";
+
 export const AboutUs = () => {
-  preload("https://u5hills.ru/img/52753815_1920_q70.jpg", { as: "image", fetchPriority: "high" });
+  preload("https://u5hills.ru/img/52753815_1920_q70.jpg", {
+    as: "image",
+    fetchPriority: "high",
+  });
 
   return (
     <section className="hero" id="top">

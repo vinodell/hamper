@@ -1,0 +1,53 @@
+.project-heading {
+    position: relative;
+    padding: 68px 0 76px;
+    background: url("/bg-pic-oinelovo.webp") center / cover;
+    color: white;
+}
+
+.project-heading::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+
+    background: linear-gradient(to right,
+            #0f261f 0%,
+            #0f261f, 20%,
+            transparent 30%,
+            transparent 70%,
+            #0f261f 90%,
+            #0f261f 100%);
+
+    pointer-events: none;
+}
+
+.project-heading>* {
+    position: relative;
+    z-index: 1;
+}
+
+.project-heading h1 {
+    max-width: 900px;
+    margin: 16px 0 0;
+    font-size: clamp(50px, 7vw, 90px);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 52px;
+    color: #e2bf84;
+    font-size: 14px;
+}
+
+@media (max-width: 760px) {
+
+    .project-heading {
+        padding: 48px 0 56px;
+    }
+
+    .back-link {
+        margin-bottom: 38px;
+    }
+}
