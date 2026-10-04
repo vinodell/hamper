@@ -45,7 +45,7 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
         <div className={styles.tooltipRow}>
           <span>Площадь</span>
 
-          <strong>{zone.area} сот.</strong>
+          <strong>{zone.area.toLocaleString("ru-RU")} сот.</strong>
         </div>
       )}
 

@@ -1,7 +1,11 @@
+import type { Plot } from "../lib/constants";
+
 export type ZoneStatus = "available" | "reserved" | "sold" | "unknown";
 
-export type MapZone = {
+export type MapZoneLayout = {
   id: string;
+  /** Exact ID in /api/plots and the admin table, e.g. 1-01. */
+  plotId: string;
   number: number;
   title: string;
 
@@ -9,12 +13,11 @@ export type MapZone = {
    * SVG path data.
    */
   d: string;
-  status: ZoneStatus;
+  labelPosition: { x: number; y: number };
+};
 
-  /**
-   * Optional business data.
-   * Заполни их реальными значениями, когда они будут.
-   */
+export type MapZone = MapZoneLayout & {
+  status: ZoneStatus;
   area?: number;
   price?: number;
   description?: string;
@@ -26,6 +29,7 @@ export type PointerPosition = {
 };
 
 export type InteractiveMapProps = {
+  plots: Plot[];
   /**
    * URL изображения, поверх которого рисуется SVG-сетка.
    *

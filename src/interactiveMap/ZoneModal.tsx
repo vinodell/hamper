@@ -103,7 +103,7 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
               <span className={styles.modalDetailLabel}>Площадь</span>
 
               <strong className={styles.modalDetailValue}>
-                {zone.area} сот.
+                {zone.area.toLocaleString("ru-RU")} сот.
               </strong>
             </div>
           )}

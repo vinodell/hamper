@@ -1,6 +1,7 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Outlet, Route, Routes } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Home } from "./pages/Home";
+import { PlotsProvider } from "./hooks/PlotsProvider";
 
 import "./styles/global.css";
 import "./App.css";
@@ -14,8 +15,10 @@ const App = () => {
     <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Suspense fallback={<main className="route-loading" role="status">Загружаем страницу…</main>}>
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/projects/:slug" element={<Main />} />
+        <Route element={<PlotsProvider><Outlet /></PlotsProvider>}>
+          <Route path="/" element={<Home />} />
+          <Route path="/projects/:slug" element={<Main />} />
+        </Route>
         <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

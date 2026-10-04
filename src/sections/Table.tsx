@@ -110,18 +110,16 @@ export const Table = ({
   }, [activeFilter, initialFilter, plots, sortDirection, sortKey, sortable]);
 
   const handleSort = (key: SortKey) => {
-    setSortKey((currentKey) => {
-      if (currentKey === key) {
-        setSortDirection((currentDirection) =>
-          currentDirection === "asc" ? "desc" : "asc",
-        );
-        return currentKey;
-      }
-
-      setSortDirection("asc");
-      return key;
-    });
+    setSortDirection((currentDirection) =>
+      sortKey === key && currentDirection === "asc" ? "desc" : "asc",
+    );
+    setSortKey(key);
   };
+
+  const getAriaSort = (key: SortKey) =>
+    !sortable || sortKey !== key
+      ? undefined
+      : sortDirection === "asc" ? "ascending" : "descending";
 
   const getSortLabel = (key: SortKey) => {
     if (sortKey !== key) return "↕";
@@ -183,7 +181,7 @@ export const Table = ({
           <table>
             <thead>
               <tr>
-                <th scope="col">
+                <th scope="col" aria-sort={getAriaSort("id")}>
                   {sortable ? (
                     <button
                       type="button"
@@ -197,7 +195,7 @@ export const Table = ({
                     "№"
                   )}
                 </th>
-                <th scope="col">
+                <th scope="col" aria-sort={getAriaSort("category")}>
                   {sortable ? (
                     <button
                       type="button"
@@ -212,7 +210,7 @@ export const Table = ({
                     "Посёлок"
                   )}
                 </th>
-                <th scope="col">
+                <th scope="col" aria-sort={getAriaSort("area")}>
                   {sortable ? (
                     <button
                       type="button"
@@ -227,7 +225,7 @@ export const Table = ({
                     "Площадь, сот."
                   )}
                 </th>
-                <th scope="col">
+                <th scope="col" aria-sort={getAriaSort("status")}>
                   {sortable ? (
                     <button
                       type="button"
@@ -242,7 +240,7 @@ export const Table = ({
                     "Статус"
                   )}
                 </th>
-                <th scope="col">
+                <th scope="col" aria-sort={getAriaSort("price")}>
                   {sortable ? (
                     <button
                       type="button"

@@ -3,6 +3,7 @@ import { LogOut, Save, ShieldCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 import { api, ApiError, type AdminPlot, type PlotUpdate } from "../lib/api";
 import { ADMIN_SAVE_FEEDBACK_MS, plotStatuses } from "../lib";
+import { notifyPlotsUpdated } from "../lib/plotEvents";
 
 import "./Admin.css";
 
@@ -75,6 +76,7 @@ export function Admin() {
       setPlots((current) =>
         current.map((item) => (item.id === plot.id ? updated : item)),
       );
+      notifyPlotsUpdated();
       setSavedId(plot.id);
       window.setTimeout(() => setSavedId(null), ADMIN_SAVE_FEEDBACK_MS);
     } catch (reason) {

@@ -61,6 +61,7 @@ export interface Plot {
   area: string;
   status: PlotStatus;
   price: string;
+  description?: string | null;
 }
 
 export interface InfoItem {

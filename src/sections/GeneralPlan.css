@@ -1,10 +1,10 @@
+.masterplan {
+    background: var(--bg);
+}
+
 .masterplan h2 {
     font-size: clamp(40px, 5vw, 65px);
     margin-bottom: 24px;
-}
-
-.masterplan {
-    background: var(--bg);
 }
 
 .masterplan-head {
@@ -15,7 +15,7 @@
     margin-bottom: 45px;
 }
 
-.masterplan-head>div {
+.masterplan-head > div {
     max-width: 600px;
 }
 
@@ -24,118 +24,73 @@
     line-height: 1.6;
 }
 
-.plan-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 21px;
-}
-
-.plan-tabs button {
-    padding: 12px 18px;
-    border: 1px solid var(--line);
-    background: transparent;
-    color: var(--muted);
-}
-
-.plan-tabs button.active {
-    background: var(--pine);
-    color: white;
-    border-color: var(--pine);
-}
-
 .plan-image {
-    background: #ece8dc;
-    position: relative;
+    width: min(100%, 760px);
+    margin: 0 auto;
     overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: #ece8dc;
 }
 
-.plan-image img {
-    width: 100%;
-    aspect-ratio: 2.12;
-    object-fit: cover;
-    position: relative;
-    z-index: 1;
-}
-
-.plan-legend {
+.plan-caption {
     display: flex;
-    gap: 26px;
-    padding: 15px 20px;
-    background: white;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 24px;
+    padding: 18px 22px;
+    background: var(--paper, #faf7f0);
     font-size: 12px;
+    line-height: 1.5;
     color: var(--muted);
 }
 
-.plan-legend span {
-    display: flex;
+.plan-hint {
+    display: inline-flex;
     align-items: center;
     gap: 8px;
+    color: var(--pine);
+    font-weight: 500;
 }
 
-.plan-legend i {
-    width: 12px;
-    height: 12px;
-    display: inline-block;
+.plan-hint i {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pine);
 }
 
-.legend-green {
-    background: #b8c795;
+.plan-status-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 18px;
+    width: 100%;
 }
 
-.legend-road {
-    background: #b7b3a4;
+.plan-status-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
 }
 
-.legend-olive {
-    background: #8b9575;
+.plan-status-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
 }
 
-@keyframes plan-skeleton-shimmer {
-    0% {
-        background-position: 200% 50%;
-    }
+.plan-status-free { background: #92b775; }
+.plan-status-reserved { background: #facc15; }
+.plan-status-sold { background: #dc2626; }
 
-    100% {
-        background-position: -100% 50%;
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .plan-image::before,
-    .plan-image::after {
-        animation: none;
-    }
-}
 @media (max-width: 760px) {
-
-    .masterplan h2 {
-        font-size: 43px;
-    }
+    .masterplan h2 { font-size: 43px; }
 
     .masterplan-head {
         display: block;
+        margin-bottom: 28px;
     }
 
-    .masterplan-head .button {
-        margin-top: 13px;
-    }
-
-    .plan-tabs {
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .plan-tabs button {
-        white-space: nowrap;
-    }
-
-    .plan-image img {
-        aspect-ratio: 0.9;
-        object-fit: cover;
-    }
-
-    .plan-legend {
-        flex-wrap: wrap;
-        gap: 10px 16px;
-    }
+    .masterplan-head .button { margin-top: 13px; }
+    .plan-caption { padding: 14px 16px; }
 }
