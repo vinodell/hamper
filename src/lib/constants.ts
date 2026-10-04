@@ -20,7 +20,6 @@ import {
 const env = import.meta.env;
 
 export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
-export const ADMIN_SAVE_FEEDBACK_MS = 1800;
 
 export const siteConfig = {
   brand: "Hamper",
