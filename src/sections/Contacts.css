@@ -117,6 +117,7 @@
 .mobile-contacts {
     display: flex;
     align-items: center;
+    height: 4rem;
 
     >a,
     >.contact-phone {
