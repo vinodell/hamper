@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "preview": "npm run build && wrangler dev",
     "worker:dev": "wrangler dev --config worker/wrangler.jsonc",
     "worker:typecheck": "tsc -p tsconfig.worker.json",

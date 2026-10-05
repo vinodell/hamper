@@ -4,7 +4,15 @@ import { settlementFormats, projectRoutes } from "../lib";
 
 import "./Projects.css";
 
-const ProjectImage = ({ src, alt, label }: { src: string; alt: string; label: string }) => {
+const ProjectImage = ({
+  src,
+  alt,
+  label,
+}: {
+  src: string;
+  alt: string;
+  label: string;
+}) => {
   const [loaded, setLoaded] = useState(false);
 
   return (
@@ -38,7 +46,11 @@ export const Projects = () => {
         <div className="format-grid">
           {settlementFormats.map((format, index) => (
             <article className="format-card" key={format.title}>
-              <ProjectImage src={format.image} alt={format.title} label={format.label} />
+              <ProjectImage
+                src={format.image}
+                alt={format.title}
+                label={format.label}
+              />
               <div className="format-content">
                 <h3>{format.title}</h3>
                 <p>{format.copy}</p>

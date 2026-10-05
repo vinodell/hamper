@@ -4,12 +4,12 @@ import { Link } from "react-router-dom";
 import { useMobileMenu } from "../hooks";
 import { Logo } from "../images";
 import {
-    chooseZemli,
-    closeMenuMsg,
-    navigation,
-    openMenuMsg,
-    projectRoutes,
-    siteConfig,
+  chooseZemli,
+  closeMenuMsg,
+  navigation,
+  openMenuMsg,
+  projectRoutes,
+  siteConfig,
 } from "../lib";
 
 import "./Header.css";
@@ -25,7 +25,12 @@ export const Header = () => {
 
   return (
     <header className="site-header">
-      <Link className="brand" aria-label="Hamper — главная" to="/" onClick={handleProjectNavigation}>
+      <Link
+        className="brand"
+        aria-label="Hamper — главная"
+        to="/"
+        onClick={handleProjectNavigation}
+      >
         <Logo />
         <span className="brand-name">
           {siteConfig.brand}

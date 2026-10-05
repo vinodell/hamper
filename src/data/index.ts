@@ -1,1 +1,1 @@
-export * from './individualPlots';
+export * from "./individualPlots";

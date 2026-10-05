@@ -2,6 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import { InteractiveMap } from "../interactiveMap";
 import { chooseZemli } from "../lib";
 import { usePlots } from "../hooks/usePlots";
+import { LoadingIndicator } from "../components/LoadingIndicator";
 
 import "./GeneralPlan.css";
 
@@ -28,7 +29,9 @@ export const GeneralPlan = () => {
             {chooseZemli} <ArrowUpRight size={17} />
           </a>
         </div>
-        {loading && <p role="status">Загружаем статусы участков…</p>}
+        {loading && (
+          <LoadingIndicator label="Загружаем статусы участков…" compact />
+        )}
         {error && <p role="alert">{error}</p>}
         <figure className="plan-image">
           <InteractiveMap
@@ -38,14 +41,22 @@ export const GeneralPlan = () => {
           />
           <figcaption className="plan-caption">
             <span className="plan-status-legend" aria-label="Статусы участков">
-              <span><i className="plan-status-free" /> Свободен</span>
-              <span><i className="plan-status-reserved" /> Забронирован</span>
-              <span><i className="plan-status-sold" /> Продан</span>
+              <span>
+                <i className="plan-status-free" /> Свободен
+              </span>
+              <span>
+                <i className="plan-status-reserved" /> Забронирован
+              </span>
+              <span>
+                <i className="plan-status-sold" /> Продан
+              </span>
             </span>
             <span className="plan-hint">
               <i aria-hidden="true" /> Нажмите на участок
             </span>
-            <span>Иллюстративный рендер. Дома и озеленение показаны как пример.</span>
+            <span>
+              Иллюстративный рендер. Дома и озеленение показаны как пример.
+            </span>
           </figcaption>
         </figure>
       </div>

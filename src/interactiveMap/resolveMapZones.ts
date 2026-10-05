@@ -29,7 +29,7 @@ export function resolveMapZones(plots: Plot[]): MapZone[] {
     const plot = byId.get(zone.plotId);
     return {
       ...zone,
-      status: plot ? statuses[plot.status] ?? "unknown" : "unknown",
+      status: plot ? (statuses[plot.status] ?? "unknown") : "unknown",
       area: numericValue(plot?.area),
       price: numericValue(plot?.price),
       description: plot?.description ?? undefined,

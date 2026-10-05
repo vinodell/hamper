@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState, KeyboardEvent, PointerEvent } from "react";
 import {
-  MapTooltip,
-  ZoneModal,
-  MAP_GROUP_TRANSFORM,
-  MAP_VIEW_BOX,
-} from "./";
+  useEffect,
+  useMemo,
+  useState,
+  KeyboardEvent,
+  PointerEvent,
+} from "react";
+import { MapTooltip, ZoneModal, MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./";
 import { isSelectableZone, resolveMapZones } from "./resolveMapZones";
 
 import type {
@@ -133,9 +134,13 @@ export const InteractiveMap = ({
                     vectorEffect="non-scaling-stroke"
                     tabIndex={selectable ? 0 : undefined}
                     role={selectable ? "button" : "img"}
-                    aria-label={`${zone.title}. ${selectable
-                      ? "Нажмите, чтобы посмотреть подробнее"
-                      : zone.status === "sold" ? "Продан" : "Статус уточняется"}`}
+                    aria-label={`${zone.title}. ${
+                      selectable
+                        ? "Нажмите, чтобы посмотреть подробнее"
+                        : zone.status === "sold"
+                          ? "Продан"
+                          : "Статус уточняется"
+                    }`}
                     aria-haspopup={selectable ? "dialog" : undefined}
                     onPointerEnter={(event) => {
                       /**
@@ -151,8 +156,13 @@ export const InteractiveMap = ({
                       setHoveredZoneId(null);
                     }}
                     onFocus={(event) => {
-                      if (!selectable || !event.currentTarget.matches(":focus-visible")) return;
-                      const bounds = event.currentTarget.getBoundingClientRect();
+                      if (
+                        !selectable ||
+                        !event.currentTarget.matches(":focus-visible")
+                      )
+                        return;
+                      const bounds =
+                        event.currentTarget.getBoundingClientRect();
                       setPointerPosition({
                         x: Math.max(
                           16,

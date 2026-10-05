@@ -1,9 +1,16 @@
 import { isValidPlotNumber, normalizePlotNumber } from "../lib/plotNumbers";
-import { LogOut, Save, ShieldCheck } from "lucide-react";
-import { useEffect, useState } from "react";
-import { api, ApiError, type AdminPlot, type PlotUpdate } from "../lib/api";
+import { LogOut, Plus, Save, ShieldCheck, X } from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import {
+  api,
+  ApiError,
+  type AdminPlot,
+  type PlotCreate,
+  type PlotUpdate,
+} from "../lib/api";
 import { plotStatuses } from "../lib";
 import { notifyPlotsUpdated } from "../lib/plotEvents";
+import { LoadingIndicator } from "../components/LoadingIndicator";
 
 import "./Admin.css";
 
@@ -15,6 +22,27 @@ const toPlotUpdate = (plot: AdminPlot): PlotUpdate => ({
   description: plot.description ?? "",
 });
 
+const emptyPlot: PlotCreate = {
+  id: "",
+  area: "",
+  status: "Свободен",
+  price: "",
+  street: "",
+  description: "",
+};
+
+const samePlot = (left: AdminPlot, right: AdminPlot) => {
+  const a = toPlotUpdate(left);
+  const b = toPlotUpdate(right);
+  return (
+    a.area === b.area &&
+    a.status === b.status &&
+    a.price === b.price &&
+    a.street === b.street &&
+    a.description === b.description
+  );
+};
+
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [login, setLogin] = useState("");
@@ -24,60 +52,91 @@ export function Admin() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loggingIn, setLoggingIn] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState("");
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newPlot, setNewPlot] = useState<PlotCreate>({ ...emptyPlot });
   const [saveMessage, setSaveMessage] = useState("");
+  const busy = saving || creating || loggingOut;
 
   const savedById = new Map(savedPlots.map((plot) => [plot.id, plot]));
   const changedPlots = plots.filter((plot) => {
     const saved = savedById.get(plot.id);
-    return saved && JSON.stringify(toPlotUpdate(plot)) !== JSON.stringify(toPlotUpdate(saved));
+    return saved && !samePlot(plot, saved);
   });
   const changedIds = new Set(changedPlots.map((plot) => plot.id));
 
   useEffect(() => {
+    const controller = new AbortController();
     api
-      .me()
-      .then((result) => {
-        setAuthenticated(result.authenticated);
-        if (result.authenticated)
-          return api
-            .getPlots()
-            .then((loaded) => {
-              setPlots(loaded);
-              setSavedPlots(loaded);
-            })
-            .catch((reason: Error) => setError(reason.message));
+      .getAdminPlots({ signal: controller.signal })
+      .then((loaded) => {
+        if (controller.signal.aborted) return;
+        setAuthenticated(true);
+        setPlots(loaded);
+        setSavedPlots(loaded);
       })
-      .catch(() => setAuthenticated(false))
-      .finally(() => setLoading(false));
+      .catch((reason: unknown) => {
+        if (controller.signal.aborted) return;
+        setAuthenticated(false);
+        if (!(reason instanceof ApiError && reason.status === 401))
+          setError(
+            reason instanceof Error
+              ? reason.message
+              : "Не удалось загрузить участки",
+          );
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
   }, []);
 
-  const handleLogin = async (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (loggingIn) return;
+    setLoggingIn(true);
     setError("");
     try {
       await api.login(login, password);
-      const session = await api.me();
-      if (!session.authenticated) {
-        throw new Error("Браузер не сохранил сессию. Разрешите cookies для сайта или попробуйте другой браузер.");
+      let loaded: AdminPlot[];
+      try {
+        // The protected data request also verifies that the cookie was saved.
+        loaded = await api.getAdminPlots();
+      } catch (reason) {
+        if (reason instanceof ApiError && reason.status === 401)
+          throw new Error(
+            "Браузер не сохранил сессию. Разрешите cookies для сайта или попробуйте другой браузер.",
+          );
+        throw reason;
       }
-      const loaded = await api.getPlots();
       // Preserve unsaved rows if the session expired during a batch save.
       const drafts = new Map(changedPlots.map((plot) => [plot.id, plot]));
       setSavedPlots(loaded);
-      setPlots(loaded.map((plot) => {
-        const draft = drafts.get(plot.id);
-        return draft ? { ...plot, ...toPlotUpdate(draft) } : plot;
-      }));
+      setPlots(
+        loaded.map((plot) => {
+          const draft = drafts.get(plot.id);
+          return draft ? { ...plot, ...toPlotUpdate(draft) } : plot;
+        }),
+      );
       setPassword("");
       setAuthenticated(true);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Не удалось войти");
+    } finally {
+      setLoggingIn(false);
     }
   };
 
   const updatePlot = (id: string, key: keyof PlotUpdate, value: string) => {
-    if (saving) return;
-    if ((key === "area" || key === "price") && !/^\d*(?:[.,]\d{0,2})?$/.test(value)) return;
+    if (busy) return;
+    if (
+      (key === "area" || key === "price") &&
+      !/^\d*(?:[.,]\d{0,2})?$/.test(value)
+    )
+      return;
     setSaveMessage("");
     setError("");
     setPlots((current) =>
@@ -87,65 +146,140 @@ export function Admin() {
     );
   };
 
+  const handleMutationError = (
+    reason: unknown,
+    fallback: string,
+    forCreate = false,
+  ) => {
+    if (reason instanceof ApiError && reason.status === 401) {
+      setAuthenticated(false);
+      setPassword("");
+      setError(
+        "Сессия завершилась. Войдите снова — несохранённые изменения останутся в форме.",
+      );
+    } else if (forCreate) {
+      setCreateError(reason instanceof Error ? reason.message : fallback);
+    } else {
+      setError(reason instanceof Error ? reason.message : fallback);
+    }
+  };
+
+  const updateNewPlot = (key: keyof PlotCreate, value: string) => {
+    if (busy) return;
+    if (
+      (key === "area" || key === "price") &&
+      !/^\d*(?:[.,]\d{0,2})?$/.test(value)
+    )
+      return;
+    setCreateError("");
+    setNewPlot((current) => ({ ...current, [key]: value }));
+  };
+
+  const createPlot = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (busy) return;
+    const id = newPlot.id.trim();
+    if (!id || id.length > 80 || /[\u0000-\u001f\u007f-\u009f]/.test(id)) {
+      setCreateError(
+        "Укажите номер участка: от 1 до 80 символов без управляющих символов.",
+      );
+      return;
+    }
+    if (plots.some((plot) => plot.id === id)) {
+      setCreateError(
+        `Участок с номером ${id} уже существует. Укажите другой номер.`,
+      );
+      return;
+    }
+    if (!isValidPlotNumber(newPlot.area) || !isValidPlotNumber(newPlot.price)) {
+      setCreateError(
+        "Площадь и цена должны быть больше нуля, не более двух знаков после запятой.",
+      );
+      return;
+    }
+    setCreating(true);
+    setCreateError("");
+    setSaveMessage("");
+    setError("");
+    try {
+      const created = await api.createPlot({
+        ...newPlot,
+        id,
+        area: normalizePlotNumber(newPlot.area),
+        price: normalizePlotNumber(newPlot.price),
+        street: newPlot.street.trim(),
+        description: newPlot.description.trim(),
+      });
+      setPlots((current) => [...current, created]);
+      setSavedPlots((current) => [...current, created]);
+      setNewPlot({ ...emptyPlot });
+      setShowCreateForm(false);
+      setSaveMessage(`Участок ${created.id} добавлен.`);
+      notifyPlotsUpdated();
+    } catch (reason) {
+      handleMutationError(reason, "Не удалось добавить участок", true);
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const saveAllChanges = async () => {
-    if (saving || changedPlots.length === 0) return;
+    if (busy || changedPlots.length === 0) return;
     const invalid = changedPlots.filter(
       (plot) => !isValidPlotNumber(plot.area) || !isValidPlotNumber(plot.price),
     );
     if (invalid.length) {
-      setError(`Проверьте участки ${invalid.map((plot) => plot.id).join(", ")}: площадь и цена должны быть больше нуля, не более двух знаков после запятой.`);
+      setError(
+        `Проверьте участки ${invalid.map((plot) => plot.id).join(", ")}: площадь и цена должны быть больше нуля, не более двух знаков после запятой.`,
+      );
       return;
     }
     setSaving(true);
     setSaveMessage("");
     setError("");
-    const saved = new Map<string, AdminPlot>();
-    const failed: string[] = [];
-    let failureMessage = "";
-    let sessionExpired = false;
     try {
-      for (const plot of changedPlots) {
-        try {
-          const updated = await api.updatePlot(plot.id, toPlotUpdate(plot));
-          saved.set(plot.id, updated);
-        } catch (reason) {
-          if (reason instanceof ApiError && reason.status === 401) {
-            sessionExpired = true;
-            break;
-          }
-          failed.push(plot.id);
-          failureMessage = reason instanceof Error ? reason.message : "Ошибка запроса";
-        }
-      }
-
-      if (saved.size) {
-        const mergeSaved = (current: AdminPlot[]) =>
-          current.map((plot) => saved.get(plot.id) ?? plot);
-        setPlots(mergeSaved);
-        setSavedPlots(mergeSaved);
-        notifyPlotsUpdated();
-      }
-      if (sessionExpired) {
-        setAuthenticated(false);
-        setPassword("");
-        setError("Сессия завершилась. Войдите снова — несохранённые изменения останутся в форме.");
-      } else if (failed.length) {
-        setError(`Сохранено участков: ${saved.size}. Не удалось сохранить: ${failed.join(", ")}. ${failureMessage}. Повторите сохранение.`);
-      } else {
-        setSaveMessage("Все изменения сохранены.");
-      }
+      const updated = await api.updatePlots(
+        changedPlots.map((plot) => ({ id: plot.id, ...toPlotUpdate(plot) })),
+      );
+      const saved = new Map(updated.map((plot) => [plot.id, plot]));
+      const mergeSaved = (current: AdminPlot[]) =>
+        current.map((plot) => saved.get(plot.id) ?? plot);
+      setPlots(mergeSaved);
+      setSavedPlots(mergeSaved);
+      setSaveMessage("Все изменения сохранены.");
+      notifyPlotsUpdated();
+    } catch (reason) {
+      handleMutationError(
+        reason,
+        "Не удалось сохранить изменения. Повторите сохранение.",
+      );
     } finally {
       setSaving(false);
     }
   };
 
   const logout = async () => {
-    await api.logout();
-    setAuthenticated(false);
-    setPlots([]);
-    setSavedPlots([]);
-    setSaveMessage("");
+    if (busy) return;
+    setLoggingOut(true);
     setError("");
+    try {
+      await api.logout();
+      setAuthenticated(false);
+      setPlots([]);
+      setSavedPlots([]);
+      setNewPlot({ ...emptyPlot });
+      setCreateError("");
+      setShowCreateForm(false);
+      setSaveMessage("");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Не удалось выйти. Повторите попытку.",
+      );
+    } finally {
+      setLoggingOut(false);
+    }
   };
 
   const settlementGroups = new Map<string, AdminPlot[]>();
@@ -154,18 +288,24 @@ export function Admin() {
     if (group) group.push(plot);
     else settlementGroups.set(plot.settlement, [plot]);
   }
+  if (!settlementGroups.has("Другие участки"))
+    settlementGroups.set("Другие участки", []);
 
   if (loading)
     return (
       <main className="admin-shell">
-        <div className="admin-loading">Проверяем сессию…</div>
+        <LoadingIndicator label="Загружаем панель управления…" />
       </main>
     );
 
   if (!authenticated)
     return (
       <main className="admin-shell">
-        <form className="admin-login" onSubmit={handleLogin}>
+        <form
+          className="admin-login"
+          onSubmit={handleLogin}
+          aria-busy={loggingIn}
+        >
           <div className="admin-login__icon">
             <ShieldCheck />
           </div>
@@ -177,6 +317,7 @@ export function Admin() {
               value={login}
               onChange={(event) => setLogin(event.target.value)}
               autoComplete="username"
+              disabled={loggingIn}
               required
             />
           </label>
@@ -187,6 +328,7 @@ export function Admin() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               autoComplete="current-password"
+              disabled={loggingIn}
               required
             />
           </label>
@@ -195,8 +337,12 @@ export function Admin() {
               {error}
             </div>
           )}
-          <button className="button button-gold" type="submit">
-            Войти
+          <button
+            className="button button-gold"
+            type="submit"
+            disabled={loggingIn}
+          >
+            {loggingIn ? "Входим…" : "Войти"}
           </button>
         </form>
       </main>
@@ -210,11 +356,17 @@ export function Admin() {
             <p className="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</p>
             <h1>Участки и цены</h1>
             <p>
-              Изменения сохраняются в Cloudflare D1 и сразу доступны на сайте.
+              Добавляйте участки и обновляйте цены. Сохранённые изменения сразу
+              доступны на сайте.
             </p>
           </div>
-          <button className="button button-dark" type="button" onClick={logout} disabled={saving}>
-            <LogOut size={17} /> Выйти
+          <button
+            className="button button-dark"
+            type="button"
+            onClick={logout}
+            disabled={busy}
+          >
+            <LogOut size={17} /> {loggingOut ? "Выходим…" : "Выйти"}
           </button>
         </header>
         <div className="admin-savebar">
@@ -228,7 +380,7 @@ export function Admin() {
           <button
             className="button button-gold admin-save-all"
             type="button"
-            disabled={saving || changedPlots.length === 0}
+            disabled={busy || changedPlots.length === 0}
             onClick={saveAllChanges}
           >
             <Save size={17} />
@@ -240,96 +392,267 @@ export function Admin() {
             {error}
           </div>
         )}
-        {plots.length === 0 && <p className="admin-empty">Участков пока нет.</p>}
+        {plots.length === 0 && (
+          <p className="admin-empty">Участков пока нет.</p>
+        )}
         <div className="admin-settlements">
-        {Array.from(settlementGroups, ([settlement, settlementPlots], index) => (
-          <section className="admin-settlement" key={settlement} aria-labelledby={`settlement-${index}`}>
-            <header className="admin-settlement-header">
-              <h2 id={`settlement-${index}`}>{settlement || "Без посёлка"}</h2>
-              <span className="admin-settlement-count">Участков: {settlementPlots.length}</span>
-            </header>
-            <div className="admin-table-wrap" role="region" aria-labelledby={`settlement-${index}`} tabIndex={0}>
-              <table className="admin-table" aria-labelledby={`settlement-${index}`}>
-
-                <thead>
-                  <tr>
-                    <th>Участок</th>
-                    <th>Площадь, сот.</th>
-                    <th>Статус</th>
-                    <th>Цена, ₽</th>
-                    <th>Улица</th>
-                    <th>Описание</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {settlementPlots.map((plot) => (
-                    <tr key={plot.id} data-changed={changedIds.has(plot.id)}>
-                      <td>
-                        <strong>{plot.id}</strong>
-                      </td>
-                      <td>
+          {Array.from(
+            settlementGroups,
+            ([settlement, settlementPlots], index) => (
+              <section
+                className="admin-settlement"
+                key={settlement}
+                aria-labelledby={`settlement-${index}`}
+              >
+                <header className="admin-settlement-header">
+                  <h2 id={`settlement-${index}`}>
+                    {settlement || "Без посёлка"}
+                  </h2>
+                  <div className="admin-settlement-actions">
+                    <span className="admin-settlement-count">
+                      Участков: {settlementPlots.length}
+                    </span>
+                    {settlement === "Другие участки" && (
+                      <button
+                        className="button button-gold admin-add-plot"
+                        type="button"
+                        disabled={busy}
+                        aria-expanded={showCreateForm}
+                        aria-controls="admin-create-plot"
+                        onClick={() => {
+                          setShowCreateForm((current) => !current);
+                          setCreateError("");
+                        }}
+                      >
+                        {showCreateForm ? <X size={17} /> : <Plus size={17} />}
+                        {showCreateForm ? "Закрыть форму" : "Добавить участок"}
+                      </button>
+                    )}
+                  </div>
+                </header>
+                {settlement === "Другие участки" && showCreateForm && (
+                  <form
+                    id="admin-create-plot"
+                    className="admin-create-plot"
+                    aria-labelledby="admin-create-heading"
+                    aria-busy={creating}
+                    onSubmit={createPlot}
+                  >
+                    <div className="admin-create-heading">
+                      <h3 id="admin-create-heading">Новый участок</h3>
+                      <p>
+                        Участок появится в разделе «Другие участки» после
+                        добавления.
+                      </p>
+                    </div>
+                    <fieldset className="admin-create-fields" disabled={busy}>
+                      <legend className="admin-visually-hidden">
+                        Данные нового участка
+                      </legend>
+                      <label>
+                        Номер участка
                         <input
-                          disabled={saving}
-                          inputMode="decimal"
-                          value={plot.area}
+                          autoFocus
+                          required
+                          maxLength={80}
+                          value={newPlot.id}
                           onChange={(event) =>
-                            updatePlot(plot.id, "area", event.target.value)
+                            updateNewPlot("id", event.target.value)
                           }
-                          aria-label={`Площадь ${plot.id}`}
+                          placeholder="Например, 2-02"
                         />
-                      </td>
-                      <td>
-                        <select
-                          disabled={saving}
-                          value={plot.status}
+                      </label>
+                      <label>
+                        Площадь, сот.
+                        <input
+                          required
+                          inputMode="decimal"
+                          value={newPlot.area}
                           onChange={(event) =>
-                            updatePlot(plot.id, "status", event.target.value)
+                            updateNewPlot("area", event.target.value)
                           }
-                          aria-label={`Статус ${plot.id}`}
+                          placeholder="8,12"
+                        />
+                      </label>
+                      <label>
+                        Цена, ₽
+                        <input
+                          required
+                          inputMode="decimal"
+                          value={newPlot.price}
+                          onChange={(event) =>
+                            updateNewPlot("price", event.target.value)
+                          }
+                          placeholder="1800000"
+                        />
+                      </label>
+                      <label>
+                        Статус
+                        <select
+                          value={newPlot.status}
+                          onChange={(event) =>
+                            updateNewPlot("status", event.target.value)
+                          }
                         >
                           {plotStatuses.map((status) => (
                             <option key={status}>{status}</option>
                           ))}
                         </select>
-                      </td>
-                      <td>
+                      </label>
+                      <label className="admin-create-wide">
+                        Улица или адрес
                         <input
-                          disabled={saving}
-                          inputMode="decimal"
-                          value={plot.price}
+                          maxLength={200}
+                          value={newPlot.street}
                           onChange={(event) =>
-                            updatePlot(plot.id, "price", event.target.value)
+                            updateNewPlot("street", event.target.value)
                           }
-                          aria-label={`Цена ${plot.id}`}
+                          placeholder="Необязательно"
                         />
-                      </td>
-                      <td>
-                        <input
-                          disabled={saving}
-                          value={plot.street ?? ""}
+                      </label>
+                      <label className="admin-create-wide">
+                        Описание
+                        <textarea
+                          rows={3}
+                          maxLength={4000}
+                          value={newPlot.description}
                           onChange={(event) =>
-                            updatePlot(plot.id, "street", event.target.value)
+                            updateNewPlot("description", event.target.value)
                           }
-                          aria-label={`Улица ${plot.id}`}
+                          placeholder="Особенности участка — необязательно"
                         />
-                      </td>
-                      <td>
-                        <input
-                          disabled={saving}
-                          value={plot.description ?? ""}
-                          onChange={(event) =>
-                            updatePlot(plot.id, "description", event.target.value)
-                          }
-                          aria-label={`Описание ${plot.id}`}
-                        />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ))}
+                      </label>
+                    </fieldset>
+                    {createError && (
+                      <div className="admin-error" role="alert">
+                        {createError}
+                      </div>
+                    )}
+                    <div className="admin-create-footer">
+                      <p>Номер, площадь и цена обязательны.</p>
+                      <button
+                        className="button button-gold"
+                        type="submit"
+                        disabled={busy}
+                      >
+                        <Plus size={17} />{" "}
+                        {creating ? "Добавляем…" : "Добавить участок на сайт"}
+                      </button>
+                    </div>
+                  </form>
+                )}
+                {settlementPlots.length === 0 && (
+                  <p className="admin-empty">
+                    Здесь пока нет участков. Добавьте первое предложение.
+                  </p>
+                )}
+                <div
+                  className="admin-table-wrap"
+                  role="region"
+                  aria-labelledby={`settlement-${index}`}
+                  tabIndex={0}
+                >
+                  <table
+                    className="admin-table"
+                    aria-labelledby={`settlement-${index}`}
+                  >
+                    <thead>
+                      <tr>
+                        <th>Участок</th>
+                        <th>Площадь, сот.</th>
+                        <th>Статус</th>
+                        <th>Цена, ₽</th>
+                        <th>Улица</th>
+                        <th>Описание</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {settlementPlots.map((plot) => (
+                        <tr
+                          key={plot.id}
+                          data-changed={changedIds.has(plot.id)}
+                        >
+                          <td>
+                            <strong>{plot.id}</strong>
+                          </td>
+                          <td>
+                            <input
+                              disabled={busy}
+                              inputMode="decimal"
+                              value={plot.area}
+                              onChange={(event) =>
+                                updatePlot(plot.id, "area", event.target.value)
+                              }
+                              aria-label={`Площадь ${plot.id}`}
+                            />
+                          </td>
+                          <td>
+                            <select
+                              disabled={busy}
+                              value={plot.status}
+                              onChange={(event) =>
+                                updatePlot(
+                                  plot.id,
+                                  "status",
+                                  event.target.value,
+                                )
+                              }
+                              aria-label={`Статус ${plot.id}`}
+                            >
+                              {plotStatuses.map((status) => (
+                                <option key={status}>{status}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              disabled={busy}
+                              inputMode="decimal"
+                              value={plot.price}
+                              onChange={(event) =>
+                                updatePlot(plot.id, "price", event.target.value)
+                              }
+                              aria-label={`Цена ${plot.id}`}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              disabled={busy}
+                              maxLength={200}
+                              value={plot.street ?? ""}
+                              onChange={(event) =>
+                                updatePlot(
+                                  plot.id,
+                                  "street",
+                                  event.target.value,
+                                )
+                              }
+                              aria-label={`Улица ${plot.id}`}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              disabled={busy}
+                              maxLength={4000}
+                              value={plot.description ?? ""}
+                              onChange={(event) =>
+                                updatePlot(
+                                  plot.id,
+                                  "description",
+                                  event.target.value,
+                                )
+                              }
+                              aria-label={`Описание ${plot.id}`}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            ),
+          )}
         </div>
       </div>
     </main>

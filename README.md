@@ -45,3 +45,13 @@ The Worker deploy workflow uses the `github-pages` GitHub Environment (the same 
 Repository-level secrets/variables with these names also work. The workflow validates both values before invoking Wrangler.
 
 The D1 schema and seed are intentionally separate from Worker deploy. Run them once after creating the database, then use `/admin` at `https://vinodell.github.io/hamper/admin`.
+
+## Plot management and loading
+
+In `/admin`, use **Добавить участок** in **Другие участки** to create a plot. Its number must be unique across all projects; area and price must be positive numbers with up to two decimal places. The existing database schema supports creation without a migration.
+
+The admin loads its session and plots with one protected `GET /api/admin/plots`. Creation uses `POST /api/admin/plots`; **Сохранить все изменения** sends one `PUT /api/admin/plots` with `{ plots: [...] }`, saved in a database transaction. Deploy the updated API Worker before publishing the frontend that uses these endpoints.
+
+Public plots start loading at application startup and share an in-memory cache across project pages. Visible pages refresh the snapshot every 30 seconds, and successful admin changes update the current tab immediately and notify other tabs. Authentication is always checked on the server.
+
+Local development uses demo plots only on localhost when `VITE_API_URL` is empty. Set `VITE_API_URL` to use the real API during development.

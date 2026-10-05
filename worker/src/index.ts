@@ -8,9 +8,32 @@ import {
   CONTACT_NAME_MAX_LENGTH,
   CONTACT_PHONE_MAX_LENGTH,
   TELEGRAM_API_URL,
+  TELEGRAM_TIMEOUT_MS,
+  OTHER_PLOTS_SETTLEMENT,
+  PLOT_ID_MAX_LENGTH,
+  PLOT_STREET_MAX_LENGTH,
+  PLOT_DESCRIPTION_MAX_LENGTH,
+  BULK_PLOTS_MAX_LENGTH,
   type PlotStatus,
 } from "./constants";
 import type { Env, PlotRow } from "./types";
+
+class RequestError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
+interface PlotUpdate {
+  area: string;
+  status: PlotStatus;
+  price: string;
+  street: string | null;
+  description: string | null;
+}
 
 function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
   if (left.length !== right.length) return false;
@@ -28,6 +51,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
     "Access-Control-Allow-Credentials": "true",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
 }
@@ -43,16 +67,18 @@ function json(data: unknown, status = 200, request?: Request, env?: Env) {
   });
 }
 
-function parseCookies(request: Request) {
-  return Object.fromEntries(
-    (request.headers.get("Cookie") ?? "")
-      .split(";")
-      .filter(Boolean)
-      .map((part) => {
-        const [key, ...value] = part.trim().split("=");
-        return [key, decodeURIComponent(value.join("="))];
-      }),
-  );
+function sessionCookie(request: Request) {
+  for (const part of (request.headers.get("Cookie") ?? "").split(";")) {
+    const separator = part.indexOf("=");
+    if (separator < 0 || part.slice(0, separator).trim() !== SESSION_COOKIE)
+      continue;
+    try {
+      return decodeURIComponent(part.slice(separator + 1));
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
 }
 
 function toBase64Url(bytes: ArrayBuffer | Uint8Array) {
@@ -95,11 +121,17 @@ async function createSession(login: string, secret: string) {
 }
 
 async function hasValidSession(request: Request, env: Env) {
-  const token = parseCookies(request)[SESSION_COOKIE];
-  if (!token) return false;
-  const [encoded, signature] = token.split(".");
+  const token = sessionCookie(request);
+  if (!token || token.length > 4096) return false;
+  const [encoded, signature, extra] = token.split(".");
+  if (extra !== undefined) return false;
   if (!encoded || !signature) return false;
-  const payload = new TextDecoder().decode(fromBase64Url(encoded));
+  let payload: string;
+  try {
+    payload = new TextDecoder().decode(fromBase64Url(encoded));
+  } catch {
+    return false;
+  }
   const expected = await hmac(payload, env.SESSION_SECRET);
   if (expected.length !== signature.length) return false;
   const validSignature = constantTimeEqual(
@@ -124,13 +156,87 @@ async function verifyPassword(password: string, encodedHash: string) {
   );
   const derived = new Uint8Array(
     await crypto.subtle.deriveBits(
-      { name: "PBKDF2", salt, iterations: PASSWORD_HASH_ITERATIONS, hash: PASSWORD_HASH_ALGORITHM },
+      {
+        name: "PBKDF2",
+        salt,
+        iterations: PASSWORD_HASH_ITERATIONS,
+        hash: PASSWORD_HASH_ALGORITHM,
+      },
       key,
       expected.length * 8,
     ),
   );
   if (derived.length !== expected.length) return false;
   return constantTimeEqual(derived, expected);
+}
+
+async function readBody(request: Request): Promise<Record<string, unknown>> {
+  let value: unknown;
+  try {
+    value = await request.json();
+  } catch {
+    throw new RequestError(400, "Некорректный JSON");
+  }
+  if (typeof value !== "object" || value === null || Array.isArray(value))
+    throw new RequestError(400, "Некорректный формат данных");
+  return value as Record<string, unknown>;
+}
+
+function validatePlotId(value: unknown) {
+  if (typeof value !== "string" || /[\u0000-\u001f\u007f-\u009f]/.test(value))
+    throw new RequestError(400, "Некорректный номер участка");
+  const id = value.trim();
+  if (!id || id.length > PLOT_ID_MAX_LENGTH)
+    throw new RequestError(400, "Некорректный номер участка");
+  return id;
+}
+
+function positiveDecimal(value: unknown) {
+  if (typeof value !== "string")
+    throw new RequestError(400, "Некорректные данные участка");
+  const decimal = value.trim().replace(",", ".");
+  if (
+    !/^\d+(?:\.\d{1,2})?$/.test(decimal) ||
+    !Number.isFinite(Number(decimal)) ||
+    Number(decimal) <= 0
+  )
+    throw new RequestError(400, "Некорректные данные участка");
+  return decimal;
+}
+
+function optionalText(value: unknown, maxLength: number) {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== "string" || value.length > maxLength)
+    throw new RequestError(400, "Некорректные текстовые данные");
+  return value.trim() || null;
+}
+
+function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
+  if (
+    typeof body.status !== "string" ||
+    !allowedStatuses.has(body.status as PlotStatus)
+  )
+    throw new RequestError(400, "Некорректный статус участка");
+  return {
+    area: positiveDecimal(body.area),
+    status: body.status as PlotStatus,
+    price: positiveDecimal(body.price),
+    street: optionalText(body.street, PLOT_STREET_MAX_LENGTH),
+    description: optionalText(body.description, PLOT_DESCRIPTION_MAX_LENGTH),
+  };
+}
+
+function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
+  return env.DB.prepare(
+    "UPDATE plots SET area = ?, status = ?, price = ?, street = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *",
+  ).bind(
+    plot.area,
+    plot.status,
+    plot.price,
+    plot.street,
+    plot.description,
+    id,
+  );
 }
 
 function mapPlot(row: PlotRow) {
@@ -162,10 +268,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (url.pathname === "/api/auth/login" && request.method === "POST") {
-    const body = await request.json<{ login?: string; password?: string }>();
+    const body = await readBody(request);
     if (
-      !body.login ||
+      typeof body.login !== "string" ||
+      typeof body.password !== "string" ||
       !body.password ||
+      body.password.length > 4096 ||
       body.login !== env.ADMIN_LOGIN ||
       !(await verifyPassword(body.password, env.ADMIN_PASSWORD_HASH))
     ) {
@@ -175,6 +283,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return new Response(JSON.stringify({ ok: true }), {
       headers: {
         "Content-Type": "application/json",
+        "Cache-Control": "no-store",
         ...corsHeaders(request, env),
         "Set-Cookie": `${SESSION_COOKIE}=${encodeURIComponent(session)}; ${SESSION_COOKIE_ATTRIBUTES}; Max-Age=${SESSION_TTL_SECONDS}`,
       },
@@ -185,6 +294,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return new Response(JSON.stringify({ ok: true }), {
       headers: {
         "Content-Type": "application/json",
+        "Cache-Control": "no-store",
         ...corsHeaders(request, env),
         "Set-Cookie": `${SESSION_COOKIE}=; ${SESSION_COOKIE_ATTRIBUTES}; Max-Age=0`,
       },
@@ -201,78 +311,143 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   }
 
   if (url.pathname === "/api/contact" && request.method === "POST") {
-    const body = await request.json<{
-      name?: string;
-      phone?: string;
-      project?: string;
-      plot?: string;
-      comment?: string;
-    }>();
+    const body = await readBody(request);
     if (
-      !body.name ||
-      !body.phone ||
+      typeof body.name !== "string" ||
+      typeof body.phone !== "string" ||
+      !body.name.trim() ||
+      !body.phone.trim() ||
       body.name.length > CONTACT_NAME_MAX_LENGTH ||
       body.phone.length > CONTACT_PHONE_MAX_LENGTH
     )
       return json({ error: "Заполните имя и телефон" }, 400, request, env);
+    const project = optionalText(body.project, 200);
+    const plot = optionalText(body.plot, PLOT_ID_MAX_LENGTH);
+    const comment = optionalText(body.comment, 2000);
     const message = [
       `📩 Новая заявка Hamper`,
       "",
-      `👤 Имя: ${body.name}`,
-      `📞 Телефон: ${body.phone}`,
-      `🏡 Проект: ${body.project?.trim() || "не указан"}`,
-      `📍 Участок: ${body.plot?.trim() || "не указан"}`,
-      `💬 Комментарий: ${body.comment?.trim() || "—"}`,
+      `👤 Имя: ${body.name.trim()}`,
+      `📞 Телефон: ${body.phone.trim()}`,
+      `🏡 Проект: ${project || "не указан"}`,
+      `📍 Участок: ${plot || "не указан"}`,
+      `💬 Комментарий: ${comment || "—"}`,
     ].join("\n");
-    const telegramResponse = await fetch(
-      `${TELEGRAM_API_URL}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: message }),
-      },
-    );
-    if (!telegramResponse.ok)
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS);
+    try {
+      const telegramResponse = await fetch(
+        `${TELEGRAM_API_URL}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: message }),
+          signal: controller.signal,
+        },
+      );
+      if (!telegramResponse.ok)
+        return json({ error: "Не удалось отправить заявку" }, 502, request, env);
+      const result: unknown = await telegramResponse.json();
+      if (
+        typeof result !== "object" ||
+        result === null ||
+        !("ok" in result) ||
+        result.ok !== true
+      )
+        return json({ error: "Не удалось отправить заявку" }, 502, request, env);
+    } catch {
       return json({ error: "Не удалось отправить заявку" }, 502, request, env);
+    } finally {
+      clearTimeout(timeout);
+    }
     return json({ ok: true }, 200, request, env);
+  }
+
+  if (
+    url.pathname === "/api/admin/plots" &&
+    ["GET", "POST", "PUT"].includes(request.method)
+  ) {
+    if (!(await hasValidSession(request, env)))
+      return json({ error: "Требуется авторизация" }, 401, request, env);
+
+    if (request.method === "GET") {
+      const result = await env.DB.prepare(
+        "SELECT * FROM plots ORDER BY settlement, id",
+      ).all<PlotRow>();
+      return json(result.results.map(mapPlot), 200, request, env);
+    }
+
+    const body = await readBody(request);
+    if (request.method === "POST") {
+      const id = validatePlotId(body.id);
+      const plot = validatePlotUpdate(body);
+      const row = await env.DB.prepare(
+        "INSERT INTO plots (id, settlement, area, status, price, street, description) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING RETURNING *",
+      )
+        .bind(
+          id,
+          OTHER_PLOTS_SETTLEMENT,
+          plot.area,
+          plot.status,
+          plot.price,
+          plot.street,
+          plot.description,
+        )
+        .first<PlotRow>();
+      if (!row)
+        return json(
+          { error: "Участок с таким номером уже существует" },
+          409,
+          request,
+          env,
+        );
+      return json(mapPlot(row), 201, request, env);
+    }
+
+    if (
+      !Array.isArray(body.plots) ||
+      body.plots.length === 0 ||
+      body.plots.length > BULK_PLOTS_MAX_LENGTH
+    )
+      throw new RequestError(400, "Некорректный список участков");
+    const updates = body.plots.map((value: unknown) => {
+      if (typeof value !== "object" || value === null || Array.isArray(value))
+        throw new RequestError(400, "Некорректные данные участка");
+      const record = value as Record<string, unknown>;
+      return { id: validatePlotId(record.id), plot: validatePlotUpdate(record) };
+    });
+    const uniqueIds = new Set(updates.map(({ id }) => id));
+    if (uniqueIds.size !== updates.length)
+      throw new RequestError(400, "Номера участков не должны повторяться");
+    const existing = await env.DB.prepare("SELECT id FROM plots").all<{
+      id: string;
+    }>();
+    const existingIds = new Set(existing.results.map(({ id }) => id));
+    if (updates.some(({ id }) => !existingIds.has(id)))
+      return json({ error: "Участок не найден" }, 404, request, env);
+    const results = await env.DB.batch<PlotRow>(
+      updates.map(({ id, plot }) => updatePlotStatement(env, id, plot)),
+    );
+    return json(
+      results.flatMap(({ results: rows }) => rows.map(mapPlot)),
+      200,
+      request,
+      env,
+    );
   }
 
   const plotMatch = url.pathname.match(/^\/api\/admin\/plots\/([^/]+)$/);
   if (plotMatch && request.method === "PUT") {
     if (!(await hasValidSession(request, env)))
       return json({ error: "Требуется авторизация" }, 401, request, env);
-    const body = await request.json<{
-      area?: string;
-      status?: PlotStatus;
-      price?: string;
-      street?: string;
-      description?: string;
-    }>();
-    if (
-      typeof body.area !== "string" ||
-      !/^\d+(?:[.,]\d{1,2})?$/.test(body.area) ||
-      !Number.isFinite(Number(body.area.replace(",", "."))) ||
-      Number(body.area.replace(",", ".")) <= 0 ||
-      typeof body.price !== "string" ||
-      !/^\d+(?:[.,]\d{1,2})?$/.test(body.price) ||
-      !Number.isFinite(Number(body.price.replace(",", "."))) ||
-      Number(body.price.replace(",", ".")) <= 0 ||
-      !body.status ||
-      !allowedStatuses.has(body.status)
-    )
-      return json({ error: "Некорректные данные участка" }, 400, request, env);
-    const result = await env.DB.prepare(
-      "UPDATE plots SET area = ?, status = ?, price = ?, street = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *",
-    )
-      .bind(
-        body.area,
-        body.status,
-        body.price,
-        body.street ?? null,
-        body.description ?? null,
-        plotMatch[1],
-      )
-      .first<PlotRow>();
+    let id: string;
+    try {
+      id = validatePlotId(decodeURIComponent(plotMatch[1]));
+    } catch {
+      throw new RequestError(400, "Некорректный номер участка");
+    }
+    const plot = validatePlotUpdate(await readBody(request));
+    const result = await updatePlotStatement(env, id, plot).first<PlotRow>();
     if (!result) return json({ error: "Участок не найден" }, 404, request, env);
     return json(mapPlot(result), 200, request, env);
   }
@@ -280,4 +455,19 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   return json({ error: "Not found" }, 404, request, env);
 }
 
-export default { fetch: handleRequest } satisfies ExportedHandler<Env>;
+export default {
+  async fetch(request: Request, env: Env) {
+    try {
+      return await handleRequest(request, env);
+    } catch (error) {
+      if (error instanceof RequestError)
+        return json({ error: error.message }, error.status, request, env);
+      console.error(
+        "API request failed",
+        request.method,
+        new URL(request.url).pathname,
+      );
+      return json({ error: "Не удалось выполнить запрос" }, 500, request, env);
+    }
+  },
+} satisfies ExportedHandler<Env>;

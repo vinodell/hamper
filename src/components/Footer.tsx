@@ -16,7 +16,7 @@ export const Footer = () => {
         </a>
         <div className="footer-links">
           {navigation.map(([label, href]) => (
-              <a key={`${label}-${href}`} href={href}>
+            <a key={`${label}-${href}`} href={href}>
               {label}
             </a>
           ))}
@@ -29,4 +29,4 @@ export const Footer = () => {
       </div>
     </footer>
   );
-}
+};

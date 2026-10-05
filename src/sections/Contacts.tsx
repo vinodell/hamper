@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone, usePlots } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
@@ -15,8 +15,15 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
   const [formState, setFormState] = useState<
     "idle" | "sending" | "success" | "error"
   >("idle");
+  const [submitError, setSubmitError] = useState("");
+  const pendingSubmission = useRef(false);
   useEffect(() => {
-    if (!selectedPlot || selectedPlot.status !== "Свободен") return;
+    if (
+      pendingSubmission.current ||
+      !selectedPlot ||
+      selectedPlot.status !== "Свободен"
+    )
+      return;
     setChosenProject(selectedPlot.settlement);
     setChosenPlot(selectedPlot.id);
     setFormState("idle");
@@ -28,9 +35,12 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (pendingSubmission.current) return;
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    pendingSubmission.current = true;
     setFormState("sending");
+    setSubmitError("");
     api
       .sendContact({
         name: String(form.get("name") ?? ""),
@@ -46,7 +56,17 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
         setChosenProject("");
         setChosenPlot("");
       })
-      .catch(() => setFormState("error"));
+      .catch((reason: unknown) => {
+        setFormState("error");
+        setSubmitError(
+          reason instanceof Error
+            ? reason.message
+            : "Не удалось отправить заявку. Попробуйте ещё раз.",
+        );
+      })
+      .finally(() => {
+        pendingSubmission.current = false;
+      });
   };
 
   const choseProject = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -129,10 +149,20 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
           </div>
         </div>
 
-        <form className="contact-form" onSubmit={handleSubmit}>
+        <form
+          className="contact-form"
+          onSubmit={handleSubmit}
+          aria-busy={formState === "sending"}
+        >
           <label>
             Ваше имя
-            <input name="name" placeholder="Как к Вам обращаться" required />
+            <input
+              name="name"
+              placeholder="Как к Вам обращаться"
+              maxLength={120}
+              disabled={formState === "sending"}
+              required
+            />
           </label>
 
           <label>
@@ -148,6 +178,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
               autoComplete="tel"
               inputMode="tel"
               aria-label="Телефон"
+              disabled={formState === "sending"}
             />
           </label>
           <label>
@@ -156,6 +187,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
               name="project"
               value={chosenProject}
               onChange={choseProject}
+              disabled={formState === "sending"}
             >
               <option value="" disabled>
                 Выберите объект
@@ -170,6 +202,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
               name="plot"
               value={availableChosenPlot}
               onChange={(event) => setChosenPlot(event.target.value)}
+              disabled={formState === "sending"}
             >
               <option value="">Выберите участок</option>
               {filteredLand.length > 0 ? (
@@ -188,14 +221,20 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
           {plotsError && <small role="alert">{plotsError}</small>}
           <label>
             Комментарий
-            <textarea name="comment" rows={3} placeholder="Ваш вопрос" />
+            <textarea
+              name="comment"
+              rows={3}
+              maxLength={2000}
+              placeholder="Ваш вопрос"
+              disabled={formState === "sending"}
+            />
           </label>
           <button
             className="button button-gold"
             type="submit"
             disabled={formState === "sending"}
           >
-            Отправить заявку
+            {formState === "sending" ? "Отправляем…" : "Отправить заявку"}
             <ArrowUpRight size={17} />
           </button>
           {formState === "success" && (
@@ -204,8 +243,8 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
             </small>
           )}
           {formState === "error" && (
-            <small className="form-error">
-              Не удалось отправить заявку. Попробуйте еще раз.
+            <small className="form-error" role="alert">
+              {submitError}
             </small>
           )}
           <small>{policyMsg}</small>

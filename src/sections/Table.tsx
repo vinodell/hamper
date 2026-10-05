@@ -6,6 +6,7 @@ import {
   CircleDollarSign,
 } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
+import { LoadingIndicator } from "../components/LoadingIndicator";
 import {
   plotFilters,
   type TableSectionProps,
@@ -119,7 +120,9 @@ export const Table = ({
   const getAriaSort = (key: SortKey) =>
     !sortable || sortKey !== key
       ? undefined
-      : sortDirection === "asc" ? "ascending" : "descending";
+      : sortDirection === "asc"
+        ? "ascending"
+        : "descending";
 
   const getSortLabel = (key: SortKey) => {
     if (sortKey !== key) return "↕";
@@ -169,7 +172,7 @@ export const Table = ({
             ))}
           </div>
         )}
-        {loading && <p role="status">Загружаем участки…</p>}
+        {loading && <LoadingIndicator />}
         {error && <p role="alert">{error}</p>}
         {!loading && !error && filteredPlots.length === 0 && (
           <p>Участков с выбранными условиями пока нет.</p>
