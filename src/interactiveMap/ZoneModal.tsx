@@ -1,32 +1,9 @@
-import { useEffect, useId, useRef, MouseEvent } from "react";
+import { useEffect, useId, useRef, type MouseEvent } from "react";
 
-import type { ZoneModalProps, ZoneStatus } from "./Interactive.types";
+import type { ZoneModalProps } from "./Interactive.types";
+import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
 import styles from "./ZoneModal.module.css";
-
-const formatPrice = (price: number): string =>
-  new Intl.NumberFormat("ru-RU", {
-    style: "currency",
-    currency: "RUB",
-    maximumFractionDigits: 0,
-  }).format(price);
-
-const getStatusLabel = (status: ZoneStatus): string => {
-  switch (status) {
-    case "available":
-      return "Свободен";
-
-    case "reserved":
-      return "Забронирован";
-
-    case "sold":
-      return "Продан";
-
-    case "unknown":
-    default:
-      return "Статус уточняется";
-  }
-};
 
 export function ZoneModal({ zone, onClose }: ZoneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -93,7 +70,7 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
           </h2>
 
           <span className={styles.status} data-status={zone.status}>
-            {getStatusLabel(zone.status)}
+            {zoneStatusLabels[zone.status]}
           </span>
         </div>
 
@@ -113,7 +90,7 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
               <span className={styles.modalDetailLabel}>Стоимость</span>
 
               <strong className={styles.modalDetailValue}>
-                {formatPrice(zone.price)}
+                {formatZonePrice(zone.price)}
               </strong>
             </div>
           )}
@@ -126,24 +103,10 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
         )}
 
         <div className={styles.modalActions}>
-          {zone.status !== "sold" && (
-            <button
-              type="button"
-              className={styles.primaryButton}
-              onClick={() => {
-                /**
-                 * Здесь можно:
-                 *
-                 * - открыть форму;
-                 * - перейти к заявке;
-                 * - вызвать callback;
-                 * - отправить событие аналитики.
-                 */
-                console.log("Request zone:", zone.id);
-              }}
-            >
+          {zone.status === "available" && (
+            <a className={styles.primaryButton} href="#form" onClick={onClose}>
               Оставить заявку
-            </button>
+            </a>
           )}
 
           <button

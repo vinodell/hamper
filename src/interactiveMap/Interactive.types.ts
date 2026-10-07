@@ -37,6 +37,8 @@ export type InteractiveMapProps = {
    * /images/master-plan.webp
    */
   imageSrc: string;
+  imageSrcSet?: string;
+  imageSizes?: string;
 
   /**
    * Accessible description изображения.

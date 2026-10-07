@@ -6,7 +6,7 @@ import { AboutUs } from "../sections/AboutUs";
 
 import "./Home.css";
 
-const tickerItems = Array.from({ length: 8 }, () => siteConfig.ticker);
+const tickerItems = Array.from({ length: 16 }, () => siteConfig.ticker);
 
 export const Home = () => {
   return (
@@ -16,7 +16,7 @@ export const Home = () => {
         <AboutUs />
         <div className="ticker" aria-label="Акция">
           <div className="ticker-track" aria-hidden="true">
-            {tickerItems.concat(tickerItems).map((item, index) => (
+            {tickerItems.map((item, index) => (
               <span className="ticker-item" key={`${item}-${index}`}>
                 <span className="ticker-text">{item}</span>
                 <span className="ticker-dot">✦</span>

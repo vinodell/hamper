@@ -157,16 +157,14 @@ export type ProjectSlug = "oynelovskie-dali" | "drugie-uchastki";
 
 export const projectPageConfig: Record<
   ProjectSlug,
-  { title: string; formatIndex: 0 | 1; plotFilter: Exclude<PlotFilter, "Все"> }
+  { title: string; plotFilter: Exclude<PlotFilter, "Все"> }
 > = {
   "oynelovskie-dali": {
     title: "Ойнеловские дали",
-    formatIndex: 0,
     plotFilter: "Ойнеловские дали",
   },
   "drugie-uchastki": {
     title: "Другие участки",
-    formatIndex: 1,
     plotFilter: "Другие участки",
   },
 };

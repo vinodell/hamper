@@ -113,8 +113,7 @@ body.menu-open {
 }
 
 .menu-toggle,
-.mobile-phone,
-.mobile-cta {
+.mobile-phone {
     display: none;
 }
 
@@ -147,7 +146,7 @@ body.menu-open {
     }
 
     .header-contact,
-.header-cta {
+    .header-cta {
         display: none;
     }
 
@@ -157,6 +156,8 @@ body.menu-open {
         background: none;
         color: var(--ink);
         padding: 7px;
+        min-width: 44px;
+        min-height: 44px;
     }
 
     .menu-toggle svg {
@@ -171,7 +172,10 @@ body.menu-open {
         background: var(--paper);
         flex-direction: column;
         align-items: stretch;
+        justify-content: flex-start;
+        overflow-y: auto;
         padding: 45px 28px;
+        padding-bottom: max(28px, env(safe-area-inset-bottom));
         gap: 0;
         z-index: 4;
         font-size: 25px;
@@ -224,13 +228,6 @@ body.menu-open {
         font-size: 16px;
         margin-top: 20px;
     }
-
-    .main-nav .mobile-cta {
-        display: inline-flex;
-        margin-top: 20px;
-        font-size: 16px;
-        border-bottom: 0;
-    }
 }
 
 .telephones {
@@ -241,10 +238,4 @@ body.menu-open {
 
 .phone-icon {
     margin-top: 0.3rem;
-}
-
-@media (max-width: 1024px) {
-    .main-nav { overflow-y: auto; justify-content: flex-start; padding-bottom: max(28px, env(safe-area-inset-bottom)); }
-    .projects-trigger { margin-top: 0; }
-    .menu-toggle { min-width: 44px; min-height: 44px; }
 }

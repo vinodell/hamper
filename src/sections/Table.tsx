@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ArrowUpRight,
-  BadgePercent,
-  Check,
-  CircleDollarSign,
-} from "lucide-react";
+import { ArrowUpRight, BadgePercent, Check, CircleDollarSign } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 import {
@@ -19,6 +14,22 @@ import "./Table.css";
 
 type SortKey = "id" | "category" | "area" | "status" | "price";
 type SortDirection = "asc" | "desc";
+
+const tableColumns: {
+  key: SortKey;
+  label: string;
+  sortLabel: string;
+}[] = [
+  { key: "id", label: "№", sortLabel: "Сортировать по номеру участка" },
+  {
+    key: "category",
+    label: "Категория",
+    sortLabel: "Сортировать по категории",
+  },
+  { key: "area", label: "Площадь, сот.", sortLabel: "Сортировать по площади" },
+  { key: "status", label: "Статус", sortLabel: "Сортировать по статусу" },
+  { key: "price", label: "Цена, ₽", sortLabel: "Сортировать по цене" },
+];
 
 const statusOrder: Record<Plot["status"], number> = {
   Свободен: 0,
@@ -37,16 +48,16 @@ const comparePlots = (left: Plot, right: Plot, key: SortKey) => {
   switch (key) {
     case "id": {
       const leftId =
-        Number.parseFloat(String(left.id).replace(/[^\d.]/g, "")) || 0;
+        Number.parseFloat(left.id.replace(/[^\d.]/g, "")) || 0;
       const rightId =
-        Number.parseFloat(String(right.id).replace(/[^\d.]/g, "")) || 0;
+        Number.parseFloat(right.id.replace(/[^\d.]/g, "")) || 0;
       return leftId - rightId;
     }
-    case "category": {
-      const leftCategory = left.category ?? "Уточняется";
-      const rightCategory = right.category ?? "Уточняется";
-      return leftCategory.localeCompare(rightCategory, "ru");
-    }
+    case "category":
+      return (left.category ?? "Уточняется").localeCompare(
+        right.category ?? "Уточняется",
+        "ru",
+      );
     case "area":
       return toNumericValue(left.area) - toNumericValue(right.area);
     case "status":
@@ -92,23 +103,21 @@ export const Table = ({
   }, []);
 
   const filteredPlots = useMemo(() => {
-    const nextPlots = plots.filter((plot) => {
-      if (plot.status === "Продан") return false;
-
-      const projectFilter = initialFilter ?? activeFilter;
-      if (projectFilter === "Все") return true;
-      return plot.settlement === projectFilter;
-    });
+    const nextPlots = plots.filter(
+      (plot) =>
+        plot.status !== "Продан" &&
+        (activeFilter === "Все" || plot.settlement === activeFilter),
+    );
 
     if (!sortable) {
       return nextPlots;
     }
 
-    return [...nextPlots].sort((left, right) => {
+    return nextPlots.sort((left, right) => {
       const result = comparePlots(left, right, sortKey);
       return sortDirection === "asc" ? result : -result;
     });
-  }, [activeFilter, initialFilter, plots, sortDirection, sortKey, sortable]);
+  }, [activeFilter, plots, sortDirection, sortKey, sortable]);
 
   const handleSort = (key: SortKey) => {
     setSortDirection((currentDirection) =>
@@ -184,80 +193,25 @@ export const Table = ({
           <table>
             <thead>
               <tr>
-                <th scope="col" aria-sort={getAriaSort("id")}>
-                  {sortable ? (
-                    <button
-                      type="button"
-                      className="sort-button"
-                      onClick={() => handleSort("id")}
-                      aria-label="Сортировать по номеру участка"
-                    >
-                      № <span aria-hidden="true">{getSortLabel("id")}</span>
-                    </button>
-                  ) : (
-                    "№"
-                  )}
-                </th>
-                <th scope="col" aria-sort={getAriaSort("category")}>
-                  {sortable ? (
-                    <button
-                      type="button"
-                      className="sort-button"
-                      onClick={() => handleSort("category")}
-                      aria-label="Сортировать по категории"
-                    >
-                      Категория{" "}
-                      <span aria-hidden="true">{getSortLabel("category")}</span>
-                    </button>
-                  ) : (
-                    "Посёлок"
-                  )}
-                </th>
-                <th scope="col" aria-sort={getAriaSort("area")}>
-                  {sortable ? (
-                    <button
-                      type="button"
-                      className="sort-button"
-                      onClick={() => handleSort("area")}
-                      aria-label="Сортировать по площади"
-                    >
-                      Площадь, сот.{" "}
-                      <span aria-hidden="true">{getSortLabel("area")}</span>
-                    </button>
-                  ) : (
-                    "Площадь, сот."
-                  )}
-                </th>
-                <th scope="col" aria-sort={getAriaSort("status")}>
-                  {sortable ? (
-                    <button
-                      type="button"
-                      className="sort-button"
-                      onClick={() => handleSort("status")}
-                      aria-label="Сортировать по статусу"
-                    >
-                      Статус{" "}
-                      <span aria-hidden="true">{getSortLabel("status")}</span>
-                    </button>
-                  ) : (
-                    "Статус"
-                  )}
-                </th>
-                <th scope="col" aria-sort={getAriaSort("price")}>
-                  {sortable ? (
-                    <button
-                      type="button"
-                      className="sort-button"
-                      onClick={() => handleSort("price")}
-                      aria-label="Сортировать по цене"
-                    >
-                      Цена, ₽{" "}
-                      <span aria-hidden="true">{getSortLabel("price")}</span>
-                    </button>
-                  ) : (
-                    "Цена, ₽"
-                  )}
-                </th>
+                {tableColumns.map(({ key, label, sortLabel }) => (
+                  <th key={key} scope="col" aria-sort={getAriaSort(key)}>
+                    {sortable ? (
+                      <button
+                        type="button"
+                        className="sort-button"
+                        onClick={() => handleSort(key)}
+                        aria-label={sortLabel}
+                      >
+                        {label}{" "}
+                        <span aria-hidden="true">{getSortLabel(key)}</span>
+                      </button>
+                    ) : key === "category" ? (
+                      "Посёлок"
+                    ) : (
+                      label
+                    )}
+                  </th>
+                ))}
                 <th scope="col" aria-label="Действие" />
               </tr>
             </thead>

@@ -1,35 +1,46 @@
+import { useEffect, useState } from "react";
 import type { MapTooltipProps } from "./Interactive.types";
+import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
 import styles from "./MapTooltip.module.css";
 
-const formatPrice = (price: number): string =>
-  new Intl.NumberFormat("ru-RU", {
-    style: "currency",
-    currency: "RUB",
-    maximumFractionDigits: 0,
-  }).format(price);
-
-const getStatusLabel = (status: MapTooltipProps["zone"]["status"]): string => {
-  switch (status) {
-    case "available":
-      return "Свободен";
-    case "reserved":
-      return "Забронирован";
-    case "sold":
-      return "Продан";
-    case "unknown":
-    default:
-      return "Статус уточняется";
-  }
-};
+export const getTooltipPosition = (x: number, y: number) => ({
+  x: Math.max(16, Math.min(x, window.innerWidth - 296)),
+  y: Math.max(16, Math.min(y, window.innerHeight - 180)),
+});
 
 export function MapTooltip({ zone, position }: MapTooltipProps) {
+  const [pointerPosition, setPointerPosition] = useState(position);
+
+  useEffect(() => {
+    let frame = 0;
+    let nextPosition = position;
+    const handlePointerMove = (event: PointerEvent) => {
+      if (event.pointerType === "touch") return;
+      nextPosition = getTooltipPosition(event.clientX + 16, event.clientY + 16);
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        setPointerPosition(nextPosition);
+      });
+    };
+
+    // Moving the tooltip should not render all of the map's SVG paths.
+    window.addEventListener("pointermove", handlePointerMove, {
+      passive: true,
+    });
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      cancelAnimationFrame(frame);
+    };
+  }, [position]);
+
   return (
     <div
       className={styles.tooltip}
       style={{
-        left: position.x,
-        top: position.y,
+        left: pointerPosition.x,
+        top: pointerPosition.y,
       }}
       role="tooltip"
     >
@@ -37,7 +48,7 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
         <strong className={styles.tooltipTitle}>{zone.title}</strong>
 
         <span className={styles.status} data-status={zone.status}>
-          {getStatusLabel(zone.status)}
+          {zoneStatusLabels[zone.status]}
         </span>
       </div>
 
@@ -53,7 +64,7 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
         <div className={styles.tooltipRow}>
           <span>Стоимость</span>
 
-          <strong>{formatPrice(zone.price)}</strong>
+          <strong>{formatZonePrice(zone.price)}</strong>
         </div>
       )}
 

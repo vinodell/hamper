@@ -1,11 +1,7 @@
-import {
-  useEffect,
-  useMemo,
-  useState,
-  KeyboardEvent,
-  PointerEvent,
-} from "react";
-import { MapTooltip, ZoneModal, MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { MapTooltip, getTooltipPosition } from "./MapTooltip";
+import { ZoneModal } from "./ZoneModal";
+import { MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./MapZones";
 import { isSelectableZone, resolveMapZones } from "./resolveMapZones";
 
 import type {
@@ -24,6 +20,8 @@ const INITIAL_POINTER_POSITION: PointerPosition = {
 export const InteractiveMap = ({
   plots,
   imageSrc,
+  imageSrcSet,
+  imageSizes,
   imageAlt = "Карта участков",
   onZoneClick,
   className,
@@ -69,27 +67,14 @@ export const InteractiveMap = ({
     handleZoneClick(zone);
   };
 
-  const handlePointerMove = (event: PointerEvent<SVGSVGElement>): void => {
-    /**
-     * На touch tooltip не нужен.
-     * Там основной interaction — tap.
-     */
-    if (event.pointerType === "touch") {
-      return;
-    }
-
-    setPointerPosition({
-      x: Math.max(16, Math.min(event.clientX + 16, window.innerWidth - 296)),
-      y: Math.max(16, Math.min(event.clientY + 16, window.innerHeight - 180)),
-    });
-  };
-
   return (
     <>
       <div className={[styles.map, className].filter(Boolean).join(" ")}>
         <img
           className={styles.render}
           src={imageSrc}
+          srcSet={imageSrcSet}
+          sizes={imageSizes}
           alt=""
           width={1024}
           height={1536}
@@ -108,7 +93,6 @@ export const InteractiveMap = ({
           viewBox={MAP_VIEW_BOX}
           role="group"
           aria-label={imageAlt}
-          onPointerMove={handlePointerMove}
           onPointerLeave={() => {
             setHoveredZoneId(null);
           }}
@@ -151,6 +135,12 @@ export const InteractiveMap = ({
                       }
 
                       setHoveredZoneId(zone.id);
+                      setPointerPosition(
+                        getTooltipPosition(
+                          event.clientX + 16,
+                          event.clientY + 16,
+                        ),
+                      );
                     }}
                     onPointerLeave={() => {
                       setHoveredZoneId(null);
@@ -163,16 +153,9 @@ export const InteractiveMap = ({
                         return;
                       const bounds =
                         event.currentTarget.getBoundingClientRect();
-                      setPointerPosition({
-                        x: Math.max(
-                          16,
-                          Math.min(bounds.right + 16, window.innerWidth - 296),
-                        ),
-                        y: Math.max(
-                          16,
-                          Math.min(bounds.top, window.innerHeight - 180),
-                        ),
-                      });
+                      setPointerPosition(
+                        getTooltipPosition(bounds.right + 16, bounds.top),
+                      );
                       setHoveredZoneId(zone.id);
                     }}
                     onBlur={() => {
@@ -204,7 +187,11 @@ export const InteractiveMap = ({
         </svg>
 
         {hoveredZone && (
-          <MapTooltip zone={hoveredZone} position={pointerPosition} />
+          <MapTooltip
+            key={hoveredZone.id}
+            zone={hoveredZone}
+            position={pointerPosition}
+          />
         )}
       </div>
 

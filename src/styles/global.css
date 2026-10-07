@@ -1,6 +1,6 @@
 @font-face {
     font-family: "hamper-regular";
-    src: url("../../public/fonts/Andika-Regular.ttf") format("truetype");
+    src: url("/fonts/Andika-Regular.woff2") format("woff2");
     font-weight: normal;
     font-style: normal;
     font-display: swap;
@@ -8,14 +8,10 @@
 
 @font-face {
     font-family: "hamper-bold";
-    src: url("../../public/fonts/Andika-Bold.ttf") format("truetype");
+    src: url("/fonts/Andika-Bold.woff2") format("woff2");
     font-weight: normal;
     font-style: normal;
     font-display: swap;
-}
-
-.body {
-    font-family: "hamper-regular", sans-serif;
 }
 
 :root {
@@ -28,7 +24,6 @@
     --gold: #c9a36e;
     --gold-dark: #a98454;
     --line: #00592e;
-    --soft-line: rgba(255, 255, 255, 0.2);
     --radius: 3px;
     --container: 1240px;
     font-family: "DM Sans", sans-serif;
@@ -135,10 +130,7 @@ img {
     padding: 0 29px;
     border-radius: var(--radius);
     font-weight: 600;
-    transition:
-        transform 0.2s ease,
-        background 0.2s ease,
-        color 0.2s ease;
+    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
 }
 
 .button:focus-visible,
@@ -336,19 +328,12 @@ td {
     }
 }
 
-.my-text-bold {
-    font-family: "hamper-bold", sans-serif;
-}
-
+.my-text-bold,
 .my-text-regular {
     font-family: "hamper-bold", sans-serif;
 }
 
 /* Shared interaction and responsive foundations. */
-.button {
-    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
-}
-
 .button:active {
     transform: translateY(0) scale(.98);
 }

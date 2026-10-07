@@ -4,24 +4,9 @@ export const TgLogo = () => (
     width="55"
     height="55"
     viewBox="0 0 240.1 240.1"
+    role="img"
+    aria-label="Telegram"
   >
-    <linearGradient
-      id="Oval_1_"
-      gradientUnits="userSpaceOnUse"
-      x1="-838.041"
-      y1="660.581"
-      x2="-838.041"
-      y2="660.3427"
-      gradientTransform="matrix(1000 0 0 -1000 838161 660581)"
-    ></linearGradient>
-    <circle
-      fillRule="evenodd"
-      clipRule="evenodd"
-      fill="url(#Oval_1_)"
-      cx="120.1"
-      cy="120.1"
-      r="120.1"
-    />
     <path
       fillRule="evenodd"
       clipRule="evenodd"

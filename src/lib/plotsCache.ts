@@ -99,7 +99,10 @@ export function loadCachedPlots(
   )
     return Promise.resolve(snapshot.plots);
 
-  publish({ ...snapshot, loading: !hasSnapshot });
+  // Background requests keep the visible data and do not change loading.
+  // Preserve the snapshot reference until there is a state change to report.
+  if (snapshot.loading !== !hasSnapshot)
+    publish({ ...snapshot, loading: !hasSnapshot });
   pending = (async () => {
     do {
       refreshQueued = false;

@@ -7,10 +7,25 @@ import { api } from "../lib/api";
 
 import "./Contacts.css";
 
+const mobileContacts = [
+  {
+    id: "vlad",
+    phone: siteConfig.phone2,
+    telegram: siteConfig.vladTelegram,
+    whatsapp: siteConfig.vladWhatsapp,
+  },
+  {
+    id: "maks",
+    phone: siteConfig.phone,
+    telegram: siteConfig.maksTelegram,
+    whatsapp: siteConfig.maksWhatsapp,
+  },
+];
+
 export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
   const [phone, setPhone] = useState("");
-  const { plots: chosenLand, error: plotsError } = usePlots();
-  const [chosenProject, setChosenProject] = useState<string>("");
+  const { plots, error: plotsError } = usePlots();
+  const [chosenProject, setChosenProject] = useState("");
   const [chosenPlot, setChosenPlot] = useState("");
   const [formState, setFormState] = useState<
     "idle" | "sending" | "success" | "error"
@@ -69,18 +84,21 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
       });
   };
 
-  const choseProject = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleProjectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setChosenProject(event.target.value);
     setChosenPlot("");
   };
 
-  const filteredLand = useMemo(() => {
-    return chosenLand.filter((item) => {
-      return item.settlement === chosenProject && item.status === "Свободен";
-    });
-  }, [chosenProject, chosenLand]);
+  const availablePlots = useMemo(
+    () =>
+      plots.filter(
+        (plot) =>
+          plot.settlement === chosenProject && plot.status === "Свободен",
+      ),
+    [chosenProject, plots],
+  );
 
-  const availableChosenPlot = filteredLand.some(
+  const availableChosenPlot = availablePlots.some(
     (plot) => plot.id === chosenPlot,
   )
     ? chosenPlot
@@ -104,42 +122,28 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
           </p>
 
           <div className="contact-details">
-            <div className="mobile-contacts">
-              <span className="contact-phone">
-                <Phone size={18} />
-                {siteConfig.phone2}
-              </span>
-              <a
-                className="social-logo"
-                href={`https://t.me/${siteConfig.vladTelegram}`}
-              >
-                <TgLogo />
-              </a>
-              <a
-                className="social-logo"
-                href={`https://wa.me/${siteConfig.vladWhatsapp}`}
-              >
-                <WhatsupLogo />
-              </a>
-            </div>
-            <div className="mobile-contacts">
-              <span className="contact-phone">
-                <Phone size={18} />
-                {siteConfig.phone}
-              </span>
-              <a
-                className="social-logo"
-                href={`https://t.me/${siteConfig.maksTelegram}`}
-              >
-                <TgLogo />
-              </a>
-              <a
-                className="social-logo"
-                href={`https://wa.me/${siteConfig.maksWhatsapp}`}
-              >
-                <WhatsupLogo />
-              </a>
-            </div>
+            {mobileContacts.map(({ id, phone, telegram, whatsapp }) => (
+              <div className="mobile-contacts" key={id}>
+                <span className="contact-phone">
+                  <Phone size={18} />
+                  {phone}
+                </span>
+                <a
+                  className="social-logo"
+                  href={`https://t.me/${telegram}`}
+                  aria-label="Написать в Telegram"
+                >
+                  <TgLogo />
+                </a>
+                <a
+                  className="social-logo"
+                  href={`https://wa.me/${whatsapp}`}
+                  aria-label="Написать в WhatsApp"
+                >
+                  <WhatsupLogo />
+                </a>
+              </div>
+            ))}
             <div className="mobile-contacts email-container">
               <a href={`mailto:${siteConfig.email}`}>
                 <Mail size={18} />
@@ -186,7 +190,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
             <select
               name="project"
               value={chosenProject}
-              onChange={choseProject}
+              onChange={handleProjectChange}
               disabled={formState === "sending"}
             >
               <option value="" disabled>
@@ -205,8 +209,8 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
               disabled={formState === "sending"}
             >
               <option value="">Выберите участок</option>
-              {filteredLand.length > 0 ? (
-                filteredLand.map((item) => (
+              {availablePlots.length > 0 ? (
+                availablePlots.map((item) => (
                   <option key={item.id} value={item.id}>
                     {item.id}
                   </option>

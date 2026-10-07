@@ -1,10 +1,4 @@
 import { createContext } from "react";
-import type { Plot } from "../lib/constants";
+import type { PlotsSnapshot } from "../lib/plotsCache";
 
-export interface PlotsState {
-  plots: Plot[];
-  loading: boolean;
-  error: string;
-}
-
-export const PlotsContext = createContext<PlotsState | null>(null);
+export const PlotsContext = createContext<PlotsSnapshot | null>(null);

@@ -1,12 +1,16 @@
 import { ArrowUpRight } from "lucide-react";
 import { InteractiveMap } from "../interactiveMap";
-import { chooseZemli } from "../lib";
+import { chooseZemli, type Plot } from "../lib";
 import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 
 import "./GeneralPlan.css";
 
-export const GeneralPlan = () => {
+export const GeneralPlan = ({
+  onSelectPlot,
+}: {
+  onSelectPlot?: (plot: Plot) => void;
+}) => {
   const { plots, loading, error } = usePlots();
 
   return (
@@ -33,32 +37,53 @@ export const GeneralPlan = () => {
           <LoadingIndicator label="Загружаем статусы участков…" compact />
         )}
         {error && <p role="alert">{error}</p>}
-        <figure className="plan-image">
-          <InteractiveMap
-            plots={plots}
-            imageSrc={`${import.meta.env.BASE_URL}images/masterplan-oinelovo-v1.webp`}
-            imageAlt="Интерактивный план: 21 земельный участок. Выберите участок по номеру."
+        <div className="plan-stage">
+          <img
+            className="plan-background"
+            src={`${import.meta.env.BASE_URL}images/masterplan-background.webp`}
+            alt=""
+            aria-hidden="true"
+            width={1200}
+            height={675}
+            loading="lazy"
+            decoding="async"
           />
-          <figcaption className="plan-caption">
-            <span className="plan-status-legend" aria-label="Статусы участков">
-              <span>
-                <i className="plan-status-free" /> Свободен
+          <figure className="plan-image">
+            <InteractiveMap
+              plots={plots}
+              imageSrc={`${import.meta.env.BASE_URL}images/masterplan-oinelovo-1024.webp`}
+              imageSrcSet={`${import.meta.env.BASE_URL}images/masterplan-oinelovo-640.webp 640w, ${import.meta.env.BASE_URL}images/masterplan-oinelovo-1024.webp 1024w`}
+              imageSizes="(max-width: 760px) calc(100vw - 64px), (max-width: 871px) calc(100vw - 112px), 760px"
+              imageAlt="Интерактивный план: 21 земельный участок. Выберите участок по номеру."
+              onZoneClick={(zone) => {
+                const plot = plots.find((plot) => plot.id === zone.plotId);
+                if (plot?.status === "Свободен") onSelectPlot?.(plot);
+              }}
+            />
+            <figcaption className="plan-caption">
+              <span
+                className="plan-status-legend"
+                aria-label="Статусы участков"
+              >
+                <span>
+                  <i className="plan-status-free" /> Свободен
+                </span>
+                <span>
+                  <i className="plan-status-reserved" /> Забронирован
+                </span>
+                <span>
+                  <i className="plan-status-sold" /> Продан
+                </span>
+              </span>
+              <span className="plan-hint">
+                <i aria-hidden="true" /> Нажмите на участок
               </span>
               <span>
-                <i className="plan-status-reserved" /> Забронирован
+                Иллюстративный рендер. Дома и озеленение показаны как пример.
               </span>
-              <span>
-                <i className="plan-status-sold" /> Продан
-              </span>
-            </span>
-            <span className="plan-hint">
-              <i aria-hidden="true" /> Нажмите на участок
-            </span>
-            <span>
-              Иллюстративный рендер. Дома и озеленение показаны как пример.
-            </span>
-          </figcaption>
-        </figure>
+            </figcaption>
+          </figure>
+        </div>
       </div>
     </section>
   );

@@ -11,7 +11,11 @@ import "./Main.css";
 export const Main = () => {
   const { slug } = useParams<{ slug: string }>();
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
-  const config = slug && projectPageConfig[slug as ProjectSlug];
+  const config =
+    slug && Object.hasOwn(projectPageConfig, slug)
+      ? projectPageConfig[slug as ProjectSlug]
+      : undefined;
+  const handleSelectPlot = (plot: Plot) => setSelectedPlot({ ...plot });
 
   if (!config) {
     return <Navigate to="/" replace />;
@@ -31,20 +35,18 @@ export const Main = () => {
           </div>
         </section>
         {slug === "drugie-uchastki" ? (
-          <IndividualPlots
-            onSelectPlot={(plot) => setSelectedPlot({ ...plot })}
-          />
+          <IndividualPlots onSelectPlot={handleSelectPlot} />
         ) : (
           <>
             <Info />
-            <GeneralPlan />
+            <GeneralPlan onSelectPlot={handleSelectPlot} />
           </>
         )}
         <Table
           key={slug}
           sortable={slug === "drugie-uchastki"}
           initialFilter={config.plotFilter}
-          onSelectPlot={(plot) => setSelectedPlot({ ...plot })}
+          onSelectPlot={handleSelectPlot}
         />
         <Contacts
           selectedPlot={
