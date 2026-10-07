@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:pages": "tsc -b && vite build --mode github-pages",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
     "preview": "npm run build && wrangler dev",
     "worker:dev": "wrangler dev --config worker/wrangler.jsonc",
     "worker:typecheck": "tsc -p tsconfig.worker.json",
+    "test:auth": "node --test scripts/admin-auth.test.mjs scripts/frontend-auth.test.mjs",
     "worker:deploy": "wrangler deploy --config worker/wrangler.jsonc",
     "deploy": "npm run build && wrangler deploy"
   },

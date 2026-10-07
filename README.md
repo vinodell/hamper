@@ -28,7 +28,6 @@ Set Worker secrets with `wrangler secret put`:
 ```bash
 npx wrangler secret put ADMIN_LOGIN --config worker/wrangler.jsonc
 npx wrangler secret put ADMIN_PASSWORD_HASH --config worker/wrangler.jsonc
-npx wrangler secret put SESSION_SECRET --config worker/wrangler.jsonc
 npx wrangler secret put TELEGRAM_BOT_TOKEN --config worker/wrangler.jsonc
 npx wrangler secret put TELEGRAM_CHAT_ID --config worker/wrangler.jsonc
 npx wrangler secret put PUBLIC_ORIGIN --config worker/wrangler.jsonc
@@ -50,7 +49,9 @@ The D1 schema and seed are intentionally separate from Worker deploy. Run them o
 
 In `/admin`, use **Добавить участок** in **Другие участки** to create a plot. Its number must be unique across all projects; area and price must be positive numbers with up to two decimal places. The existing database schema supports creation without a migration.
 
-The admin loads its session and plots with one protected `GET /api/admin/plots`. Creation uses `POST /api/admin/plots`; **Сохранить все изменения** sends one `PUT /api/admin/plots` with `{ plots: [...] }`, saved in a database transaction. Deploy the updated API Worker before publishing the frontend that uses these endpoints.
+Admin sign-in uses the login and password from the form with HTTP Basic authorization. The Worker checks `ADMIN_LOGIN` and `ADMIN_PASSWORD_HASH` on every admin request. The authorization value is kept in the current tab's `sessionStorage`, so refreshing retains sign-in and **Выйти** clears it locally. If tab storage is unavailable, sign-in lasts until the page is refreshed. No cookies or `SESSION_SECRET` are used. Changing the configured password invalidates the previous credentials immediately.
+
+Sign-in verifies credentials and loads plots with one protected `GET /api/admin/plots`. Creation uses `POST /api/admin/plots`; **Сохранить все изменения** sends one `PUT /api/admin/plots` with `{ plots: [...] }`, saved in a database transaction. Deploy the updated API Worker, then publish the matching frontend. The old `/api/auth/login`, `/api/auth/logout`, and `/api/auth/me` endpoints are removed.
 
 Public plots start loading at application startup and share an in-memory cache across project pages. Visible pages refresh the snapshot every 30 seconds, and successful admin changes update the current tab immediately and notify other tabs. Authentication is always checked on the server.
 

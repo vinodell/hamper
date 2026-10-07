@@ -17,6 +17,8 @@ import {
   Zap,
 } from "lucide-react";
 
+export { projectRoutes } from "./routes";
+
 const env = import.meta.env;
 
 export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
@@ -41,11 +43,6 @@ export const navigation = [
   ["Проекты", "#projects"],
   ["Контакты", "#form"],
   ["Акции", "#form"],
-] as const;
-
-export const projectRoutes = [
-  { label: "Ойнеловские дали", path: "/projects/oynelovskie-dali" },
-  { label: "Другие участки", path: "/projects/drugie-uchastki" },
 ] as const;
 
 export const plotStatuses = ["Свободен", "Забронирован", "Продан"] as const;

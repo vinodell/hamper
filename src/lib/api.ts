@@ -1,6 +1,12 @@
 import { normalizePlotNumber } from "./plotNumbers";
 import { apiUrl, plotStatuses, type Plot, type PlotStatus } from "./constants";
 import {
+  clearAdminAuthorization,
+  createBasicAuthorization,
+  getAdminAuthorization,
+  saveAdminAuthorization,
+} from "./adminAuth";
+import {
   getPlotsRevision,
   loadCachedPlots,
   mergeSavedPlots,
@@ -35,7 +41,7 @@ function invalidResponse() {
 }
 
 function statusMessage(status: number) {
-  if (status === 401) return "Сессия завершилась. Войдите снова.";
+  if (status === 401) return "Неверный логин или пароль. Войдите снова.";
   if (status === 403) return "Недостаточно прав для этого действия.";
   if (status === 404) return "Данные не найдены. Проверьте адрес API.";
   if (status === 429)
@@ -47,7 +53,14 @@ function statusMessage(status: number) {
 async function request(
   path: string,
   options: RequestInit = {},
+  loginAuthorization?: string,
 ): Promise<unknown> {
+  const adminRequest = path.startsWith("/api/admin/");
+  const authorization = adminRequest
+    ? loginAuthorization ?? getAdminAuthorization()
+    : null;
+  if (adminRequest && !authorization)
+    throw new ApiError("Войдите, чтобы открыть панель управления.", 401);
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (options.signal?.aborted)
@@ -59,19 +72,28 @@ async function request(
     controller.abort();
   }, REQUEST_TIMEOUT_MS);
   const headers = new Headers(options.headers);
-  // A bodyless GET needs no Content-Type: this avoids a CORS preflight on
-  // public loads and on the initial admin/session request.
+  if (adminRequest && authorization)
+    headers.set("Authorization", authorization);
+  else headers.delete("Authorization");
+  // A bodyless public GET needs no Content-Type or CORS preflight.
   if (options.body !== undefined && options.body !== null)
     headers.set("Content-Type", "application/json");
 
   try {
     const response = await fetch(`${apiUrl}${path}`, {
-      credentials: "include",
       cache: "no-store",
       ...options,
+      credentials: "omit",
       headers,
       signal: controller.signal,
     });
+    if (
+      adminRequest &&
+      response.status === 401 &&
+      !loginAuthorization &&
+      getAdminAuthorization() === authorization
+    )
+      clearAdminAuthorization();
     const contentType = response.headers.get("Content-Type") ?? "";
     if (!/\bapplication\/(?:[\w.+-]+\+)?json\b/i.test(contentType)) {
       if (!response.ok)
@@ -225,22 +247,25 @@ export const api = {
     login: string,
     password: string,
     options: RequestOptions = {},
-  ) =>
-    parseOk(
-      await request("/api/auth/login", {
-        ...options,
-        method: "POST",
-        body: JSON.stringify({ login, password }),
-      }),
-    ),
-  logout: async (options: RequestOptions = {}) =>
-    parseOk(await request("/api/auth/logout", { ...options, method: "POST" })),
-  me: async (options: RequestOptions = {}) => {
-    const payload = await request("/api/auth/me", options);
-    if (!isRecord(payload) || typeof payload.authenticated !== "boolean")
-      throw invalidResponse();
-    return { authenticated: payload.authenticated };
+  ) => {
+    const authorization = createBasicAuthorization(login, password);
+    const revision = getPlotsRevision();
+    let plots: AdminPlot[];
+    try {
+      plots = parseList(
+        await request("/api/admin/plots", options, authorization),
+        parseAdminPlot,
+      );
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.status === 401)
+        throw new ApiError("Неверный логин или пароль", 401);
+      throw reason;
+    }
+    saveAdminAuthorization(authorization);
+    replaceCachedPlots(plots.map(parsePublicPlot), revision);
+    return plots;
   },
+  logout: () => clearAdminAuthorization(),
   getPlots: (
     options: RequestOptions & { force?: boolean; maxAgeMs?: number } = {},
   ) => loadCachedPlots(fetchPublicPlots, options),

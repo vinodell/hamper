@@ -1,7 +1,4 @@
 import {
-  SESSION_COOKIE,
-  SESSION_COOKIE_ATTRIBUTES,
-  SESSION_TTL_SECONDS,
   allowedStatuses,
   PASSWORD_HASH_ITERATIONS,
   PASSWORD_HASH_ALGORITHM,
@@ -48,8 +45,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
   const allowedOrigin = env.PUBLIC_ORIGIN ?? origin ?? "*";
   return {
     "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Credentials": "true",
-    "Access-Control-Allow-Headers": "Content-Type",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
@@ -67,32 +63,6 @@ function json(data: unknown, status = 200, request?: Request, env?: Env) {
   });
 }
 
-function sessionCookie(request: Request) {
-  for (const part of (request.headers.get("Cookie") ?? "").split(";")) {
-    const separator = part.indexOf("=");
-    if (separator < 0 || part.slice(0, separator).trim() !== SESSION_COOKIE)
-      continue;
-    try {
-      return decodeURIComponent(part.slice(separator + 1));
-    } catch {
-      return undefined;
-    }
-  }
-  return undefined;
-}
-
-function toBase64Url(bytes: ArrayBuffer | Uint8Array) {
-  const data = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
-  let binary = "";
-  data.forEach((byte) => {
-    binary += String.fromCharCode(byte);
-  });
-  return btoa(binary)
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
 function fromBase64Url(value: string) {
   const padded = value
     .replace(/-/g, "+")
@@ -100,46 +70,6 @@ function fromBase64Url(value: string) {
     .padEnd(Math.ceil(value.length / 4) * 4, "=");
   const binary = atob(padded);
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
-}
-
-async function hmac(value: string, secret: string) {
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secret),
-    { name: "HMAC", hash: PASSWORD_HASH_ALGORITHM },
-    false,
-    ["sign"],
-  );
-  return toBase64Url(
-    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(value)),
-  );
-}
-
-async function createSession(login: string, secret: string) {
-  const payload = `${login}.${Date.now() + SESSION_TTL_SECONDS * 1000}.${crypto.randomUUID()}`;
-  return `${toBase64Url(new TextEncoder().encode(payload))}.${await hmac(payload, secret)}`;
-}
-
-async function hasValidSession(request: Request, env: Env) {
-  const token = sessionCookie(request);
-  if (!token || token.length > 4096) return false;
-  const [encoded, signature, extra] = token.split(".");
-  if (extra !== undefined) return false;
-  if (!encoded || !signature) return false;
-  let payload: string;
-  try {
-    payload = new TextDecoder().decode(fromBase64Url(encoded));
-  } catch {
-    return false;
-  }
-  const expected = await hmac(payload, env.SESSION_SECRET);
-  if (expected.length !== signature.length) return false;
-  const validSignature = constantTimeEqual(
-    new TextEncoder().encode(expected),
-    new TextEncoder().encode(signature),
-  );
-  const expiresAt = Number(payload.split(".")[1]);
-  return validSignature && Number.isFinite(expiresAt) && expiresAt > Date.now();
 }
 
 async function verifyPassword(password: string, encodedHash: string) {
@@ -168,6 +98,31 @@ async function verifyPassword(password: string, encodedHash: string) {
   );
   if (derived.length !== expected.length) return false;
   return constantTimeEqual(derived, expected);
+}
+
+async function hasAdminAccess(request: Request, env: Env) {
+  const encoded = request.headers
+    .get("Authorization")
+    ?.match(/^Basic\s+([A-Za-z0-9+/]+={0,2})$/i)?.[1];
+  if (!encoded || encoded.length > 32_768) return false;
+
+  let credentials: string;
+  try {
+    const bytes = Uint8Array.from(atob(encoded), (character) =>
+      character.charCodeAt(0),
+    );
+    credentials = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    return false;
+  }
+
+  const separator = credentials.indexOf(":");
+  if (separator < 1) return false;
+  const login = credentials.slice(0, separator);
+  const password = credentials.slice(separator + 1);
+  if (login !== env.ADMIN_LOGIN || !password || password.length > 4096)
+    return false;
+  return verifyPassword(password, env.ADMIN_PASSWORD_HASH);
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
@@ -267,49 +222,6 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return json(result.results.map(mapPlot), 200, request, env);
   }
 
-  if (url.pathname === "/api/auth/login" && request.method === "POST") {
-    const body = await readBody(request);
-    if (
-      typeof body.login !== "string" ||
-      typeof body.password !== "string" ||
-      !body.password ||
-      body.password.length > 4096 ||
-      body.login !== env.ADMIN_LOGIN ||
-      !(await verifyPassword(body.password, env.ADMIN_PASSWORD_HASH))
-    ) {
-      return json({ error: "Неверный логин или пароль" }, 401, request, env);
-    }
-    const session = await createSession(body.login, env.SESSION_SECRET);
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-        ...corsHeaders(request, env),
-        "Set-Cookie": `${SESSION_COOKIE}=${encodeURIComponent(session)}; ${SESSION_COOKIE_ATTRIBUTES}; Max-Age=${SESSION_TTL_SECONDS}`,
-      },
-    });
-  }
-
-  if (url.pathname === "/api/auth/logout" && request.method === "POST") {
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
-        ...corsHeaders(request, env),
-        "Set-Cookie": `${SESSION_COOKIE}=; ${SESSION_COOKIE_ATTRIBUTES}; Max-Age=0`,
-      },
-    });
-  }
-
-  if (url.pathname === "/api/auth/me" && request.method === "GET") {
-    return json(
-      { authenticated: await hasValidSession(request, env) },
-      200,
-      request,
-      env,
-    );
-  }
-
   if (url.pathname === "/api/contact" && request.method === "POST") {
     const body = await readBody(request);
     if (
@@ -367,7 +279,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     url.pathname === "/api/admin/plots" &&
     ["GET", "POST", "PUT"].includes(request.method)
   ) {
-    if (!(await hasValidSession(request, env)))
+    if (!(await hasAdminAccess(request, env)))
       return json({ error: "Требуется авторизация" }, 401, request, env);
 
     if (request.method === "GET") {
@@ -438,7 +350,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   const plotMatch = url.pathname.match(/^\/api\/admin\/plots\/([^/]+)$/);
   if (plotMatch && request.method === "PUT") {
-    if (!(await hasValidSession(request, env)))
+    if (!(await hasAdminAccess(request, env)))
       return json({ error: "Требуется авторизация" }, 401, request, env);
     let id: string;
     try {

@@ -9,6 +9,7 @@ import {
   type PlotUpdate,
 } from "../lib/api";
 import { plotStatuses } from "../lib";
+import { getAdminAuthorization } from "../lib/adminAuth";
 import { notifyPlotsUpdated } from "../lib/plotEvents";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 
@@ -50,16 +51,15 @@ export function Admin() {
   const [plots, setPlots] = useState<AdminPlot[]>([]);
   const [savedPlots, setSavedPlots] = useState<AdminPlot[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(getAdminAuthorization()));
   const [saving, setSaving] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
-  const [loggingOut, setLoggingOut] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPlot, setNewPlot] = useState<PlotCreate>({ ...emptyPlot });
   const [saveMessage, setSaveMessage] = useState("");
-  const busy = saving || creating || loggingOut;
+  const busy = saving || creating;
 
   const savedById = new Map(savedPlots.map((plot) => [plot.id, plot]));
   const changedPlots = plots.filter((plot) => {
@@ -100,19 +100,8 @@ export function Admin() {
     setLoggingIn(true);
     setError("");
     try {
-      await api.login(login, password);
-      let loaded: AdminPlot[];
-      try {
-        // The protected data request also verifies that the cookie was saved.
-        loaded = await api.getAdminPlots();
-      } catch (reason) {
-        if (reason instanceof ApiError && reason.status === 401)
-          throw new Error(
-            "Браузер не сохранил сессию. Разрешите cookies для сайта или попробуйте другой браузер.",
-          );
-        throw reason;
-      }
-      // Preserve unsaved rows if the session expired during a batch save.
+      const loaded = await api.login(login, password);
+      // Preserve unsaved rows when the user signs in again after a rejected save.
       const drafts = new Map(changedPlots.map((plot) => [plot.id, plot]));
       setSavedPlots(loaded);
       setPlots(
@@ -155,7 +144,7 @@ export function Admin() {
       setAuthenticated(false);
       setPassword("");
       setError(
-        "Сессия завершилась. Войдите снова — несохранённые изменения останутся в форме.",
+        "Войдите снова — несохранённые изменения останутся в форме.",
       );
     } else if (forCreate) {
       setCreateError(reason instanceof Error ? reason.message : fallback);
@@ -258,28 +247,19 @@ export function Admin() {
     }
   };
 
-  const logout = async () => {
+  const logout = () => {
     if (busy) return;
-    setLoggingOut(true);
+    api.logout();
+    setAuthenticated(false);
+    setLogin("");
+    setPassword("");
     setError("");
-    try {
-      await api.logout();
-      setAuthenticated(false);
-      setPlots([]);
-      setSavedPlots([]);
-      setNewPlot({ ...emptyPlot });
-      setCreateError("");
-      setShowCreateForm(false);
-      setSaveMessage("");
-    } catch (reason) {
-      setError(
-        reason instanceof Error
-          ? reason.message
-          : "Не удалось выйти. Повторите попытку.",
-      );
-    } finally {
-      setLoggingOut(false);
-    }
+    setPlots([]);
+    setSavedPlots([]);
+    setNewPlot({ ...emptyPlot });
+    setCreateError("");
+    setShowCreateForm(false);
+    setSaveMessage("");
   };
 
   const settlementGroups = new Map<string, AdminPlot[]>();
@@ -366,7 +346,7 @@ export function Admin() {
             onClick={logout}
             disabled={busy}
           >
-            <LogOut size={17} /> {loggingOut ? "Выходим…" : "Выйти"}
+            <LogOut size={17} /> Выйти
           </button>
         </header>
         <div className="admin-savebar">

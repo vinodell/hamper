@@ -39,7 +39,7 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: npm run build:pages
         env:
           VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_PHONE_MAKS: ${{ secrets.VITE_PHONE_MAKS }}
@@ -50,9 +50,6 @@ jobs:
           VITE_TELEGRAM_MAKS: ${{ secrets.VITE_TELEGRAM_MAKS }}
           VITE_TELEGRAM_VLAD: ${{ secrets.VITE_TELEGRAM_VLAD }}
           VITE_CONTACT_EMAIL: ${{ secrets.VITE_CONTACT_EMAIL }}
-
-      - name: Prepare SPA fallback
-        run: cp dist/index.html dist/404.html
 
       - name: Setup Pages
         uses: actions/configure-pages@v5

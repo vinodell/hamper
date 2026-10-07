@@ -9,6 +9,7 @@ import { lazy, Suspense } from "react";
 import { Home } from "./pages/Home";
 import { PlotsProvider } from "./hooks/PlotsProvider";
 import { LoadingIndicator } from "./components/LoadingIndicator";
+import { adminPath } from "./lib/routes";
 
 import "./styles/global.css";
 import "./App.css";
@@ -41,7 +42,7 @@ const App = () => {
             <Route path="/" element={<Home />} />
             <Route path="/projects/:slug" element={<Main />} />
           </Route>
-          <Route path="/admin" element={<Admin />} />
+          <Route path={adminPath} element={<Admin />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Suspense>
