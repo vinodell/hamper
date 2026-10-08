@@ -20,7 +20,7 @@ function githubPagesRoutes(): Plugin {
         const paths = [adminPath, ...projectRoutes.map(({ path }) => path)];
         const files = [
           "404.html",
-          ...paths.map((path) => `${path.slice(1)}/index.html`),
+          ...paths.map((path) => `${path.slice(1)}index.html`),
         ];
         for (const fileName of files)
           this.emitFile({ type: "asset", fileName, source: html.source });

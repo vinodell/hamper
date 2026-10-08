@@ -44,7 +44,7 @@ Set `PUBLIC_ORIGIN` to the exact frontend origin, such as `https://vinodell.gith
 
 ## Admin sign-in
 
-Open `/admin` and enter the configured login and password. `POST /api/admin/login` verifies them once and sets a signed HttpOnly cookie valid for 24 hours. The frontend then loads `/api/admin/plots` to check that the browser accepted the cookie. Reloading the page reuses this cookie; there are no client tokens, stored passwords, session database, redirects, or separate authentication routes. The previous Basic-auth value is removed from tab storage when opening the admin page.
+Open `/admin/` and enter the configured login and password. `POST /api/admin/login` verifies them once and sets a signed HttpOnly cookie valid for 24 hours. The frontend then loads `/api/admin/plots` to check that the browser accepted the cookie. Reloading the page reuses this cookie; there are no client tokens, stored passwords, session database, redirects, or separate authentication routes. The previous Basic-auth value is removed from tab storage when opening the admin page.
 
 Every admin read/write checks the cookie signature and expiry on the server. Changing the configured login, password hash, or optional `SESSION_SECRET` invalidates existing cookies. The existing password hash provides signing key material when `SESSION_SECRET` is absent, so no new secret is required. **Выйти** sends `POST /api/admin/logout` and expires the browser cookie. Expired authentication returns to the login form and preserves unsaved editor rows until re-entry.
 
@@ -63,3 +63,5 @@ To test real requests locally, create an ignored `worker/.dev.vars` with `ADMIN_
 Run `npm test`, `npm run worker:typecheck`, and `npm run build` before publishing. `npm run test:data` covers shared request cancellation, cache refresh/save races, sorting, map status resolution, and Telegram success/error responses.
 
 Both deployment workflows run the full tests before publishing. The GitHub Pages build requires `VITE_API_URL` in the `github-pages` environment or repository secrets.
+
+Project and admin links end in `/`, matching the directory URLs served by GitHub Pages and avoiding an extra redirect on direct visits or reloads.

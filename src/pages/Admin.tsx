@@ -294,7 +294,7 @@ export function Admin() {
             <ShieldCheck size="1.5rem" />
           </div>
           <p className="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</p>
-          <h1>Вход в управление</h1>
+          <h1>Admin</h1>
           <label>
             Логин
             <input

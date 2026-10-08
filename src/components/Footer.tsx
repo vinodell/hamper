@@ -1,5 +1,5 @@
-import { Logo } from "../images";
 import { Link } from "react-router-dom";
+import { Logo } from "../images";
 import { navigation, offertaMsg, siteConfig } from "../lib";
 
 import "./Footer.css";

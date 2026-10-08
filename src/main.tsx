@@ -8,5 +8,5 @@ const siteBasePath = import.meta.env.BASE_URL.replace(/\/+$/, "");
 const currentPath = window.location.pathname.replace(/\/+$/, "");
 // The protected admin response supplies the same public snapshot, so a direct
 // admin visit needs only that request. Public entries preload before rendering.
-if (currentPath !== `${siteBasePath}${adminPath}`) preloadPlots();
+if (currentPath !== `${siteBasePath}${adminPath.slice(0, -1)}`) preloadPlots();
 createRoot(document.getElementById("root")!).render(<App />);
