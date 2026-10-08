@@ -1,6 +1,6 @@
 .project-heading {
     position: relative;
-    padding: 68px 0 76px;
+    padding: 4.25rem 0 4.75rem;
     background: url("/bg-pic-oinelovo.webp") center / cover;
     color: white;
 }
@@ -27,27 +27,27 @@
 }
 
 .project-heading h1 {
-    max-width: 900px;
-    margin: 16px 0 0;
-    font-size: clamp(50px, 7vw, 90px);
+    max-width: 56.25rem;
+    margin: 1rem 0 0;
+    font-size: clamp(2.25rem, 7vw, 5.625rem);
 }
 
 .back-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    margin-bottom: 52px;
+    gap: 0.5rem;
+    margin-bottom: 3.25rem;
     color: #e2bf84;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
 
     .project-heading {
-        padding: 48px 0 56px;
+        padding: 3rem 0 3.5rem;
     }
 
     .back-link {
-        margin-bottom: 38px;
+        margin-bottom: 2.375rem;
     }
 }

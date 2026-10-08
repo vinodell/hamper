@@ -21,7 +21,8 @@ export { projectRoutes } from "./routes";
 
 const env = import.meta.env;
 
-export const apiUrl = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
+export const apiUrl =
+  import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") ?? "";
 
 export const siteConfig = {
   brand: "Hamper",
@@ -29,6 +30,7 @@ export const siteConfig = {
   phone: env.VITE_PHONE_MAKS,
   phone2: env.VITE_PHONE_VLAD,
   phoneHref: env.VITE_PHONE_HREF,
+  phone2Href: `tel:${env.VITE_PHONE_VLAD?.replace(/[^\d+]/g, "") ?? ""}`,
   vladWhatsapp: env.VITE_WHATSAPP_VLAD,
   maksWhatsapp: env.VITE_WHATSAPP_MAKS,
   vladTelegram: env.VITE_TELEGRAM_VLAD,
@@ -40,7 +42,7 @@ export const siteConfig = {
 } as const;
 
 export const navigation = [
-  ["Проекты", "#projects"],
+  ["Проекты", "#poselki"],
   ["Контакты", "#form"],
   ["Акции", "#form"],
 ] as const;

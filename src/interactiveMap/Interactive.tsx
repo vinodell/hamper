@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
-import { MapTooltip, getTooltipPosition } from "./MapTooltip";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type KeyboardEvent,
+} from "react";
+import { MapTooltip } from "./MapTooltip";
 import { ZoneModal } from "./ZoneModal";
 import { MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./MapZones";
 import { isSelectableZone, resolveMapZones } from "./resolveMapZones";
@@ -34,12 +40,19 @@ export const InteractiveMap = ({
   );
 
   const zones = useMemo(() => resolveMapZones(plots), [plots]);
-  const hoveredZone = zones.find(
-    (zone) => zone.id === hoveredZoneId && isSelectableZone(zone),
+  const selectableZones = useMemo(
+    () =>
+      new Map(zones.filter(isSelectableZone).map((zone) => [zone.id, zone])),
+    [zones],
   );
-  const selectedZone = zones.find(
-    (zone) => zone.id === selectedZoneId && isSelectableZone(zone),
-  );
+  const hoveredZone = hoveredZoneId
+    ? selectableZones.get(hoveredZoneId)
+    : undefined;
+  const selectedZone = selectedZoneId
+    ? selectableZones.get(selectedZoneId)
+    : undefined;
+
+  useEffect(() => setImageFailed(false), [imageSrc]);
 
   useEffect(() => {
     // Close a sold/deleted parcel immediately; don't reopen it on a later update.
@@ -47,12 +60,17 @@ export const InteractiveMap = ({
     if (hoveredZoneId && !hoveredZone) setHoveredZoneId(null);
   }, [selectedZoneId, selectedZone, hoveredZoneId, hoveredZone]);
 
-  const handleZoneClick = (zone: MapZone): void => {
-    if (!isSelectableZone(zone)) return;
-    setSelectedZoneId(zone.id);
-    setHoveredZoneId(null);
-    onZoneClick?.(zone);
-  };
+  const handleZoneClick = useCallback(
+    (zone: MapZone): void => {
+      if (!isSelectableZone(zone)) return;
+      setSelectedZoneId(zone.id);
+      setHoveredZoneId(null);
+      onZoneClick?.(zone);
+    },
+    [onZoneClick],
+  );
+
+  const closeModal = useCallback(() => setSelectedZoneId(null), []);
 
   const handleZoneKeyDown = (
     event: KeyboardEvent<SVGPathElement>,
@@ -135,12 +153,10 @@ export const InteractiveMap = ({
                       }
 
                       setHoveredZoneId(zone.id);
-                      setPointerPosition(
-                        getTooltipPosition(
-                          event.clientX + 16,
-                          event.clientY + 16,
-                        ),
-                      );
+                      setPointerPosition({
+                        x: event.clientX,
+                        y: event.clientY,
+                      });
                     }}
                     onPointerLeave={() => {
                       setHoveredZoneId(null);
@@ -153,9 +169,7 @@ export const InteractiveMap = ({
                         return;
                       const bounds =
                         event.currentTarget.getBoundingClientRect();
-                      setPointerPosition(
-                        getTooltipPosition(bounds.right + 16, bounds.top),
-                      );
+                      setPointerPosition({ x: bounds.right, y: bounds.top });
                       setHoveredZoneId(zone.id);
                     }}
                     onBlur={() => {
@@ -195,14 +209,7 @@ export const InteractiveMap = ({
         )}
       </div>
 
-      {selectedZone && (
-        <ZoneModal
-          zone={selectedZone}
-          onClose={() => {
-            setSelectedZoneId(null);
-          }}
-        />
-      )}
+      {selectedZone && <ZoneModal zone={selectedZone} onClose={closeModal} />}
     </>
   );
 };

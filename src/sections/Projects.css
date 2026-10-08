@@ -1,7 +1,7 @@
 .format-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 28px;
+    gap: 1.75rem;
 }
 
 .format-card {
@@ -17,10 +17,10 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: 300px;
+    min-height: 18.75rem;
     background-size: cover;
     background-position: center;
-    padding: 23px;
+    padding: 1.4375rem;
     display: flex;
     align-items: flex-end;
     background:
@@ -40,8 +40,8 @@
     content: "";
     position: absolute;
     inset: 18% 12% 18% 12%;
-    border-radius: 14px;
-    border: 1px solid rgba(53, 75, 48, 0.45);
+    border-radius: 0.875rem;
+    border: 0.0625rem solid rgba(53, 75, 48, 0.45);
     background:
         linear-gradient(0deg, rgba(62, 79, 53, 0.12), rgba(62, 79, 53, 0.12)),
         repeating-linear-gradient(
@@ -60,9 +60,9 @@
     z-index: 1;
     background: var(--pine);
     color: #e3c18e;
-    font-size: 11px;
-    letter-spacing: 1.4px;
-    padding: 10px 14px;
+    font-size: 0.6875rem;
+    letter-spacing: 0.0875rem;
+    padding: 0.625rem 0.875rem;
 }
 
 .format-image img {
@@ -81,60 +81,57 @@
 }
 
 .format-content {
-    padding: 32px;
+    padding: 2rem;
 }
 
 .format-content h3 {
     font-family: "hamper-regular", sans-serif;
-    font-size: 33px;
+    font-size: 2.0625rem;
     font-weight: 400;
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
 
 .format-content p {
     color: var(--muted);
     line-height: 1.6;
-    margin-bottom: 20px;
+    margin-bottom: 1.25rem;
 }
 
 .format-content ul {
     list-style: none;
     padding: 0;
-    margin: 0 0 25px;
+    margin: 0 0 1.5625rem;
     display: grid;
-    gap: 11px;
+    gap: 0.6875rem;
     color: #4d5149;
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .format-content li {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 0.6875rem;
 }
 
 .format-content li svg {
     color: var(--gold-dark);
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
     .format-grid {
         grid-template-columns: 1fr;
-    }
-
-    .format-grid {
-        gap: 20px;
+        gap: 1.25rem;
     }
 
     .format-image {
         position: relative;
         isolation: isolate;
         overflow: hidden;
-        min-height: 230px;
+        min-height: 14.375rem;
     }
 
     .format-content {
-        padding: 25px;
+        padding: 1.5625rem;
     }
 }
 

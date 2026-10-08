@@ -9,6 +9,7 @@ import { lazy, Suspense } from "react";
 import { Home } from "./pages/Home";
 import { PlotsProvider } from "./hooks/PlotsProvider";
 import { LoadingIndicator } from "./components/LoadingIndicator";
+import { RouteScroll } from "./components/RouteScroll";
 import { adminPath } from "./lib/routes";
 
 import "./styles/global.css";
@@ -31,6 +32,7 @@ const App = () => {
           </main>
         }
       >
+        <RouteScroll />
         <Routes>
           <Route
             element={

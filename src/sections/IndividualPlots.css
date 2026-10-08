@@ -1,19 +1,19 @@
 .individual-plots-picker {
     display: grid;
-    gap: 10px;
-    max-width: 560px;
-    margin-bottom: 28px;
-    font-size: 14px;
+    gap: 0.625rem;
+    max-width: 35rem;
+    margin-bottom: 1.75rem;
+    font-size: 0.875rem;
     color: var(--ink);
 }
 
 .individual-plots-picker select {
     width: 100%;
     min-width: 0;
-    min-height: 52px;
-    padding: 12px;
-    font-size: 16px;
-    border: 1px solid var(--line);
+    min-height: 3.25rem;
+    padding: 0.75rem;
+    font-size: 1rem;
+    border: 0.0625rem solid var(--line);
     border-radius: var(--radius);
     background: var(--paper);
     color: var(--ink);
@@ -21,22 +21,22 @@
 
 .individual-plot {
     display: grid;
-    grid-template-columns: minmax(0, 1.8fr) minmax(240px, 1fr);
+    grid-template-columns: minmax(0, 1.8fr) minmax(15rem, 1fr);
     background: var(--paper);
-    border: 1px solid var(--line);
+    border: 0.0625rem solid var(--line);
 }
 
 .individual-plot-details {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 24px;
-    padding: clamp(20px, 3vw, 40px);
+    gap: 1.5rem;
+    padding: clamp(1.25rem, 3vw, 2.5rem);
     min-width: 0;
 }
 
 .individual-plot-details h3 {
-    font-size: clamp(24px, 3vw, 36px);
+    font-size: clamp(1.5rem, 3vw, 2.25rem);
     line-height: 1.2;
     margin: 0;
     overflow-wrap: anywhere;
@@ -45,7 +45,7 @@
 .individual-plot-description {
     margin: 0;
     color: var(--muted);
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.65;
     white-space: pre-line;
     overflow-wrap: anywhere;
@@ -53,7 +53,7 @@
 
 .individual-plot-details dl {
     display: grid;
-    gap: 16px;
+    gap: 1rem;
     margin: 0;
 }
 
@@ -61,14 +61,14 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 8px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--line);
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 0.0625rem solid var(--line);
 }
 
 .individual-plot-details dt {
     color: var(--muted);
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
 .individual-plot-details dd {
@@ -79,11 +79,11 @@
 .individual-plot-details .button {
     width: 100%;
     min-width: 0;
-    padding-inline: 12px;
+    padding-inline: 0.75rem;
     text-align: center;
 }
 
-@media (max-width:900px) {
+@media (max-width:56.25rem) {
     .individual-plot {
         grid-template-columns: minmax(0, 1fr);
     }

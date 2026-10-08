@@ -1,5 +1,5 @@
 import { IndividualPlots } from "../sections/IndividualPlots";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Footer, Header } from "../components";
@@ -15,7 +15,14 @@ export const Main = () => {
     slug && Object.hasOwn(projectPageConfig, slug)
       ? projectPageConfig[slug as ProjectSlug]
       : undefined;
-  const handleSelectPlot = (plot: Plot) => setSelectedPlot({ ...plot });
+  const handleSelectPlot = useCallback((plot: Plot) => {
+    // Selecting the same parcel again must update a form edited since that click.
+    setSelectedPlot({ ...plot });
+  }, []);
+
+  useEffect(() => {
+    setSelectedPlot(null);
+  }, [slug]);
 
   if (!config) {
     return <Navigate to="/" replace />;
@@ -28,7 +35,7 @@ export const Main = () => {
         <section className="project-heading">
           <div className="container">
             <Link className="back-link" to="/">
-              <ArrowLeft size={17} /> Все проекты
+              <ArrowLeft size="1.0625rem" /> Все проекты
             </Link>
             <p className="eyebrow">ПРОЕКТ HAMPER</p>
             <h1>{config.title}</h1>
@@ -49,6 +56,7 @@ export const Main = () => {
           onSelectPlot={handleSelectPlot}
         />
         <Contacts
+          key={slug}
           selectedPlot={
             selectedPlot?.settlement === config.plotFilter ? selectedPlot : null
           }

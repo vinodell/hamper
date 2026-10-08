@@ -27,7 +27,7 @@ export const AboutUs = () => {
           {heroFacts.map(({ icon: Icon, text }) => (
             <div className="hero-fact" key={text}>
               <span>
-                <Icon size={20} />
+                <Icon size="1.25rem" />
               </span>
               <strong>{text}</strong>
             </div>
@@ -38,7 +38,7 @@ export const AboutUs = () => {
             {chooseZemli}
           </a>
           <a className="button button-outline" href="#form">
-            Записаться на просмотр <ArrowDown size={17} />
+            Записаться на просмотр <ArrowDown size="1.0625rem" />
           </a>
         </div>
       </div>

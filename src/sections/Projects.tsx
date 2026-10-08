@@ -57,7 +57,7 @@ export const Projects = () => {
                 <ul>
                   {format.facts.map(({ text, icon: Icon }) => (
                     <li key={text}>
-                      <Icon size={17} />
+                      <Icon size="1.0625rem" />
                       {text}
                     </li>
                   ))}

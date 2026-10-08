@@ -1,3 +1,5 @@
+export const ADMIN_COOKIE = "hamper_admin";
+export const ADMIN_COOKIE_TTL_SECONDS = 86_400;
 export const PASSWORD_HASH_ITERATIONS = 100_000;
 export const PASSWORD_HASH_ALGORITHM = "SHA-256";
 export const CONTACT_NAME_MAX_LENGTH = 120;

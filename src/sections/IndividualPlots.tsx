@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { usePlots } from "../hooks";
 import { PlotCarousel } from "../components/PlotCarousel";
 import { LoadingIndicator } from "../components/LoadingIndicator";
@@ -14,11 +14,18 @@ export function IndividualPlots({
 }) {
   const { plots, loading, error } = usePlots();
   const [selectedId, setSelectedId] = useState("");
-  const available = plots.filter(
-    (plot) => plot.settlement === "Другие участки" && plot.status !== "Продан",
+  const available = useMemo(
+    () =>
+      plots.filter(
+        (plot) =>
+          plot.settlement === "Другие участки" && plot.status !== "Продан",
+      ),
+    [plots],
   );
-  const selected =
-    available.find((plot) => plot.id === selectedId) ?? available[0];
+  const selected = useMemo(
+    () => available.find((plot) => plot.id === selectedId) ?? available[0],
+    [available, selectedId],
+  );
 
   return (
     <section

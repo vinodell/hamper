@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import type { PlotPhoto } from "../data/individualPlots";
 import "./PlotCarousel.css";
@@ -20,7 +20,7 @@ function Slide({ photo }: { photo: PlotPhoto }) {
       )}
       {state === "error" ? (
         <span className="plot-carousel-message" role="status">
-          <ImageOff aria-hidden="true" />
+          <ImageOff size="1.5rem" aria-hidden="true" />
           Не удалось загрузить фотографию
         </span>
       ) : (
@@ -47,13 +47,21 @@ export function PlotCarousel({
   const [index, setIndex] = useState(0);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
   const currentIndex = Math.min(index, Math.max(0, photos.length - 1));
-  const move = (step: number) =>
-    setIndex((currentIndex + step + photos.length) % photos.length);
+  const move = useCallback(
+    (step: number) => {
+      if (photos.length < 2) return;
+      setIndex((current) => {
+        const bounded = Math.min(current, photos.length - 1);
+        return (bounded + step + photos.length) % photos.length;
+      });
+    },
+    [photos.length],
+  );
 
   if (!photos.length)
     return (
       <div className="plot-carousel-empty">
-        <ImageOff size={32} aria-hidden="true" />
+        <ImageOff size="2rem" aria-hidden="true" />
         <p>Фотографии этого участка скоро появятся.</p>
       </div>
     );
@@ -73,6 +81,10 @@ export function PlotCarousel({
       }}
       onTouchStart={(event) => {
         const touch = event.touches[0];
+        if (!touch || event.touches.length !== 1) {
+          touchStart.current = null;
+          return;
+        }
         touchStart.current = { x: touch.clientX, y: touch.clientY };
       }}
       onTouchCancel={() => {
@@ -83,6 +95,7 @@ export function PlotCarousel({
         touchStart.current = null;
         if (!start) return;
         const touch = event.changedTouches[0];
+        if (!touch) return;
         const dx = touch.clientX - start.x;
         if (
           Math.abs(dx) > 50 &&
@@ -99,7 +112,7 @@ export function PlotCarousel({
           disabled={photos.length < 2}
           aria-label="Предыдущая фотография"
         >
-          <ChevronLeft aria-hidden="true" />
+          <ChevronLeft size="1.5rem" aria-hidden="true" />
         </button>
         <span aria-live="polite" aria-atomic="true">
           {currentIndex + 1} / {photos.length}
@@ -110,7 +123,7 @@ export function PlotCarousel({
           disabled={photos.length < 2}
           aria-label="Следующая фотография"
         >
-          <ChevronRight aria-hidden="true" />
+          <ChevronRight size="1.5rem" aria-hidden="true" />
         </button>
       </div>
       {photos.length > 1 && (

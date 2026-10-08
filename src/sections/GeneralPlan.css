@@ -3,20 +3,20 @@
 }
 
 .masterplan h2 {
-    font-size: clamp(40px, 5vw, 65px);
-    margin-bottom: 24px;
+    font-size: clamp(2.5rem, 5vw, 4.0625rem);
+    margin-bottom: 1.5rem;
 }
 
 .masterplan-head {
     display: flex;
     justify-content: space-between;
     align-items: end;
-    gap: 30px;
-    margin-bottom: 45px;
+    gap: 1.875rem;
+    margin-bottom: 2.8125rem;
 }
 
 .masterplan-head > div {
-    max-width: 600px;
+    max-width: 37.5rem;
 }
 
 .masterplan-head p:last-child {
@@ -28,7 +28,7 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    padding: 32px;
+    padding: 2rem;
     border-radius: var(--radius);
     background: #deded0;
 }
@@ -36,13 +36,13 @@
 .plan-background {
     position: absolute;
     z-index: -2;
-    inset: -24px;
-    width: calc(100% + 48px);
+    inset: -1.5rem;
+    width: calc(100% + 3rem);
     max-width: none;
-    height: calc(100% + 48px);
+    height: calc(100% + 3rem);
     object-fit: cover;
     object-position: center;
-    filter: blur(14px);
+    filter: blur(0.875rem);
     opacity: 0.8;
     pointer-events: none;
 }
@@ -63,23 +63,23 @@
 }
 
 .plan-image {
-    width: min(100%, 760px);
+    width: min(100%, 47.5rem);
     margin: 0 auto;
     overflow: hidden;
-    border: 1px solid var(--line);
-    border-radius: 4px;
+    border: 0.0625rem solid var(--line);
+    border-radius: 0.25rem;
     background: #ece8dc;
-    box-shadow: 0 12px 40px rgb(15 38 31 / 0.16);
+    box-shadow: 0 0.75rem 2.5rem rgb(15 38 31 / 0.16);
 }
 
 .plan-caption {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 10px 24px;
-    padding: 18px 22px;
+    gap: 0.625rem 1.5rem;
+    padding: 1.125rem 1.375rem;
     background: var(--paper);
-    font-size: 12px;
+    font-size: 0.75rem;
     line-height: 1.5;
     color: var(--muted);
 }
@@ -87,14 +87,14 @@
 .plan-hint {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     color: var(--pine);
     font-weight: 500;
 }
 
 .plan-hint i {
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 50%;
     background: var(--pine);
 }
@@ -102,35 +102,35 @@
 .plan-status-legend {
     display: flex;
     flex-wrap: wrap;
-    gap: 10px 18px;
+    gap: 0.625rem 1.125rem;
     width: 100%;
 }
 
 .plan-status-legend span {
     display: inline-flex;
     align-items: center;
-    gap: 7px;
+    gap: 0.4375rem;
 }
 
 .plan-status-legend i {
-    width: 10px;
-    height: 10px;
-    border-radius: 2px;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 0.125rem;
 }
 
 .plan-status-free { background: #92b775; }
 .plan-status-reserved { background: #facc15; }
 .plan-status-sold { background: #dc2626; }
 
-@media (max-width: 760px) {
-    .masterplan h2 { font-size: 43px; }
+@media (max-width: 47.5rem) {
+    .masterplan h2 { font-size: 2.6875rem; }
 
     .masterplan-head {
         display: block;
-        margin-bottom: 28px;
+        margin-bottom: 1.75rem;
     }
 
-    .masterplan-head .button { margin-top: 13px; }
-    .plan-stage { padding: 12px; }
-    .plan-caption { padding: 14px 16px; }
+    .masterplan-head .button { margin-top: 0.8125rem; }
+    .plan-stage { padding: 0.75rem; }
+    .plan-caption { padding: 0.875rem 1rem; }
 }

@@ -19,7 +19,7 @@ export const Info = () => {
             {infrastructure.map(({ icon: Icon, title, text }) => (
               <article className="feature bordered" key={title}>
                 <span className="feature-icon">
-                  <Icon />
+                  <Icon size="1.5rem" />
                 </span>
                 <h3>{title}</h3>
                 <p>{text}</p>
@@ -43,7 +43,7 @@ export const Info = () => {
           <div className="utility-grid">
             {utilities.map(({ icon: Icon, title, text }) => (
               <div className="utility" key={title}>
-                <Icon />
+                <Icon size="1.5rem" />
                 <div>
                   <h3>{title}</h3>
                   <p>{text}</p>

@@ -1,13 +1,13 @@
 .contact-copy h2 {
-    font-size: clamp(40px, 5vw, 65px);
-    margin-bottom: 24px;
+    font-size: clamp(2.5rem, 5vw, 4.0625rem);
+    margin-bottom: 1.5rem;
 }
 
 .contact-copy>p {
     color: var(--muted);
-    font-size: 17px;
+    font-size: 1.0625rem;
     line-height: 1.65;
-    max-width: 650px;
+    max-width: 40.625rem;
 }
 
 .contact-section {
@@ -19,43 +19,43 @@
 .contact-grid {
     display: grid;
     grid-template-columns: 1fr 0.9fr;
-    gap: clamp(40px, 10vw, 150px);
+    gap: clamp(2.5rem, 10vw, 9.375rem);
     align-items: start;
 }
 
 .contact-copy h2 {
-    font-size: clamp(49px, 6vw, 78px);
+    font-size: clamp(3.0625rem, 6vw, 4.875rem);
 }
 
 .contact-copy>p {
     color: rgba(255, 255, 255, 0.68);
-    max-width: 470px;
+    max-width: 29.375rem;
 }
 
 .contact-details {
     display: grid;
-    margin-top: 42px;
+    margin-top: 2.625rem;
 }
 
 .contact-details a,
 .contact-details .contact-phone {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 0.6875rem;
     color: #e4c187;
-    font-size: 18px;
+    font-size: 1.125rem;
 }
 
 .contact-form {
     display: grid;
-    gap: 19px;
+    gap: 1.1875rem;
 }
 
 .contact-form label {
     color: #dfc08a;
-    font-size: 11px;
+    font-size: 0.6875rem;
     text-transform: uppercase;
-    letter-spacing: 1.5px;
+    letter-spacing: 0.09375rem;
 }
 
 .contact-form input,
@@ -63,13 +63,13 @@
 .contact-form textarea {
     width: 100%;
     border: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.33);
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.33);
     color: white;
     background: transparent;
-    padding: 12px 0;
+    padding: 0.75rem 0;
     outline: none;
     resize: vertical;
-    margin-top: 3px;
+    margin-top: 0.1875rem;
 }
 
 .contact-form input::placeholder,
@@ -87,7 +87,7 @@
 
 .contact-form small {
     color: rgba(255, 255, 255, 0.47);
-    font-size: 11px;
+    font-size: 0.6875rem;
     line-height: 1.4;
 }
 
@@ -99,7 +99,7 @@
     color: #ffad9c !important;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
 
     .contact-grid {
         grid-template-columns: 1fr;
@@ -110,7 +110,7 @@
     }
 
     .contact-grid {
-        gap: 45px;
+        gap: 2.8125rem;
     }
 }
 
@@ -127,34 +127,34 @@
 
 .mobile-contacts .social-icon {
     display: block;
-    width: 32px;
-    height: 32px;
-    flex: 0 0 32px;
+    width: 2rem;
+    height: 2rem;
+    flex: 0 0 2rem;
 }
 
 .social-logo:hover svg {
     transition: transform .2s ease;
-    transform: translateY(-3px);
+    transform: translateY(-0.1875rem);
 }
 
 .email-container {
-    height: 55px;
+    height: 3.4375rem;
 }
 
-@media (max-width: 600px) {
+@media (max-width: 37.5rem) {
     .contact-copy h2 {
-        font-size: clamp(34px, 9vw, 49px);
+        font-size: clamp(2.125rem, 9vw, 3.0625rem);
     }
 
     .mobile-contacts {
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 0.5rem;
     }
 
     .mobile-contacts>a,
     .mobile-contacts>.contact-phone {
         padding-left: 0;
-        min-height: 44px;
+        min-height: 2.75rem;
     }
 
     .contact-details a {
@@ -164,7 +164,7 @@
     .contact-form input,
     .contact-form select,
     .contact-form textarea {
-        font-size: 16px;
+        font-size: 1rem;
         min-width: 0;
     }
 }
@@ -173,9 +173,9 @@
     min-width: 0;
 }
 
-@media (min-width: 761px) and (max-width: 1024px) {
+@media (min-width: 47.5625rem) and (max-width: 64rem) {
     .contact-grid {
         grid-template-columns: minmax(0, 1fr);
-        gap: 40px;
+        gap: 2.5rem;
     }
 }

@@ -1,7 +1,7 @@
 export const WhatsupLogo = () => (
   <svg
-    width="55"
-    height="55"
+    width="3.4375rem"
+    height="3.4375rem"
     viewBox="0 0 48 48"
     xmlns="http://www.w3.org/2000/svg"
     role="img"

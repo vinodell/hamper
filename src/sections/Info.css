@@ -1,50 +1,50 @@
 .utilities h2 {
-    font-size: clamp(40px, 5vw, 65px);
-    margin-bottom: 24px;
+    font-size: clamp(2.5rem, 5vw, 4.0625rem);
+    margin-bottom: 1.5rem;
 }
 
 .utilities-inner>div:first-child>p:last-child {
     color: var(--muted);
-    font-size: 17px;
+    font-size: 1.0625rem;
     line-height: 1.65;
-    max-width: 650px;
+    max-width: 40.625rem;
 }
 
 .feature-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 24px;
+    gap: 1.5rem;
 }
 
 .feature {
-    padding: 26px 0;
+    padding: 1.625rem 0;
 }
 
 .feature.bordered {
-    border-top: 1px solid var(--line);
+    border-top: 0.0625rem solid var(--line);
 }
 
 .feature-icon {
-    width: 47px;
-    height: 47px;
+    width: 2.9375rem;
+    height: 2.9375rem;
     color: var(--gold-dark);
     display: grid;
     place-items: center;
-    border: 1px solid var(--line);
+    border: 0.0625rem solid var(--line);
     border-radius: 50%;
-    margin-bottom: 25px;
+    margin-bottom: 1.5625rem;
 }
 
 .feature-icon svg {
-    width: 21px;
+    width: 1.3125rem;
 }
 
 .feature h3,
 .utility h3 {
     font-family: "hamper-regular", Georgia, serif;
-    font-size: 25px;
+    font-size: 1.5625rem;
     font-weight: 400;
-    margin-bottom: 10px;
+    margin-bottom: 0.625rem;
 }
 
 .feature p,
@@ -57,18 +57,18 @@
 .utilities {
     background: var(--pine-light);
     color: white;
-    padding: 88px 0;
+    padding: 5.5rem 0;
 }
 
 .utilities-inner {
     display: grid;
     grid-template-columns: 0.75fr 1.25fr;
-    gap: 100px;
+    gap: 6.25rem;
     align-items: center;
 }
 
 .utilities h2 {
-    font-size: clamp(38px, 4vw, 55px);
+    font-size: clamp(2.375rem, 4vw, 3.4375rem);
 }
 
 .utilities-inner>div:first-child>p:last-child {
@@ -78,14 +78,14 @@
 .utility-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 38px 48px;
+    gap: 2.375rem 3rem;
 }
 
 .utility {
     display: flex;
-    gap: 17px;
-    border-top: 1px solid rgba(255, 255, 255, 0.24);
-    padding-top: 20px;
+    gap: 1.0625rem;
+    border-top: 0.0625rem solid rgba(255, 255, 255, 0.24);
+    padding-top: 1.25rem;
     align-items: center;
 }
 
@@ -95,19 +95,19 @@
 }
 
 .utility h3 {
-    font-size: 22px;
-    margin-bottom: 5px;
+    font-size: 1.375rem;
+    margin-bottom: 0.3125rem;
 }
 
 .utility p {
     color: rgba(255, 255, 255, 0.66);
-    font-size: 14px;
+    font-size: 0.875rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
 
     .utilities h2 {
-        font-size: 43px;
+        font-size: 2.6875rem;
     }
 
     .feature-grid,
@@ -116,45 +116,45 @@
     }
 
     .feature-grid {
-        gap: 18px;
+        gap: 1.125rem;
     }
 
     .feature {
-        padding: 20px 0;
+        padding: 1.25rem 0;
     }
 
     .feature.bordered {
-        padding-top: 27px;
+        padding-top: 1.6875rem;
     }
 
     .utilities {
-        padding: 70px 0;
+        padding: 4.375rem 0;
     }
 
     .utilities-inner {
-        gap: 38px;
+        gap: 2.375rem;
     }
 
     .utility-grid {
-        gap: 25px 16px;
+        gap: 1.5625rem 1rem;
     }
 
     .utility {
-        gap: 10px;
+        gap: 0.625rem;
     }
 
     .utility h3 {
-        font-size: 19px;
+        font-size: 1.1875rem;
     }
 
     .utility p {
-        font-size: 12px;
+        font-size: 0.75rem;
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 37.5rem) {
     .utilities h2 {
-        font-size: clamp(28px, 7.5vw, 43px);
+        font-size: clamp(1.75rem, 7.5vw, 2.6875rem);
         overflow-wrap: anywhere;
     }
 
@@ -171,10 +171,10 @@
     }
 }
 
-@media (min-width: 761px) and (max-width: 1024px) {
+@media (min-width: 47.5625rem) and (max-width: 64rem) {
     .utilities-inner {
         grid-template-columns: minmax(0, 1fr);
-        gap: 32px;
+        gap: 2rem;
     }
 
     .utility-grid {

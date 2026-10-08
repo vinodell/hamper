@@ -30,8 +30,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 12px;
-    padding: 24px;
+    gap: 0.75rem;
+    padding: 1.5rem;
     text-align: center;
     color: var(--ink);
 }
@@ -41,8 +41,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 28px;
-    gap: 16px;
+    padding: 1.75rem;
+    gap: 1rem;
     text-align: center;
 }
 
@@ -52,18 +52,18 @@
 
 .plot-carousel-controls {
     position: absolute;
-    bottom: 24px;
-    right: 24px;
+    bottom: 1.5rem;
+    right: 1.5rem;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 6px;
+    gap: 0.75rem;
+    padding: 0.375rem;
     background: var(--paper);
-    border-radius: 40px;
+    border-radius: 2.5rem;
 }
 
 .plot-carousel-controls span {
-    min-width: 54px;
+    min-width: 3.375rem;
     text-align: center;
     font-variant-numeric: tabular-nums;
 }
@@ -71,8 +71,8 @@
 .plot-carousel-controls button {
     display: grid;
     place-items: center;
-    width: 44px;
-    height: 44px;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 50%;
     color: var(--ink);
     background: transparent;
@@ -86,27 +86,27 @@
 
 .plot-carousel-pagination {
     position: absolute;
-    bottom: 26px;
-    left: 24px;
+    bottom: 1.625rem;
+    left: 1.5rem;
     display: flex;
     flex-wrap: wrap;
-    max-width: calc(100% - 220px);
+    max-width: calc(100% - 13.75rem);
 }
 
 .plot-carousel-pagination button {
-    width: 24px;
-    height: 44px;
-    padding: 8px;
+    width: 1.5rem;
+    height: 2.75rem;
+    padding: 0.5rem;
     background: transparent;
 }
 
 .plot-carousel-pagination span {
     display: block;
-    width: 8px;
-    height: 8px;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 50%;
     background: white;
-    box-shadow: 0 0 0 1px rgba(15, 38, 31, .3);
+    box-shadow: 0 0 0 0.0625rem rgba(15, 38, 31, .3);
     opacity: .55;
     transition: transform 180ms ease, opacity 180ms ease;
 }
@@ -119,11 +119,11 @@
 @media (hover:hover) {
     .plot-carousel-controls button:not(:disabled):hover {
         background: #e7e7da;
-        transform: translateY(-1px);
+        transform: translateY(-0.0625rem);
     }
 }
 
-@media (max-width:600px) {
+@media (max-width:37.5rem) {
 
     .plot-carousel-slide,
     .plot-carousel-empty {
@@ -131,8 +131,8 @@
     }
 
     .plot-carousel-controls {
-        bottom: 12px;
-        right: 12px;
+        bottom: 0.75rem;
+        right: 0.75rem;
     }
 
     .plot-carousel-pagination {

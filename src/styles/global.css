@@ -24,8 +24,10 @@
     --gold: #c9a36e;
     --gold-dark: #a98454;
     --line: #00592e;
-    --radius: 3px;
-    --container: 1240px;
+    --radius: 0.1875rem;
+    --container: 77.5rem;
+    --section-offset: 1.5rem;
+    font-size: 100%;
     font-family: "DM Sans", sans-serif;
     color: var(--ink);
     background: var(--bg);
@@ -42,7 +44,7 @@ html {
 
 body {
     margin: 0;
-    min-width: 320px;
+    min-width: 0;
     background: var(--bg);
 }
 
@@ -73,26 +75,34 @@ img {
     max-width: 100%;
 }
 
+svg {
+    flex-shrink: 0;
+}
+
+[id] {
+    scroll-margin-top: var(--section-offset);
+}
+
 .container {
-    width: min(calc(100% - 64px), var(--container));
+    width: min(calc(100% - 4rem), var(--container));
     margin: 0 auto;
 }
 
 .brand {
     display: inline-flex;
     align-items: center;
-    gap: 11px;
+    gap: 0.6875rem;
     cursor: pointer;
-    min-width: 205px;
+    min-width: 12.8125rem;
 }
 
 .brand-mark {
-    width: 48px;
-    height: 48px;
+    width: 3rem;
+    height: 3rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    flex: 0 0 48px;
+    flex: 0 0 3rem;
 }
 
 .brand-mark svg {
@@ -103,7 +113,7 @@ img {
 
 .brand-name {
     font-family: "hamper-bold", serif;
-    font-size: 15px;
+    font-size: 0.9375rem;
     line-height: 1.05;
     text-align: left;
     white-space: nowrap;
@@ -113,11 +123,11 @@ img {
 .brand-name small {
     display: block;
     font:
-        7px "hamper-regular",
+        0.4375rem "hamper-regular",
         sans-serif;
-    letter-spacing: 1.2px;
+    letter-spacing: 0.075rem;
     text-transform: uppercase;
-    margin-top: 5px;
+    margin-top: 0.3125rem;
     color: #99978d;
 }
 
@@ -125,12 +135,18 @@ img {
     display: inline-flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    min-height: 54px;
-    padding: 0 29px;
+    gap: 0.625rem;
+    min-height: 3.375rem;
+    padding: 0 1.8125rem;
     border-radius: var(--radius);
     font-weight: 600;
     transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+}
+
+.button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .button:focus-visible,
@@ -139,8 +155,8 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-    outline: 2px solid var(--gold-dark);
-    outline-offset: 3px;
+    outline: 0.125rem solid var(--gold-dark);
+    outline-offset: 0.1875rem;
 }
 
 .button-gold {
@@ -158,7 +174,7 @@ select:focus-visible {
 }
 
 .button-outline {
-    border: 1px solid rgba(255, 255, 255, 0.6);
+    border: 0.0625rem solid rgba(255, 255, 255, 0.6);
     color: white;
 }
 
@@ -167,11 +183,11 @@ select:focus-visible {
 }
 
 .eyebrow {
-    margin: 0 0 16px;
+    margin: 0 0 1rem;
     color: var(--gold-dark);
-    font-size: 12px;
+    font-size: 0.75rem;
     font-weight: 700;
-    letter-spacing: 2.3px;
+    letter-spacing: 0.14375rem;
 }
 
 .eyebrow.light {
@@ -193,9 +209,9 @@ h2 {
 }
 
 h1 {
-    font-size: clamp(56px, 7vw, 94px);
+    font-size: clamp(3.5rem, 7vw, 5.875rem);
     margin: 0;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.03125rem;
 }
 
 h1 em,
@@ -213,12 +229,12 @@ h2 em {
 }
 
 .section-heading {
-    max-width: 800px;
-    margin-bottom: 55px;
+    max-width: 50rem;
+    margin-bottom: 3.4375rem;
 }
 
 .section-heading.narrow {
-    max-width: 750px;
+    max-width: 46.875rem;
 }
 
 .section-heading.centered {
@@ -228,74 +244,74 @@ h2 em {
 }
 
 .section-heading h2 {
-    font-size: clamp(40px, 5vw, 65px);
-    margin-bottom: 24px;
+    font-size: clamp(2.5rem, 5vw, 4.0625rem);
+    margin-bottom: 1.5rem;
 }
 
 .section-heading>p:last-child {
     color: var(--muted);
-    font-size: 17px;
+    font-size: 1.0625rem;
     line-height: 1.65;
-    max-width: 650px;
+    max-width: 40.625rem;
 }
 
 .text-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
     color: var(--gold-dark);
     font-weight: 600;
-    font-size: 14px;
-    border-bottom: 1px solid currentColor;
-    padding-bottom: 5px;
+    font-size: 0.875rem;
+    border-bottom: 0.0625rem solid currentColor;
+    padding-bottom: 0.3125rem;
     transition: gap .25s ease;
 }
 
 .text-link:hover {
-    gap: 30px;
+    gap: 1.875rem;
 }
 
 .text-link span {
-    font-size: 18px;
+    font-size: 1.125rem;
 }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 760px;
-    font-size: 14px;
+    min-width: 47.5rem;
+    font-size: 0.875rem;
 }
 
 th {
     color: var(--muted);
     text-align: left;
-    font-size: 11px;
+    font-size: 0.6875rem;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.0625rem;
     font-weight: 600;
-    padding: 17px 14px;
-    border-bottom: 1px solid var(--line);
+    padding: 1.0625rem 0.875rem;
+    border-bottom: 0.0625rem solid var(--line);
 }
 
 td {
-    padding: 19px 14px;
-    border-bottom: 1px solid var(--line);
+    padding: 1.1875rem 0.875rem;
+    border-bottom: 0.0625rem solid var(--line);
 }
 
-@media (max-width: 1050px) {
+@media (max-width: 65.625rem) {
 
     .brand {
-        min-width: 155px;
+        min-width: 9.6875rem;
     }
 
     .container {
-        width: min(calc(100% - 48px), var(--container));
+        width: min(calc(100% - 3rem), var(--container));
     }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
     .container {
-        width: min(calc(100% - 40px), var(--container));
+        width: min(calc(100% - 2.5rem), var(--container));
     }
 
     .brand {
@@ -304,15 +320,15 @@ td {
     }
 
     .section {
-        padding: 75px 0;
+        padding: 4.6875rem 0;
     }
 
     .section-heading {
-        margin-bottom: 37px;
+        margin-bottom: 2.3125rem;
     }
 
     .section-heading h2 {
-        font-size: 43px;
+        font-size: 2.6875rem;
     }
 }
 
@@ -344,23 +360,23 @@ td {
 
 @media (hover: hover) {
     .button:hover {
-        transform: translateY(-2px);
+        transform: translateY(-0.125rem);
     }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 37.5rem) {
     h1 {
-        font-size: clamp(36px, 10vw, 56px);
+        font-size: clamp(2.25rem, 10vw, 3.5rem);
     }
 
     .section-heading h2 {
-        font-size: clamp(30px, 8vw, 43px);
+        font-size: clamp(1.875rem, 8vw, 2.6875rem);
     }
 
     input,
     select,
     textarea {
-        font-size: 16px;
+        font-size: 1rem;
     }
 }
 

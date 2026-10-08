@@ -1,6 +1,12 @@
 import { isValidPlotNumber, normalizePlotNumber } from "../lib/plotNumbers";
 import { LogOut, Plus, Save, ShieldCheck, X } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   api,
   ApiError,
@@ -9,19 +15,11 @@ import {
   type PlotUpdate,
 } from "../lib/api";
 import { plotStatuses } from "../lib";
-import { getAdminAuthorization } from "../lib/adminAuth";
+import { mergeAdminDrafts, toPlotUpdate } from "../lib/adminDrafts";
 import { notifyPlotsUpdated } from "../lib/plotEvents";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 
 import "./Admin.css";
-
-const toPlotUpdate = (plot: AdminPlot): PlotUpdate => ({
-  area: normalizePlotNumber(plot.area),
-  status: plot.status,
-  price: normalizePlotNumber(plot.price),
-  street: plot.street ?? "",
-  description: plot.description ?? "",
-});
 
 const emptyPlot: PlotCreate = {
   id: "",
@@ -61,12 +59,22 @@ export function Admin() {
   const [saveMessage, setSaveMessage] = useState("");
   const busy = saving || creating;
 
-  const savedById = new Map(savedPlots.map((plot) => [plot.id, plot]));
-  const changedPlots = plots.filter((plot) => {
-    const saved = savedById.get(plot.id);
-    return saved && !samePlot(plot, saved);
-  });
-  const changedIds = new Set(changedPlots.map((plot) => plot.id));
+  const savedById = useMemo(
+    () => new Map(savedPlots.map((plot) => [plot.id, plot])),
+    [savedPlots],
+  );
+  const changedPlots = useMemo(
+    () =>
+      plots.filter((plot) => {
+        const saved = savedById.get(plot.id);
+        return saved && !samePlot(plot, saved);
+      }),
+    [plots, savedById],
+  );
+  const changedIds = useMemo(
+    () => new Set(changedPlots.map((plot) => plot.id)),
+    [changedPlots],
+  );
 
   useEffect(() => {
     const controller = new AbortController();
@@ -94,75 +102,75 @@ export function Admin() {
     return () => controller.abort();
   }, []);
 
-  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (loggingIn) return;
-    setLoggingIn(true);
-    setError("");
-    try {
-      const loaded = await api.login(login, password);
-      // Preserve unsaved rows when the user signs in again after a rejected save.
-      const drafts = new Map(changedPlots.map((plot) => [plot.id, plot]));
-      setSavedPlots(loaded);
-      setPlots(
-        loaded.map((plot) => {
-          const draft = drafts.get(plot.id);
-          return draft ? { ...plot, ...toPlotUpdate(draft) } : plot;
-        }),
+  const handleLogin = useCallback(
+    async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (loggingIn) return;
+      setLoggingIn(true);
+      setError("");
+      try {
+        const loaded = await api.login(login, password);
+        setSavedPlots(loaded);
+        setPlots(mergeAdminDrafts(loaded, changedPlots, savedById));
+        setLogin("");
+        setAuthenticated(true);
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : "Не удалось войти");
+      } finally {
+        setPassword("");
+        setLoggingIn(false);
+      }
+    },
+    [changedPlots, login, loggingIn, password, savedById],
+  );
+
+  const updatePlot = useCallback(
+    (id: string, key: keyof PlotUpdate, value: string) => {
+      if (busy) return;
+      if (
+        (key === "area" || key === "price") &&
+        !/^\d*(?:[.,]\d{0,2})?$/.test(value)
+      )
+        return;
+      setSaveMessage("");
+      setError("");
+      setPlots((current) =>
+        current.map((plot) =>
+          plot.id === id ? { ...plot, [key]: value } : plot,
+        ),
       );
-      setPassword("");
-      setAuthenticated(true);
-    } catch (reason) {
-      setError(reason instanceof Error ? reason.message : "Не удалось войти");
-    } finally {
-      setLoggingIn(false);
-    }
-  };
+    },
+    [busy],
+  );
 
-  const updatePlot = (id: string, key: keyof PlotUpdate, value: string) => {
-    if (busy) return;
-    if (
-      (key === "area" || key === "price") &&
-      !/^\d*(?:[.,]\d{0,2})?$/.test(value)
-    )
-      return;
-    setSaveMessage("");
-    setError("");
-    setPlots((current) =>
-      current.map((plot) =>
-        plot.id === id ? { ...plot, [key]: value } : plot,
-      ),
-    );
-  };
+  const handleMutationError = useCallback(
+    (reason: unknown, fallback: string, forCreate = false) => {
+      if (reason instanceof ApiError && reason.status === 401) {
+        setAuthenticated(false);
+        setPassword("");
+        setError("Войдите снова — несохранённые изменения останутся в форме.");
+      } else if (forCreate) {
+        setCreateError(reason instanceof Error ? reason.message : fallback);
+      } else {
+        setError(reason instanceof Error ? reason.message : fallback);
+      }
+    },
+    [],
+  );
 
-  const handleMutationError = (
-    reason: unknown,
-    fallback: string,
-    forCreate = false,
-  ) => {
-    if (reason instanceof ApiError && reason.status === 401) {
-      setAuthenticated(false);
-      setPassword("");
-      setError(
-        "Войдите снова — несохранённые изменения останутся в форме.",
-      );
-    } else if (forCreate) {
-      setCreateError(reason instanceof Error ? reason.message : fallback);
-    } else {
-      setError(reason instanceof Error ? reason.message : fallback);
-    }
-  };
-
-  const updateNewPlot = (key: keyof PlotCreate, value: string) => {
-    if (busy) return;
-    if (
-      (key === "area" || key === "price") &&
-      !/^\d*(?:[.,]\d{0,2})?$/.test(value)
-    )
-      return;
-    setCreateError("");
-    setNewPlot((current) => ({ ...current, [key]: value }));
-  };
+  const updateNewPlot = useCallback(
+    (key: keyof PlotCreate, value: string) => {
+      if (busy) return;
+      if (
+        (key === "area" || key === "price") &&
+        !/^\d*(?:[.,]\d{0,2})?$/.test(value)
+      )
+        return;
+      setCreateError("");
+      setNewPlot((current) => ({ ...current, [key]: value }));
+    },
+    [busy],
+  );
 
   const createPlot = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -247,29 +255,45 @@ export function Admin() {
     }
   };
 
-  const logout = () => {
+  const logout = useCallback(async () => {
     if (busy) return;
     api.logout();
     setAuthenticated(false);
     setLogin("");
     setPassword("");
     setError("");
-    setPlots([]);
-    setSavedPlots([]);
-    setNewPlot({ ...emptyPlot });
-    setCreateError("");
-    setShowCreateForm(false);
-    setSaveMessage("");
-  };
+    try {
+      await api.logout();
+      setAuthenticated(false);
+      setLogin("");
+      setPassword("");
+      setPlots([]);
+      setSavedPlots([]);
+      setNewPlot({ ...emptyPlot });
+      setCreateError("");
+      setShowCreateForm(false);
+      setSaveMessage("");
+    } catch (reason) {
+      setError(
+        reason instanceof Error
+          ? reason.message
+          : "Не удалось выйти. Попробуйте ещё раз.",
+      );
+    } finally {
+      setLoggingOut(false);
+    }
+  }, [busy]);
 
-  const settlementGroups = new Map<string, AdminPlot[]>();
-  for (const plot of plots) {
-    const group = settlementGroups.get(plot.settlement);
-    if (group) group.push(plot);
-    else settlementGroups.set(plot.settlement, [plot]);
-  }
-  if (!settlementGroups.has("Другие участки"))
-    settlementGroups.set("Другие участки", []);
+  const settlementGroups = useMemo(() => {
+    const groups = new Map<string, AdminPlot[]>();
+    for (const plot of plots) {
+      const group = groups.get(plot.settlement);
+      if (group) group.push(plot);
+      else groups.set(plot.settlement, [plot]);
+    }
+    if (!groups.has("Другие участки")) groups.set("Другие участки", []);
+    return groups;
+  }, [plots]);
 
   if (loading)
     return (
@@ -287,16 +311,18 @@ export function Admin() {
           aria-busy={loggingIn}
         >
           <div className="admin-login__icon">
-            <ShieldCheck />
+            <ShieldCheck size="1.5rem" />
           </div>
           <p className="eyebrow">ПАНЕЛЬ УПРАВЛЕНИЯ</p>
-          <h1>Admin tool</h1>
+          <h1>Вход в управление</h1>
           <label>
             Логин
             <input
               value={login}
               onChange={(event) => setLogin(event.target.value)}
               autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
               disabled={loggingIn}
               required
             />
@@ -346,7 +372,7 @@ export function Admin() {
             onClick={logout}
             disabled={busy}
           >
-            <LogOut size={17} /> Выйти
+            <LogOut size="1.0625rem" /> {loggingOut ? "Выходим…" : "Выйти"}
           </button>
         </header>
         <div className="admin-savebar">
@@ -363,7 +389,7 @@ export function Admin() {
             disabled={busy || changedPlots.length === 0}
             onClick={saveAllChanges}
           >
-            <Save size={17} />
+            <Save size="1.0625rem" />
             {saving ? "Сохраняем…" : "Сохранить все изменения"}
           </button>
         </div>
@@ -404,7 +430,11 @@ export function Admin() {
                           setCreateError("");
                         }}
                       >
-                        {showCreateForm ? <X size={17} /> : <Plus size={17} />}
+                        {showCreateForm ? (
+                          <X size="1.0625rem" />
+                        ) : (
+                          <Plus size="1.0625rem" />
+                        )}
                         {showCreateForm ? "Закрыть форму" : "Добавить участок"}
                       </button>
                     )}
@@ -515,7 +545,7 @@ export function Admin() {
                         type="submit"
                         disabled={busy}
                       >
-                        <Plus size={17} />{" "}
+                        <Plus size="1.0625rem" />{" "}
                         {creating ? "Добавляем…" : "Добавить участок на сайт"}
                       </button>
                     </div>

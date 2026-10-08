@@ -1,5 +1,5 @@
 .hero {
-    min-height: 600px;
+    min-height: 37.5rem;
     color: white;
     background:
         linear-gradient(90deg, rgba(24, 40, 31, 0.8), rgba(24, 40, 31, 0.46)),
@@ -10,36 +10,36 @@
 }
 
 .hero-inner {
-    padding: 76px 0 66px;
+    padding: 4.75rem 0 4.125rem;
 }
 
 .hero-copy {
-    max-width: 700px;
-    margin: 34px auto 42px;
+    max-width: 43.75rem;
+    margin: 2.125rem auto 2.625rem;
     color: rgba(255, 255, 255, 0.84);
-    font-size: 20px;
+    font-size: 1.25rem;
     line-height: 1.65;
 }
 
 .hero-facts {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
-    margin: 0 auto 40px;
-    max-width: 1050px;
+    gap: 1.25rem;
+    margin: 0 auto 2.5rem;
+    max-width: 65.625rem;
 }
 
 .hero-fact {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 0.75rem;
     text-align: left;
-    font-size: 16px;
+    font-size: 1rem;
 }
 
 .hero-fact span {
-    width: 44px;
-    height: 44px;
+    width: 2.75rem;
+    height: 2.75rem;
     border-radius: 50%;
     background: rgba(229, 205, 161, 0.2);
     display: grid;
@@ -54,44 +54,44 @@
 .hero-actions {
     display: flex;
     justify-content: center;
-    gap: 24px;
+    gap: 1.5rem;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
 
     .hero {
-        min-height: 690px;
+        min-height: 43.125rem;
     }
 
     .hero-inner {
-        padding: 65px 0 53px;
+        padding: 4.0625rem 0 3.3125rem;
     }
 
     .hero-copy {
-        font-size: 17px;
+        font-size: 1.0625rem;
         line-height: 1.55;
-        margin: 27px auto 35px;
+        margin: 1.6875rem auto 2.1875rem;
     }
 
     .hero-facts {
         grid-template-columns: repeat(2, 1fr);
-        gap: 17px 9px;
-        margin-bottom: 33px;
+        gap: 1.0625rem 0.5625rem;
+        margin-bottom: 2.0625rem;
     }
 
     .hero-fact {
-        font-size: 13px;
-        gap: 8px;
+        font-size: 0.8125rem;
+        gap: 0.5rem;
     }
 
     .hero-fact span {
-        width: 37px;
-        height: 37px;
+        width: 2.3125rem;
+        height: 2.3125rem;
     }
 
     .hero-actions {
         flex-direction: column;
-        gap: 12px;
+        gap: 0.75rem;
     }
 
     .hero-actions .button {

@@ -14,7 +14,11 @@ export const Home = () => {
       <Header />
       <main>
         <AboutUs />
-        <div className="ticker" aria-label="Акция">
+        <div
+          className="ticker"
+          role="region"
+          aria-label={`Акция: ${siteConfig.ticker}`}
+        >
           <div className="ticker-track" aria-hidden="true">
             {tickerItems.map((item, index) => (
               <span className="ticker-item" key={`${item}-${index}`}>

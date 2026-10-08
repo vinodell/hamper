@@ -26,6 +26,41 @@ function withDetails(plot: Plot): Plot {
   return { ...plot, ...individualPlots[plot.id] };
 }
 
+function samePlot(left: Plot, right: Plot): boolean {
+  return (
+    left.id === right.id &&
+    left.settlement === right.settlement &&
+    left.area === right.area &&
+    left.status === right.status &&
+    left.price === right.price &&
+    left.description === right.description &&
+    left.title === right.title &&
+    left.category === right.category &&
+    (left.photos === right.photos ||
+      (left.photos !== undefined &&
+        right.photos !== undefined &&
+        left.photos.length === right.photos.length &&
+        left.photos.every(
+          (photo, index) =>
+            photo.src === right.photos?.[index].src &&
+            photo.alt === right.photos?.[index].alt,
+        )))
+  );
+}
+
+function publishReadyPlots(plots: Plot[]) {
+  updatedAt = Date.now();
+  // Polling identical server rows should not rerender the map, gallery or form.
+  if (
+    !snapshot.loading &&
+    !snapshot.error &&
+    plots.length === snapshot.plots.length &&
+    plots.every((plot, index) => plot === snapshot.plots[index])
+  )
+    return;
+  publish({ plots, loading: false, error: "" });
+}
+
 export const getPlotsSnapshot = () => snapshot;
 export const getPlotsRevision = () => revision;
 
@@ -43,8 +78,13 @@ export function replaceCachedPlots(plots: Plot[], expectedRevision?: number) {
 
 function publishCompletePlots(plots: Plot[]) {
   hasSnapshot = true;
-  updatedAt = Date.now();
-  publish({ plots: plots.map(withDetails), loading: false, error: "" });
+  const previous = new Map(snapshot.plots.map((plot) => [plot.id, plot]));
+  const next = plots.map((plot) => {
+    const detailed = withDetails(plot);
+    const existing = previous.get(plot.id);
+    return existing && samePlot(existing, detailed) ? existing : detailed;
+  });
+  publishReadyPlots(next);
 }
 
 /** Call only after the server confirms a successful mutation. */
@@ -58,10 +98,9 @@ export function mergeSavedPlots(plots: Plot[]) {
   const merged = snapshot.plots.map((plot) => {
     const replacement = saved.get(plot.id);
     saved.delete(plot.id);
-    return replacement ?? plot;
+    return replacement && !samePlot(plot, replacement) ? replacement : plot;
   });
-  updatedAt = Date.now();
-  publish({ plots: [...merged, ...saved.values()], loading: false, error: "" });
+  publishReadyPlots([...merged, ...saved.values()]);
 }
 
 export function invalidatePlotsCache() {
@@ -95,6 +134,7 @@ export function loadCachedPlots(
   if (pending) return waitForPlots(pending, options.signal);
   if (
     hasSnapshot &&
+    !snapshot.error &&
     Date.now() - updatedAt < (options.maxAgeMs ?? PLOTS_REFRESH_MS)
   )
     return Promise.resolve(snapshot.plots);

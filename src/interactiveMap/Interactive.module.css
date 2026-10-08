@@ -1,6 +1,6 @@
 .map {
   position: relative;
-  width: min(100%, 760px);
+  width: min(100%, 47.5rem);
   min-width: 0;
   aspect-ratio: 2 / 3;
   margin-inline: auto;
@@ -27,10 +27,10 @@
 
 .fallback {
   position: absolute;
-  inset: 16px 20px auto;
+  inset: 1rem 1.25rem auto;
   margin: 0;
   color: white;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 
 .zone {
@@ -91,7 +91,7 @@
 .marker text {
   fill: #0f261f;
   font-family: var(--font-body, sans-serif);
-  font-size: 17px;
+  font-size: 1.0625rem;
   font-weight: 600;
   transition: fill 180ms ease;
 }
@@ -111,9 +111,9 @@
   fill: #faf5e9;
 }
 
-@media (max-width: 640px) {
-  .marker circle { r: 28px; }
-  .marker text { font-size: 27px; }
+@media (max-width: 40rem) {
+  .marker circle { r: 1.75rem; }
+  .marker text { font-size: 1.6875rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

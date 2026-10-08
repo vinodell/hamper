@@ -17,7 +17,7 @@
     justify-content: space-between;
     align-items: center;
     padding-bottom: 1rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+    border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.16);
 }
 
 .brand-footer .brand-name {
@@ -26,41 +26,41 @@
 
 .footer-links {
     display: flex;
-    gap: 28px;
-    font-size: 13px;
+    gap: 1.75rem;
+    font-size: 0.8125rem;
 }
 
 .footer-phone {
     color: #e0bd82;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0.5rem;
 }
 
 .footer-bottom {
     display: flex;
     justify-content: space-between;
-    gap: 20px;
-    padding-top: 24px;
-    font-size: 11px;
+    gap: 1.25rem;
+    padding-top: 1.5rem;
+    font-size: 0.6875rem;
 }
 
 .footer-bottom a {
     color: #e0bd82;
 }
 
-@media (max-width: 760px) {
+@media (max-width: 47.5rem) {
 
     .footer-top,
     .footer-bottom {
         align-items: flex-start;
         flex-direction: column;
-        gap: 25px;
+        gap: 1.5625rem;
     }
 
     .footer-links {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 15px 26px;
+        gap: 0.9375rem 1.625rem;
     }
 }

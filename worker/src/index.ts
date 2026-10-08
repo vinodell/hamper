@@ -1,4 +1,6 @@
 import {
+  ADMIN_COOKIE,
+  ADMIN_COOKIE_TTL_SECONDS,
   allowedStatuses,
   PASSWORD_HASH_ITERATIONS,
   PASSWORD_HASH_ALGORITHM,
@@ -40,16 +42,55 @@ function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
   return difference === 0;
 }
 
-function corsHeaders(request: Request, env: Env): HeadersInit {
+function adminOrigin(request: Request, env: Env) {
+  return env.PUBLIC_ORIGIN
+    ? new URL(env.PUBLIC_ORIGIN).origin
+    : new URL(request.url).origin;
+}
+
+function isTrustedAdminOrigin(request: Request, env: Env) {
   const origin = request.headers.get("Origin");
-  const allowedOrigin = env.PUBLIC_ORIGIN ?? origin ?? "*";
+  return (
+    origin === adminOrigin(request, env) ||
+    (!origin && request.method === "GET")
+  );
+}
+
+function corsHeaders(request: Request, env: Env): HeadersInit {
+  const adminRequest = new URL(request.url).pathname.startsWith("/api/admin/");
   return {
-    "Access-Control-Allow-Origin": allowedOrigin,
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Origin": adminRequest
+      ? adminOrigin(request, env)
+      : "*",
+    ...(adminRequest ? { "Access-Control-Allow-Credentials": "true" } : {}),
+    "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
+}
+
+function cookieHeader(request: Request, token: string, maxAge: number) {
+  // GitHub Pages and workers.dev have different sites. CHIPS permits the
+  // HttpOnly cookie without opening access to other top-level sites.
+  const url = new URL(request.url);
+  const localHttp =
+    url.protocol === "http:" &&
+    ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
+  const attributes = localHttp
+    ? "; SameSite=Lax"
+    : "; Secure; SameSite=None; Partitioned";
+  return `${ADMIN_COOKIE}=${token}; Path=/api/admin; HttpOnly; Max-Age=${maxAge}${attributes}${maxAge === 0 ? "; Expires=Thu, 01 Jan 1970 00:00:00 GMT" : ""}`;
+}
+
+function withAdminCookie(
+  response: Response,
+  request: Request,
+  token = "",
+  maxAge = 0,
+) {
+  response.headers.set("Set-Cookie", cookieHeader(request, token, maxAge));
+  return response;
 }
 
 function json(data: unknown, status = 200, request?: Request, env?: Env) {
@@ -100,29 +141,65 @@ async function verifyPassword(password: string, encodedHash: string) {
   return constantTimeEqual(derived, expected);
 }
 
-async function hasAdminAccess(request: Request, env: Env) {
-  const encoded = request.headers
-    .get("Authorization")
-    ?.match(/^Basic\s+([A-Za-z0-9+/]+={0,2})$/i)?.[1];
-  if (!encoded || encoded.length > 32_768) return false;
+function toBase64Url(bytes: ArrayBuffer) {
+  return btoa(String.fromCharCode(...new Uint8Array(bytes)))
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
+}
 
-  let credentials: string;
+async function cookieSignature(payload: string, env: Env) {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(env.SESSION_SECRET || env.ADMIN_PASSWORD_HASH),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  // Binding to both configured credentials invalidates a cookie when they change.
+  const message = `hamper-admin-v1\n${env.ADMIN_LOGIN}\n${env.ADMIN_PASSWORD_HASH}\n${payload}`;
+  return new Uint8Array(
+    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message)),
+  );
+}
+
+async function createAdminCookie(env: Env) {
+  const expiresAt = Math.floor(Date.now() / 1000) + ADMIN_COOKIE_TTL_SECONDS;
+  const payload = `v1.${expiresAt}.${crypto.randomUUID()}`;
+  const signature = await cookieSignature(payload, env);
+  return `${payload}.${toBase64Url(signature.buffer)}`;
+}
+
+async function hasAdminAccess(request: Request, env: Env) {
+  const token = (request.headers.get("Cookie") ?? "")
+    .split(";")
+    .map((part) => part.trim())
+    .find((part) => part.startsWith(`${ADMIN_COOKIE}=`))
+    ?.slice(ADMIN_COOKIE.length + 1);
+  if (!token || token.length > 256) return false;
+  const parts = token.split(".");
+  if (parts.length !== 4) return false;
+  const [version, expiry, nonce, signature] = parts;
+  const expiresAt = Number(expiry);
+  const now = Math.floor(Date.now() / 1000);
+  if (
+    version !== "v1" ||
+    !/^\d+$/.test(expiry) ||
+    !Number.isSafeInteger(expiresAt) ||
+    expiresAt <= now ||
+    expiresAt > now + ADMIN_COOKIE_TTL_SECONDS ||
+    !/^[0-9a-f-]{36}$/.test(nonce) ||
+    !/^[\w-]{43}$/.test(signature)
+  )
+    return false;
   try {
-    const bytes = Uint8Array.from(atob(encoded), (character) =>
-      character.charCodeAt(0),
+    return constantTimeEqual(
+      await cookieSignature(`${version}.${expiry}.${nonce}`, env),
+      fromBase64Url(signature),
     );
-    credentials = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
   } catch {
     return false;
   }
-
-  const separator = credentials.indexOf(":");
-  if (separator < 1) return false;
-  const login = credentials.slice(0, separator);
-  const password = credentials.slice(separator + 1);
-  if (login !== env.ADMIN_LOGIN || !password || password.length > 4096)
-    return false;
-  return verifyPassword(password, env.ADMIN_PASSWORD_HASH);
 }
 
 async function readBody(request: Request): Promise<Record<string, unknown>> {
@@ -184,14 +261,7 @@ function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
 function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
   return env.DB.prepare(
     "UPDATE plots SET area = ?, status = ?, price = ?, street = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *",
-  ).bind(
-    plot.area,
-    plot.status,
-    plot.price,
-    plot.street,
-    plot.description,
-    id,
-  );
+  ).bind(plot.area, plot.status, plot.price, plot.street, plot.description, id);
 }
 
 function mapPlot(row: PlotRow) {
@@ -209,8 +279,35 @@ function mapPlot(row: PlotRow) {
 
 async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
+  if (
+    url.pathname.startsWith("/api/admin/") &&
+    !isTrustedAdminOrigin(request, env)
+  )
+    return json({ error: "Запрос с этого сайта запрещён" }, 403, request, env);
   if (request.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders(request, env) });
+
+  if (url.pathname === "/api/admin/login" && request.method === "POST") {
+    const body = await readBody(request);
+    if (
+      typeof body.login !== "string" ||
+      body.login !== env.ADMIN_LOGIN ||
+      typeof body.password !== "string" ||
+      !body.password ||
+      body.password.length > 4096 ||
+      !(await verifyPassword(body.password, env.ADMIN_PASSWORD_HASH))
+    )
+      return json({ error: "Неверный логин или пароль" }, 401, request, env);
+    return withAdminCookie(
+      json({ ok: true }, 200, request, env),
+      request,
+      await createAdminCookie(env),
+      ADMIN_COOKIE_TTL_SECONDS,
+    );
+  }
+
+  if (url.pathname === "/api/admin/logout" && request.method === "POST")
+    return withAdminCookie(json({ ok: true }, 200, request, env), request);
 
   if (url.pathname === "/api/health")
     return json({ ok: true }, 200, request, env);
@@ -230,7 +327,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       !body.name.trim() ||
       !body.phone.trim() ||
       body.name.length > CONTACT_NAME_MAX_LENGTH ||
-      body.phone.length > CONTACT_PHONE_MAX_LENGTH
+      body.phone.length > CONTACT_PHONE_MAX_LENGTH ||
+      !/^[+\d\s().-]+$/.test(body.phone) ||
+      !/^(?:7|8)\d{10}$/.test(body.phone.replace(/\D/g, ""))
     )
       return json({ error: "Заполните имя и телефон" }, 400, request, env);
     const project = optionalText(body.project, 200);
@@ -253,12 +352,20 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: env.TELEGRAM_CHAT_ID, text: message }),
+          body: JSON.stringify({
+            chat_id: env.TELEGRAM_CHAT_ID,
+            text: message,
+          }),
           signal: controller.signal,
         },
       );
       if (!telegramResponse.ok)
-        return json({ error: "Не удалось отправить заявку" }, 502, request, env);
+        return json(
+          { error: "Не удалось отправить заявку" },
+          502,
+          request,
+          env,
+        );
       const result: unknown = await telegramResponse.json();
       if (
         typeof result !== "object" ||
@@ -266,7 +373,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
         !("ok" in result) ||
         result.ok !== true
       )
-        return json({ error: "Не удалось отправить заявку" }, 502, request, env);
+        return json(
+          { error: "Не удалось отправить заявку" },
+          502,
+          request,
+          env,
+        );
     } catch {
       return json({ error: "Не удалось отправить заявку" }, 502, request, env);
     } finally {
@@ -280,7 +392,10 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     ["GET", "POST", "PUT"].includes(request.method)
   ) {
     if (!(await hasAdminAccess(request, env)))
-      return json({ error: "Требуется авторизация" }, 401, request, env);
+      return withAdminCookie(
+        json({ error: "Требуется авторизация" }, 401, request, env),
+        request,
+      );
 
     if (request.method === "GET") {
       const result = await env.DB.prepare(
@@ -326,7 +441,10 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       if (typeof value !== "object" || value === null || Array.isArray(value))
         throw new RequestError(400, "Некорректные данные участка");
       const record = value as Record<string, unknown>;
-      return { id: validatePlotId(record.id), plot: validatePlotUpdate(record) };
+      return {
+        id: validatePlotId(record.id),
+        plot: validatePlotUpdate(record),
+      };
     });
     const uniqueIds = new Set(updates.map(({ id }) => id));
     if (uniqueIds.size !== updates.length)
@@ -351,7 +469,10 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   const plotMatch = url.pathname.match(/^\/api\/admin\/plots\/([^/]+)$/);
   if (plotMatch && request.method === "PUT") {
     if (!(await hasAdminAccess(request, env)))
-      return json({ error: "Требуется авторизация" }, 401, request, env);
+      return withAdminCookie(
+        json({ error: "Требуется авторизация" }, 401, request, env),
+        request,
+      );
     let id: string;
     try {
       id = validatePlotId(decodeURIComponent(plotMatch[1]));

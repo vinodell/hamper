@@ -1,5 +1,6 @@
-import { normalizePlotNumber } from "./plotNumbers";
+import { isValidPlotNumber, normalizePlotNumber } from "./plotNumbers";
 import { apiUrl, plotStatuses, type Plot, type PlotStatus } from "./constants";
+import { clearLegacyAdminAuthorization } from "./adminAuth";
 import {
   clearAdminAuthorization,
   createBasicAuthorization,
@@ -56,11 +57,6 @@ async function request(
   loginAuthorization?: string,
 ): Promise<unknown> {
   const adminRequest = path.startsWith("/api/admin/");
-  const authorization = adminRequest
-    ? loginAuthorization ?? getAdminAuthorization()
-    : null;
-  if (adminRequest && !authorization)
-    throw new ApiError("Войдите, чтобы открыть панель управления.", 401);
   const controller = new AbortController();
   const abort = () => controller.abort();
   if (options.signal?.aborted)
@@ -72,9 +68,7 @@ async function request(
     controller.abort();
   }, REQUEST_TIMEOUT_MS);
   const headers = new Headers(options.headers);
-  if (adminRequest && authorization)
-    headers.set("Authorization", authorization);
-  else headers.delete("Authorization");
+  headers.delete("Authorization");
   // A bodyless public GET needs no Content-Type or CORS preflight.
   if (options.body !== undefined && options.body !== null)
     headers.set("Content-Type", "application/json");
@@ -83,7 +77,7 @@ async function request(
     const response = await fetch(`${apiUrl}${path}`, {
       cache: "no-store",
       ...options,
-      credentials: "omit",
+      credentials: adminRequest ? "include" : "omit",
       headers,
       signal: controller.signal,
     });
@@ -179,6 +173,10 @@ function parsePublicPlot(value: unknown): Plot {
   if (
     !isRecord(value) ||
     typeof value.id !== "string" ||
+    !value.id.trim() ||
+    value.id !== value.id.trim() ||
+    value.id.length > 80 ||
+    /[\u0000-\u001f\u007f-\u009f]/.test(value.id) ||
     typeof value.settlement !== "string" ||
     typeof value.area !== "string" ||
     typeof value.price !== "string" ||
@@ -190,12 +188,16 @@ function parsePublicPlot(value: unknown): Plot {
     )
   )
     throw invalidResponse();
+  const area = normalizePlotNumber(value.area);
+  const price = normalizePlotNumber(value.price);
+  if (!isValidPlotNumber(area) || !isValidPlotNumber(price))
+    throw invalidResponse();
   return {
     id: value.id,
     settlement: value.settlement,
-    area: normalizePlotNumber(value.area).replace(".", ","),
+    area: area.replace(".", ","),
     status: value.status,
-    price: normalizePlotNumber(value.price).replace(".", ","),
+    price: price.replace(".", ","),
     description: value.description,
   };
 }
@@ -217,9 +219,15 @@ function parseAdminPlot(value: unknown): AdminPlot {
   };
 }
 
-function parseList<T>(value: unknown, parseItem: (item: unknown) => T): T[] {
+function parseList<T extends Plot>(
+  value: unknown,
+  parseItem: (item: unknown) => T,
+): T[] {
   if (!Array.isArray(value)) throw invalidResponse();
-  return value.map(parseItem);
+  const plots = value.map(parseItem);
+  if (new Set(plots.map(({ id }) => id)).size !== plots.length)
+    throw invalidResponse();
+  return plots;
 }
 
 function parseOk(value: unknown): { ok: true } {
@@ -230,7 +238,7 @@ function parseOk(value: unknown): { ok: true } {
 async function fetchPublicPlots(): Promise<Plot[]> {
   if (
     import.meta.env.DEV &&
-    !import.meta.env.VITE_API_URL &&
+    import.meta.env.VITE_USE_MOCK_DATA === "true" &&
     ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)
   ) {
     const { mockPlots } = await import("../../localTest/plots");
@@ -248,28 +256,44 @@ export const api = {
     password: string,
     options: RequestOptions = {},
   ) => {
-    const authorization = createBasicAuthorization(login, password);
-    const revision = getPlotsRevision();
-    let plots: AdminPlot[];
+    clearLegacyAdminAuthorization();
     try {
-      plots = parseList(
-        await request("/api/admin/plots", options, authorization),
-        parseAdminPlot,
+      parseOk(
+        await request("/api/admin/login", {
+          ...options,
+          method: "POST",
+          body: JSON.stringify({ login, password }),
+        }),
       );
     } catch (reason) {
       if (reason instanceof ApiError && reason.status === 401)
         throw new ApiError("Неверный логин или пароль", 401);
       throw reason;
     }
-    saveAdminAuthorization(authorization);
-    replaceCachedPlots(plots.map(parsePublicPlot), revision);
-    return plots;
+    try {
+      // Verify that the browser accepted the cookie before opening the panel.
+      return await api.getAdminPlots(options);
+    } catch (reason) {
+      if (reason instanceof ApiError && reason.status === 401)
+        throw new ApiError(
+          "Браузер не сохранил вход. Разрешите cookies для сайта и повторите попытку.",
+          401,
+        );
+      throw reason;
+    }
+  },
+  logout: async (options: RequestOptions = {}) => {
+    clearLegacyAdminAuthorization();
+    return parseOk(
+      await request("/api/admin/logout", { ...options, method: "POST" }),
+    );
   },
   logout: () => clearAdminAuthorization(),
   getPlots: (
     options: RequestOptions & { force?: boolean; maxAgeMs?: number } = {},
   ) => loadCachedPlots(fetchPublicPlots, options),
   getAdminPlots: async (options: RequestOptions = {}) => {
+    clearLegacyAdminAuthorization();
     const revision = getPlotsRevision();
     const plots = parseList(
       await request("/api/admin/plots", options),
@@ -286,6 +310,7 @@ export const api = {
         body: JSON.stringify(data),
       }),
     );
+    if (plot.id !== data.id.trim()) throw invalidResponse();
     mergeSavedPlots([parsePublicPlot(plot)]);
     return plot;
   },
@@ -298,6 +323,12 @@ export const api = {
       }),
       parseAdminPlot,
     );
+    const expectedIds = new Set(data.map(({ id }) => id));
+    if (
+      plots.length !== data.length ||
+      plots.some(({ id }) => !expectedIds.has(id))
+    )
+      throw invalidResponse();
     mergeSavedPlots(plots.map(parsePublicPlot));
     return plots;
   },
@@ -313,6 +344,7 @@ export const api = {
         body: JSON.stringify(data),
       }),
     );
+    if (plot.id !== id.trim()) throw invalidResponse();
     mergeSavedPlots([parsePublicPlot(plot)]);
     return plot;
   },

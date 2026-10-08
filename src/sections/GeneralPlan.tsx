@@ -1,8 +1,10 @@
+import { useCallback, useMemo } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { InteractiveMap } from "../interactiveMap";
 import { chooseZemli, type Plot } from "../lib";
 import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
+import type { MapZone } from "../interactiveMap/Interactive.types";
 
 import "./GeneralPlan.css";
 
@@ -12,6 +14,17 @@ export const GeneralPlan = ({
   onSelectPlot?: (plot: Plot) => void;
 }) => {
   const { plots, loading, error } = usePlots();
+  const plotsById = useMemo(
+    () => new Map(plots.map((plot) => [plot.id, plot])),
+    [plots],
+  );
+  const handleZoneClick = useCallback(
+    (zone: MapZone) => {
+      const plot = plotsById.get(zone.plotId);
+      if (plot?.status === "Свободен") onSelectPlot?.(plot);
+    },
+    [onSelectPlot, plotsById],
+  );
 
   return (
     <section className="section masterplan" id="genplan">
@@ -30,7 +43,7 @@ export const GeneralPlan = ({
             </p>
           </div>
           <a className="button button-gold" href="#uchastki">
-            {chooseZemli} <ArrowUpRight size={17} />
+            {chooseZemli} <ArrowUpRight size="1.0625rem" />
           </a>
         </div>
         {loading && (
@@ -53,12 +66,9 @@ export const GeneralPlan = ({
               plots={plots}
               imageSrc={`${import.meta.env.BASE_URL}images/masterplan-oinelovo-1024.webp`}
               imageSrcSet={`${import.meta.env.BASE_URL}images/masterplan-oinelovo-640.webp 640w, ${import.meta.env.BASE_URL}images/masterplan-oinelovo-1024.webp 1024w`}
-              imageSizes="(max-width: 760px) calc(100vw - 64px), (max-width: 871px) calc(100vw - 112px), 760px"
+              imageSizes="(max-width: 47.5rem) calc(100vw - 4rem), (max-width: 54.4375rem) calc(100vw - 7rem), 47.5rem"
               imageAlt="Интерактивный план: 21 земельный участок. Выберите участок по номеру."
-              onZoneClick={(zone) => {
-                const plot = plots.find((plot) => plot.id === zone.plotId);
-                if (plot?.status === "Свободен") onSelectPlot?.(plot);
-              }}
+              onZoneClick={handleZoneClick}
             />
             <figcaption className="plan-caption">
               <span

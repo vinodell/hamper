@@ -1,29 +1,29 @@
 .loading-indicator {
   display: flex;
-  min-height: 180px;
+  min-height: 11.25rem;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 24px 16px;
+  gap: 0.875rem;
+  padding: 1.5rem 1rem;
   color: var(--pine);
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.5;
   text-align: center;
 }
 
 .loading-indicator-compact {
-  min-height: 64px;
+  min-height: 4rem;
   justify-content: flex-start;
-  padding: 16px 0;
+  padding: 1rem 0;
   text-align: left;
 }
 
 .loading-indicator-spinner {
   display: inline-block;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
-  border: 3px solid rgba(50, 78, 42, 0.15);
+  width: 2.125rem;
+  height: 2.125rem;
+  flex: 0 0 2.125rem;
+  border: 0.1875rem solid rgba(50, 78, 42, 0.15);
   border-top-color: var(--gold-dark);
   border-right-color: var(--pine);
   border-radius: 50%;
@@ -36,14 +36,14 @@
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 37.5rem) {
   .loading-indicator {
-    min-height: 152px;
-    font-size: 14px;
+    min-height: 9.5rem;
+    font-size: 0.875rem;
   }
 
   .loading-indicator-compact {
-    min-height: 64px;
+    min-height: 4rem;
   }
 }
 
