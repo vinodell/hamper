@@ -7,8 +7,8 @@ export interface PlotsSnapshot {
   error: string;
 }
 
-// Public data lives in memory only. Authentication and editor drafts stay local
-// to the admin page, and navigating between pages keeps the same snapshot.
+// Public data lives in memory only. The server owns authentication; editor
+// drafts stay on the admin page. Public pages share this snapshot.
 let snapshot: PlotsSnapshot = { plots: [], loading: true, error: "" };
 let hasSnapshot = false;
 let updatedAt = 0;
@@ -36,15 +36,8 @@ function samePlot(left: Plot, right: Plot): boolean {
     left.description === right.description &&
     left.title === right.title &&
     left.category === right.category &&
-    (left.photos === right.photos ||
-      (left.photos !== undefined &&
-        right.photos !== undefined &&
-        left.photos.length === right.photos.length &&
-        left.photos.every(
-          (photo, index) =>
-            photo.src === right.photos?.[index].src &&
-            photo.alt === right.photos?.[index].alt,
-        )))
+    // Photos come from static metadata or the immutable local mock, not the API.
+    left.photos === right.photos
   );
 }
 

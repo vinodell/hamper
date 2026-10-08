@@ -17,9 +17,6 @@ export function isValidPlotNumber(value: string): boolean {
 }
 
 export function formatPlotNumber(value: string): string {
-  const normalized = normalizePlotNumber(value);
-  const number = Number(normalized);
-  return normalized && Number.isFinite(number)
-    ? plotNumberFormatter.format(number)
-    : value;
+  // Public values have already been normalized and validated by the API.
+  return plotNumberFormatter.format(Number(value.replace(",", ".")));
 }

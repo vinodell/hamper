@@ -1,10 +1,9 @@
-export const PLOTS_UPDATED_EVENT = "hamper:plots-updated";
+export const PLOTS_UPDATED_CHANNEL = "hamper:plots-updated";
 
-/** Notify public views only after the server has saved an admin change. */
+/** Same-tab views use the shared cache; notify other tabs after a saved change. */
 export function notifyPlotsUpdated() {
-  window.dispatchEvent(new Event(PLOTS_UPDATED_EVENT));
   if (typeof BroadcastChannel !== "undefined") {
-    const channel = new BroadcastChannel(PLOTS_UPDATED_EVENT);
+    const channel = new BroadcastChannel(PLOTS_UPDATED_CHANNEL);
     channel.postMessage("updated");
     channel.close();
   }

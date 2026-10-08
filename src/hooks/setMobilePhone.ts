@@ -1,6 +1,8 @@
 export const formatPhone = (value: string) => {
-  const digits = value.replace(/\D/g, "").replace(/^8/, "7").slice(0, 11);
-  const localNumber = digits.startsWith("7") ? digits.slice(1) : digits;
+  const localNumber = value
+    .replace(/\D/g, "")
+    .replace(/^[78]/, "")
+    .slice(0, 10);
 
   if (!localNumber) return "";
   if (localNumber.length <= 3) return `+7 (${localNumber}`;

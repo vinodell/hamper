@@ -17,6 +17,8 @@ import {
 } from "./constants";
 import type { Env, PlotRow } from "./types";
 
+const textEncoder = new TextEncoder();
+
 class RequestError extends Error {
   constructor(
     readonly status: number,
@@ -105,11 +107,7 @@ function json(data: unknown, status = 200, request?: Request, env?: Env) {
 }
 
 function fromBase64Url(value: string) {
-  const padded = value
-    .replace(/-/g, "+")
-    .replace(/_/g, "/")
-    .padEnd(Math.ceil(value.length / 4) * 4, "=");
-  const binary = atob(padded);
+  const binary = atob(value.replace(/-/g, "+").replace(/_/g, "/"));
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
 
@@ -120,7 +118,7 @@ async function verifyPassword(password: string, encodedHash: string) {
   const expected = fromBase64Url(hashText);
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(password),
+    textEncoder.encode(password),
     "PBKDF2",
     false,
     ["deriveBits"],
@@ -137,7 +135,6 @@ async function verifyPassword(password: string, encodedHash: string) {
       expected.length * 8,
     ),
   );
-  if (derived.length !== expected.length) return false;
   return constantTimeEqual(derived, expected);
 }
 
@@ -151,7 +148,7 @@ function toBase64Url(bytes: ArrayBuffer) {
 async function cookieSignature(payload: string, env: Env) {
   const key = await crypto.subtle.importKey(
     "raw",
-    new TextEncoder().encode(env.SESSION_SECRET || env.ADMIN_PASSWORD_HASH),
+    textEncoder.encode(env.SESSION_SECRET || env.ADMIN_PASSWORD_HASH),
     { name: "HMAC", hash: "SHA-256" },
     false,
     ["sign"],
@@ -159,7 +156,7 @@ async function cookieSignature(payload: string, env: Env) {
   // Binding to both configured credentials invalidates a cookie when they change.
   const message = `hamper-admin-v1\n${env.ADMIN_LOGIN}\n${env.ADMIN_PASSWORD_HASH}\n${payload}`;
   return new Uint8Array(
-    await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(message)),
+    await crypto.subtle.sign("HMAC", key, textEncoder.encode(message)),
   );
 }
 
@@ -227,10 +224,11 @@ function positiveDecimal(value: unknown) {
   if (typeof value !== "string")
     throw new RequestError(400, "Некорректные данные участка");
   const decimal = value.trim().replace(",", ".");
+  const number = Number(decimal);
   if (
     !/^\d+(?:\.\d{1,2})?$/.test(decimal) ||
-    !Number.isFinite(Number(decimal)) ||
-    Number(decimal) <= 0
+    !Number.isFinite(number) ||
+    number <= 0
   )
     throw new RequestError(400, "Некорректные данные участка");
   return decimal;
@@ -279,10 +277,8 @@ function mapPlot(row: PlotRow) {
 
 async function handleRequest(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
-  if (
-    url.pathname.startsWith("/api/admin/") &&
-    !isTrustedAdminOrigin(request, env)
-  )
+  const adminRequest = url.pathname.startsWith("/api/admin/");
+  if (adminRequest && !isTrustedAdminOrigin(request, env))
     return json({ error: "Запрос с этого сайта запрещён" }, 403, request, env);
   if (request.method === "OPTIONS")
     return new Response(null, { headers: corsHeaders(request, env) });
@@ -308,6 +304,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === "/api/admin/logout" && request.method === "POST")
     return withAdminCookie(json({ ok: true }, 200, request, env), request);
+
+  if (adminRequest && !(await hasAdminAccess(request, env)))
+    return withAdminCookie(
+      json({ error: "Требуется авторизация" }, 401, request, env),
+      request,
+    );
 
   if (url.pathname === "/api/health")
     return json({ ok: true }, 200, request, env);
@@ -346,6 +348,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     ].join("\n");
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS);
+    let sent = false;
     try {
       const telegramResponse = await fetch(
         `${TELEGRAM_API_URL}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
@@ -359,44 +362,31 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
           signal: controller.signal,
         },
       );
-      if (!telegramResponse.ok)
-        return json(
-          { error: "Не удалось отправить заявку" },
-          502,
-          request,
-          env,
-        );
-      const result: unknown = await telegramResponse.json();
-      if (
-        typeof result !== "object" ||
-        result === null ||
-        !("ok" in result) ||
-        result.ok !== true
-      )
-        return json(
-          { error: "Не удалось отправить заявку" },
-          502,
-          request,
-          env,
-        );
+      if (telegramResponse.ok) {
+        const result: unknown = await telegramResponse.json();
+        sent =
+          typeof result === "object" &&
+          result !== null &&
+          "ok" in result &&
+          result.ok === true;
+      }
     } catch {
-      return json({ error: "Не удалось отправить заявку" }, 502, request, env);
+      // A network error or timeout is reported through the same failed result.
     } finally {
       clearTimeout(timeout);
     }
-    return json({ ok: true }, 200, request, env);
+    return json(
+      sent ? { ok: true } : { error: "Не удалось отправить заявку" },
+      sent ? 200 : 502,
+      request,
+      env,
+    );
   }
 
   if (
     url.pathname === "/api/admin/plots" &&
     ["GET", "POST", "PUT"].includes(request.method)
   ) {
-    if (!(await hasAdminAccess(request, env)))
-      return withAdminCookie(
-        json({ error: "Требуется авторизация" }, 401, request, env),
-        request,
-      );
-
     if (request.method === "GET") {
       const result = await env.DB.prepare(
         "SELECT * FROM plots ORDER BY settlement, id",
@@ -468,11 +458,6 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   const plotMatch = url.pathname.match(/^\/api\/admin\/plots\/([^/]+)$/);
   if (plotMatch && request.method === "PUT") {
-    if (!(await hasAdminAccess(request, env)))
-      return withAdminCookie(
-        json({ error: "Требуется авторизация" }, 401, request, env),
-        request,
-      );
     let id: string;
     try {
       id = validatePlotId(decodeURIComponent(plotMatch[1]));

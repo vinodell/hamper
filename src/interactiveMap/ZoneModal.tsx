@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, type MouseEvent } from "react";
+import { useEffect, useId, useRef } from "react";
 
 import type { ZoneModalProps } from "./Interactive.types";
 import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
@@ -18,27 +18,9 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
       return;
     }
 
-    if (!dialog.open) {
-      dialog.showModal();
-    }
-
-    return () => {
-      if (dialog.open) {
-        dialog.close();
-      }
-    };
+    dialog.showModal();
+    return () => dialog.close();
   }, []);
-
-  const handleBackdropClick = (event: MouseEvent<HTMLDialogElement>): void => {
-    /**
-     * Если кликнули именно по <dialog>,
-     * а не по содержимому внутри —
-     * значит пользователь нажал на backdrop.
-     */
-    if (event.target === event.currentTarget) {
-      onClose();
-    }
-  };
 
   return (
     <dialog
@@ -50,7 +32,9 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
         event.preventDefault();
         onClose();
       }}
-      onClick={handleBackdropClick}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
     >
       <div className={styles.modalContent}>
         <button

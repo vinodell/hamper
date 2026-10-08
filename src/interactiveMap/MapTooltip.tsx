@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 import type { MapTooltipProps } from "./Interactive.types";
 import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
@@ -6,11 +6,6 @@ import styles from "./MapTooltip.module.css";
 
 export function MapTooltip({ zone, position }: MapTooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [pointerPosition, setPointerPosition] = useState({
-    left: "0rem",
-    top: "0rem",
-  });
-
   useLayoutEffect(() => {
     const element = tooltipRef.current;
     if (!element) return;
@@ -18,10 +13,9 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
     let nextPosition = position;
     const placeTooltip = () => {
       frame = 0;
-      const rootSize =
-        Number.parseFloat(
-          getComputedStyle(document.documentElement).fontSize,
-        ) || 16;
+      const rootSize = Number.parseFloat(
+        getComputedStyle(document.documentElement).fontSize,
+      );
       const left = Math.max(
         rootSize,
         Math.min(
@@ -36,13 +30,8 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
           window.innerHeight - element.offsetHeight - rootSize,
         ),
       );
-      const next = {
-        left: `${left / rootSize}rem`,
-        top: `${top / rootSize}rem`,
-      };
-      setPointerPosition((current) =>
-        current.left === next.left && current.top === next.top ? current : next,
-      );
+      element.style.left = `${left / rootSize}rem`;
+      element.style.top = `${top / rootSize}rem`;
     };
     const schedulePosition = () => {
       if (!frame) frame = requestAnimationFrame(placeTooltip);
@@ -53,32 +42,24 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
       schedulePosition();
     };
 
-    // Moving the tooltip should not render all of the map's SVG paths.
+    // Update only the tooltip position, once per frame, without React renders.
     placeTooltip();
     window.addEventListener("pointermove", handlePointerMove, {
       passive: true,
     });
     window.addEventListener("resize", schedulePosition);
-    const observer =
-      typeof ResizeObserver === "undefined"
-        ? null
-        : new ResizeObserver(schedulePosition);
-    observer?.observe(element);
+    const observer = new ResizeObserver(schedulePosition);
+    observer.observe(element);
     return () => {
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("resize", schedulePosition);
-      observer?.disconnect();
+      observer.disconnect();
       cancelAnimationFrame(frame);
     };
   }, [position]);
 
   return (
-    <div
-      ref={tooltipRef}
-      className={styles.tooltip}
-      style={pointerPosition}
-      role="tooltip"
-    >
+    <div ref={tooltipRef} className={styles.tooltip} role="tooltip">
       <div className={styles.tooltipHeader}>
         <strong className={styles.tooltipTitle}>{zone.title}</strong>
 

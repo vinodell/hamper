@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone, usePlots } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
 import { policyMsg, siteConfig, PHONE_PATTERN, type Plot } from "../lib";
 import { api } from "../lib/api";
-import { telegramHref, whatsappHref } from "../lib/contactLinks";
 
 import "./Contacts.css";
 
@@ -12,14 +11,16 @@ const mobileContacts = [
   {
     id: "vlad",
     phone: siteConfig.phone2,
-    telegram: telegramHref(siteConfig.vladTelegram),
-    whatsapp: whatsappHref(siteConfig.vladWhatsapp),
+    phoneHref: siteConfig.phone2Href,
+    telegram: siteConfig.vladTelegram,
+    whatsapp: siteConfig.vladWhatsapp,
   },
   {
     id: "maks",
     phone: siteConfig.phone,
-    telegram: telegramHref(siteConfig.maksTelegram),
-    whatsapp: whatsappHref(siteConfig.maksWhatsapp),
+    phoneHref: siteConfig.phoneHref,
+    telegram: siteConfig.maksTelegram,
+    whatsapp: siteConfig.maksWhatsapp,
   },
 ];
 
@@ -42,11 +43,11 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
       ),
     [chosenProject, plots],
   );
-  const availableChosenPlot = useMemo(
-    () =>
-      availablePlots.some((plot) => plot.id === chosenPlot) ? chosenPlot : "",
-    [availablePlots, chosenPlot],
-  );
+  const availableChosenPlot = availablePlots.some(
+    (plot) => plot.id === chosenPlot,
+  )
+    ? chosenPlot
+    : "";
 
   useEffect(() => {
     if (
@@ -60,59 +61,38 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
     setFormState("idle");
   }, [selectedPlot]);
 
-  const handlePhoneChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      setPhone(formatPhone(event.target.value));
-    },
-    [],
-  );
-
-  const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      if (pendingSubmission.current) return;
-      const formElement = event.currentTarget;
-      const form = new FormData(formElement);
-      pendingSubmission.current = true;
-      setFormState("sending");
-      setSubmitError("");
-      api
-        .sendContact({
-          name: String(form.get("name") ?? ""),
-          phone,
-          project: chosenProject,
-          plot: availableChosenPlot,
-          comment: String(form.get("comment") ?? ""),
-        })
-        .then(() => {
-          setFormState("success");
-          formElement.reset();
-          setPhone("");
-          setChosenProject("");
-          setChosenPlot("");
-        })
-        .catch((reason: unknown) => {
-          setFormState("error");
-          setSubmitError(
-            reason instanceof Error
-              ? reason.message
-              : "Не удалось отправить заявку. Попробуйте ещё раз.",
-          );
-        })
-        .finally(() => {
-          pendingSubmission.current = false;
-        });
-    },
-    [phone, chosenProject, availableChosenPlot],
-  );
-
-  const handleProjectChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setChosenProject(event.target.value);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (pendingSubmission.current) return;
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    pendingSubmission.current = true;
+    setFormState("sending");
+    setSubmitError("");
+    try {
+      await api.sendContact({
+        name: String(form.get("name") ?? ""),
+        phone,
+        project: chosenProject,
+        plot: availableChosenPlot,
+        comment: String(form.get("comment") ?? ""),
+      });
+      setFormState("success");
+      formElement.reset();
+      setPhone("");
+      setChosenProject("");
       setChosenPlot("");
-    },
-    [],
-  );
+    } catch (reason) {
+      setFormState("error");
+      setSubmitError(
+        reason instanceof Error
+          ? reason.message
+          : "Не удалось отправить заявку. Попробуйте ещё раз.",
+      );
+    } finally {
+      pendingSubmission.current = false;
+    }
+  };
 
   return (
     <section className="contact-section" id="form">
@@ -132,36 +112,38 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
           </p>
 
           <div className="contact-details">
-            {mobileContacts.map(({ id, phone, telegram, whatsapp }) => (
-              <div className="mobile-contacts" key={id}>
-                <a
-                  className="contact-phone"
-                  href={`tel:${phone?.replace(/[^\d+]/g, "") ?? ""}`}
-                  aria-label={`Позвонить: ${phone ?? ""}`}
-                >
-                  <Phone size="1.125rem" />
-                  {phone}
-                </a>
-                {telegram && (
+            {mobileContacts.map(
+              ({ id, phone, phoneHref, telegram, whatsapp }) => (
+                <div className="mobile-contacts" key={id}>
                   <a
-                    className="social-logo"
-                    href={telegram}
-                    aria-label="Написать в Telegram"
+                    className="contact-phone"
+                    href={phoneHref}
+                    aria-label={`Позвонить: ${phone}`}
                   >
-                    <TgLogo />
+                    <Phone size="1.125rem" />
+                    {phone}
                   </a>
-                )}
-                {whatsapp && (
-                  <a
-                    className="social-logo"
-                    href={whatsapp}
-                    aria-label="Написать в WhatsApp"
-                  >
-                    <WhatsupLogo />
-                  </a>
-                )}
-              </div>
-            ))}
+                  {telegram && (
+                    <a
+                      className="social-logo"
+                      href={`https://t.me/${telegram}`}
+                      aria-label="Написать в Telegram"
+                    >
+                      <TgLogo />
+                    </a>
+                  )}
+                  {whatsapp && (
+                    <a
+                      className="social-logo"
+                      href={`https://wa.me/${whatsapp}`}
+                      aria-label="Написать в WhatsApp"
+                    >
+                      <WhatsupLogo />
+                    </a>
+                  )}
+                </div>
+              ),
+            )}
             <div className="mobile-contacts email-container">
               <a href={`mailto:${siteConfig.email}`}>
                 <Mail size="1.125rem" />
@@ -197,7 +179,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
             <input
               type="tel"
               value={phone}
-              onChange={handlePhoneChange}
+              onChange={(event) => setPhone(formatPhone(event.target.value))}
               name="phone"
               placeholder="+7 (___) ___-__-__"
               pattern={PHONE_PATTERN}
@@ -213,7 +195,10 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
             <select
               name="project"
               value={chosenProject}
-              onChange={handleProjectChange}
+              onChange={(event) => {
+                setChosenProject(event.target.value);
+                setChosenPlot("");
+              }}
               disabled={formState === "sending"}
             >
               <option value="" disabled>

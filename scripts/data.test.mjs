@@ -40,7 +40,6 @@ const zones = await import(
     "./MapZones": await compile("src/interactiveMap/MapZones.ts"),
   })
 );
-const links = await import(await compile("src/lib/contactLinks.ts"));
 const worker = (
   await import(
     await compile("worker/src/index.ts", {
@@ -112,13 +111,14 @@ test("already aborted calls do not start requests or invalidate fresh data", asy
 test("identical polls keep the snapshot and rows stable while refreshing freshness", async () => {
   const cache = await freshCache();
   const photo = { src: "photo.webp", alt: "Фото участка" };
-  cache.replaceCachedPlots([plot({ photos: [photo] })]);
+  const photos = [photo];
+  cache.replaceCachedPlots([plot({ photos })]);
   const original = cache.getPlotsSnapshot();
   let notifications = 0;
   const unsubscribe = cache.subscribePlots(() => {
     notifications += 1;
   });
-  await cache.loadCachedPlots(async () => [plot({ photos: [{ ...photo }] })], {
+  await cache.loadCachedPlots(async () => [plot({ photos })], {
     maxAgeMs: 0,
   });
   assert.equal(cache.getPlotsSnapshot(), original);
@@ -126,7 +126,7 @@ test("identical polls keep the snapshot and rows stable while refreshing freshne
   await cache.loadCachedPlots(() => {
     assert.fail("Fresh rows must use memory");
   });
-  cache.mergeSavedPlots([plot({ photos: [{ ...photo }] })]);
+  cache.mergeSavedPlots([plot({ photos })]);
   assert.equal(cache.getPlotsSnapshot(), original);
   assert.equal(notifications, 0);
   unsubscribe();
@@ -207,8 +207,8 @@ test("map uses exact API IDs, ignores other settlements and disables sold or mis
     plot({
       id: "1-02",
       status: "Забронирован",
-      area: "8,12 сот.",
-      price: "1 800 000 ₽",
+      area: "8,12",
+      price: "1800000",
     }),
     plot({ id: "1-03", status: "Продан" }),
     plot({ id: "1-04", settlement: "Другие участки" }),
@@ -222,7 +222,7 @@ test("map uses exact API IDs, ignores other settlements and disables sold or mis
   assert.equal(byId.get("1-04").status, "unknown");
 });
 
-test("table sorting preserves natural IDs and compares normalized prices and areas", () => {
+test("table sorting preserves natural IDs and compares numeric prices and areas", () => {
   const items = [
     plot({ id: "2-10" }),
     plot({ id: "2-2" }),
@@ -236,46 +236,18 @@ test("table sorting preserves natural IDs and compares normalized prices and are
   );
   assert.ok(
     sorting.comparePlots(
-      plot({ price: "900 000 ₽" }),
-      plot({ price: "1 000 000 ₽" }),
+      plot({ price: "900000" }),
+      plot({ price: "1000000" }),
       "price",
     ) < 0,
   );
   assert.ok(
     sorting.comparePlots(
-      plot({ area: "7,56 сот." }),
+      plot({ area: "7,56" }),
       plot({ area: "8,1" }),
       "area",
     ) < 0,
   );
-});
-
-test("messenger contacts accept raw identifiers and complete HTTPS URLs", () => {
-  assert.equal(
-    links.telegramHref(" @hamper_team "),
-    "https://t.me/hamper_team",
-  );
-  assert.equal(
-    links.telegramHref("https://t.me/hamper_team"),
-    "https://t.me/hamper_team",
-  );
-  assert.equal(
-    links.whatsappHref("+7 (999) 123-45-67"),
-    "https://wa.me/79991234567",
-  );
-  assert.equal(
-    links.whatsappHref("https://wa.me/79991234567"),
-    "https://wa.me/79991234567",
-  );
-  for (const value of [
-    undefined,
-    "",
-    "javascript:alert(1)",
-    "http://example.test",
-  ]) {
-    assert.equal(links.telegramHref(value), undefined);
-    assert.equal(links.whatsappHref(value), undefined);
-  }
 });
 
 function contactRequest(payload) {

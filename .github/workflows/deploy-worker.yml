@@ -9,6 +9,8 @@ on:
       - "worker/**"
       - "package.json"
       - "package-lock.json"
+      - "scripts/**"
+      - ".github/workflows/deploy-worker.yml"
 
 permissions:
   contents: read
@@ -34,8 +36,8 @@ jobs:
       - name: Typecheck Worker
         run: npm run worker:typecheck
 
-      - name: Test admin authentication
-        run: npm run test:auth
+      - name: Test application
+        run: npm test
 
       - name: Validate Cloudflare credentials
         env:

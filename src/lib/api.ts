@@ -1,12 +1,5 @@
 import { isValidPlotNumber, normalizePlotNumber } from "./plotNumbers";
 import { apiUrl, plotStatuses, type Plot, type PlotStatus } from "./constants";
-import { clearLegacyAdminAuthorization } from "./adminAuth";
-import {
-  clearAdminAuthorization,
-  createBasicAuthorization,
-  getAdminAuthorization,
-  saveAdminAuthorization,
-} from "./adminAuth";
 import {
   getPlotsRevision,
   loadCachedPlots,
@@ -53,8 +46,7 @@ function statusMessage(status: number) {
 
 async function request(
   path: string,
-  options: RequestInit = {},
-  loginAuthorization?: string,
+  options: RequestOptions & { method?: "POST" | "PUT"; body?: string } = {},
 ): Promise<unknown> {
   const adminRequest = path.startsWith("/api/admin/");
   const controller = new AbortController();
@@ -67,11 +59,12 @@ async function request(
     timedOut = true;
     controller.abort();
   }, REQUEST_TIMEOUT_MS);
-  const headers = new Headers(options.headers);
-  headers.delete("Authorization");
   // A bodyless public GET needs no Content-Type or CORS preflight.
-  if (options.body !== undefined && options.body !== null)
-    headers.set("Content-Type", "application/json");
+  const headers = new Headers(
+    options.body === undefined
+      ? undefined
+      : { "Content-Type": "application/json" },
+  );
 
   try {
     const response = await fetch(`${apiUrl}${path}`, {
@@ -81,15 +74,8 @@ async function request(
       headers,
       signal: controller.signal,
     });
-    if (
-      adminRequest &&
-      response.status === 401 &&
-      !loginAuthorization &&
-      getAdminAuthorization() === authorization
-    )
-      clearAdminAuthorization();
     const contentType = response.headers.get("Content-Type") ?? "";
-    if (!/\bapplication\/(?:[\w.+-]+\+)?json\b/i.test(contentType)) {
+    if (!contentType.includes("application/json")) {
       if (!response.ok)
         throw new ApiError(statusMessage(response.status), response.status);
       throw new ApiError(
@@ -121,7 +107,7 @@ async function request(
   } catch (reason) {
     if (timedOut)
       throw new ApiError(
-        options.method && options.method !== "GET"
+        options.method
           ? "Сервер не ответил вовремя. Обновите данные перед повторной отправкой."
           : "Сервер не ответил вовремя. Попробуйте ещё раз.",
         0,
@@ -173,7 +159,7 @@ function parsePublicPlot(value: unknown): Plot {
   if (
     !isRecord(value) ||
     typeof value.id !== "string" ||
-    !value.id.trim() ||
+    !value.id.length ||
     value.id !== value.id.trim() ||
     value.id.length > 80 ||
     /[\u0000-\u001f\u007f-\u009f]/.test(value.id) ||
@@ -224,10 +210,18 @@ function parseList<T extends Plot>(
   parseItem: (item: unknown) => T,
 ): T[] {
   if (!Array.isArray(value)) throw invalidResponse();
-  const plots = value.map(parseItem);
-  if (new Set(plots.map(({ id }) => id)).size !== plots.length)
-    throw invalidResponse();
-  return plots;
+  const ids = new Set<string>();
+  return value.map((item) => {
+    const plot = parseItem(item);
+    if (ids.has(plot.id)) throw invalidResponse();
+    ids.add(plot.id);
+    return plot;
+  });
+}
+
+/** Admin responses are already validated; only omit their private fields. */
+function toPublicPlot({ street, updatedAt, ...plot }: AdminPlot): Plot {
+  return plot;
 }
 
 function parseOk(value: unknown): { ok: true } {
@@ -244,10 +238,7 @@ async function fetchPublicPlots(): Promise<Plot[]> {
     const { mockPlots } = await import("../../localTest/plots");
     return mockPlots;
   }
-  return parseList(
-    await request("/api/plots", { credentials: "omit" }),
-    parsePublicPlot,
-  );
+  return parseList(await request("/api/plots"), parsePublicPlot);
 }
 
 export const api = {
@@ -256,7 +247,6 @@ export const api = {
     password: string,
     options: RequestOptions = {},
   ) => {
-    clearLegacyAdminAuthorization();
     try {
       parseOk(
         await request("/api/admin/login", {
@@ -283,23 +273,20 @@ export const api = {
     }
   },
   logout: async (options: RequestOptions = {}) => {
-    clearLegacyAdminAuthorization();
     return parseOk(
       await request("/api/admin/logout", { ...options, method: "POST" }),
     );
   },
-  logout: () => clearAdminAuthorization(),
   getPlots: (
     options: RequestOptions & { force?: boolean; maxAgeMs?: number } = {},
   ) => loadCachedPlots(fetchPublicPlots, options),
   getAdminPlots: async (options: RequestOptions = {}) => {
-    clearLegacyAdminAuthorization();
     const revision = getPlotsRevision();
     const plots = parseList(
       await request("/api/admin/plots", options),
       parseAdminPlot,
     );
-    replaceCachedPlots(plots.map(parsePublicPlot), revision);
+    replaceCachedPlots(plots.map(toPublicPlot), revision);
     return plots;
   },
   createPlot: async (data: PlotCreate, options: RequestOptions = {}) => {
@@ -311,7 +298,7 @@ export const api = {
       }),
     );
     if (plot.id !== data.id.trim()) throw invalidResponse();
-    mergeSavedPlots([parsePublicPlot(plot)]);
+    mergeSavedPlots([toPublicPlot(plot)]);
     return plot;
   },
   updatePlots: async (data: PlotCreate[], options: RequestOptions = {}) => {
@@ -329,7 +316,7 @@ export const api = {
       plots.some(({ id }) => !expectedIds.has(id))
     )
       throw invalidResponse();
-    mergeSavedPlots(plots.map(parsePublicPlot));
+    mergeSavedPlots(plots.map(toPublicPlot));
     return plots;
   },
   updatePlot: async (
@@ -345,14 +332,13 @@ export const api = {
       }),
     );
     if (plot.id !== id.trim()) throw invalidResponse();
-    mergeSavedPlots([parsePublicPlot(plot)]);
+    mergeSavedPlots([toPublicPlot(plot)]);
     return plot;
   },
   sendContact: async (data: ContactPayload, options: RequestOptions = {}) =>
     parseOk(
       await request("/api/contact", {
         ...options,
-        credentials: "omit",
         method: "POST",
         body: JSON.stringify(data),
       }),

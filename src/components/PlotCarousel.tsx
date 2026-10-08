@@ -1,13 +1,7 @@
-import { useCallback, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import type { PlotPhoto } from "../data/individualPlots";
 import "./PlotCarousel.css";
-
-function photoUrl(src: string) {
-  return /^(https?:\/\/|data:)/.test(src)
-    ? src
-    : `${import.meta.env.BASE_URL}${src.replace(/^\//, "")}`;
-}
 
 function Slide({ photo }: { photo: PlotPhoto }) {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
@@ -25,7 +19,11 @@ function Slide({ photo }: { photo: PlotPhoto }) {
         </span>
       ) : (
         <img
-          src={photoUrl(photo.src)}
+          src={
+            photo.src.startsWith("https://")
+              ? photo.src
+              : `${import.meta.env.BASE_URL}${photo.src}`
+          }
           alt={photo.alt}
           decoding="async"
           className={state === "ready" ? "is-ready" : ""}
@@ -46,17 +44,9 @@ export function PlotCarousel({
 }) {
   const [index, setIndex] = useState(0);
   const touchStart = useRef<{ x: number; y: number } | null>(null);
-  const currentIndex = Math.min(index, Math.max(0, photos.length - 1));
-  const move = useCallback(
-    (step: number) => {
-      if (photos.length < 2) return;
-      setIndex((current) => {
-        const bounded = Math.min(current, photos.length - 1);
-        return (bounded + step + photos.length) % photos.length;
-      });
-    },
-    [photos.length],
-  );
+  const move = (step: number) => {
+    setIndex((current) => (current + step + photos.length) % photos.length);
+  };
 
   if (!photos.length)
     return (
@@ -81,7 +71,7 @@ export function PlotCarousel({
       }}
       onTouchStart={(event) => {
         const touch = event.touches[0];
-        if (!touch || event.touches.length !== 1) {
+        if (event.touches.length !== 1) {
           touchStart.current = null;
           return;
         }
@@ -104,7 +94,7 @@ export function PlotCarousel({
           move(dx < 0 ? 1 : -1);
       }}
     >
-      <Slide key={photos[currentIndex].src} photo={photos[currentIndex]} />
+      <Slide key={photos[index].src} photo={photos[index]} />
       <div className="plot-carousel-controls">
         <button
           type="button"
@@ -115,7 +105,7 @@ export function PlotCarousel({
           <ChevronLeft size="1.5rem" aria-hidden="true" />
         </button>
         <span aria-live="polite" aria-atomic="true">
-          {currentIndex + 1} / {photos.length}
+          {index + 1} / {photos.length}
         </span>
         <button
           type="button"
@@ -133,7 +123,7 @@ export function PlotCarousel({
               key={`${photo.src}-${photoIndex}`}
               type="button"
               aria-label={`Фотография ${photoIndex + 1}`}
-              aria-current={photoIndex === currentIndex ? "true" : undefined}
+              aria-current={photoIndex === index ? "true" : undefined}
               onClick={() => setIndex(photoIndex)}
             >
               <span />

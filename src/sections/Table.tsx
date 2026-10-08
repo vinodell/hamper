@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowUpRight,
   BadgePercent,
@@ -7,12 +7,7 @@ import {
 } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
-import {
-  plotFilters,
-  type TableSectionProps,
-  type PlotFilter,
-  type Plot,
-} from "../lib";
+import { plotFilters, type TableSectionProps, type PlotFilter } from "../lib";
 import { formatPlotNumber } from "../lib/plotNumbers";
 import { comparePlots, type PlotSortKey } from "../lib/plotSorting";
 
@@ -44,8 +39,10 @@ export const Table = ({
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableVisible, setTableVisible] = useState(false);
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
-  const [sortKey, setSortKey] = useState<PlotSortKey>("id");
-  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [sort, setSort] = useState<{
+    key: PlotSortKey;
+    direction: SortDirection;
+  }>({ key: "id", direction: "asc" });
   const { plots, loading, error } = usePlots();
   const activeFilter = initialFilter ?? filter;
 
@@ -81,44 +78,29 @@ export const Table = ({
     }
 
     return nextPlots.sort((left, right) => {
-      const result = comparePlots(left, right, sortKey);
-      return sortDirection === "asc" ? result : -result;
+      const result = comparePlots(left, right, sort.key);
+      return sort.direction === "asc" ? result : -result;
     });
-  }, [activeFilter, plots, sortDirection, sortKey, sortable]);
+  }, [activeFilter, plots, sort, sortable]);
 
-  const handleSort = useCallback(
-    (key: PlotSortKey) => {
-      setSortDirection((currentDirection) =>
-        sortKey === key && currentDirection === "asc" ? "desc" : "asc",
-      );
-      setSortKey(key);
-    },
-    [sortKey],
-  );
-
-  const handleSelectPlot = useCallback(
-    (plot: Plot) => {
-      if (plot.status !== "Свободен" || !onSelectPlot) return;
-      onSelectPlot(plot);
-      document.getElementById("form")?.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
-          ? "instant"
-          : "smooth",
-      });
-    },
-    [onSelectPlot],
-  );
+  const handleSort = (key: PlotSortKey) => {
+    setSort((current) => ({
+      key,
+      direction:
+        current.key === key && current.direction === "asc" ? "desc" : "asc",
+    }));
+  };
 
   const getAriaSort = (key: PlotSortKey) =>
-    !sortable || sortKey !== key
+    !sortable || sort.key !== key
       ? undefined
-      : sortDirection === "asc"
+      : sort.direction === "asc"
         ? "ascending"
         : "descending";
 
   const getSortLabel = (key: PlotSortKey) => {
-    if (sortKey !== key) return "↕";
-    return sortDirection === "asc" ? "↑" : "↓";
+    if (sort.key !== key) return "↕";
+    return sort.direction === "asc" ? "↑" : "↓";
   };
 
   return (
@@ -210,13 +192,21 @@ export const Table = ({
                       : undefined
                   }
                   style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-                  onClick={(event) => {
-                    if (plot.status !== "Свободен" || !onSelectPlot) return;
-                    if ((event.target as HTMLElement).closest("a, button"))
-                      return;
-                    if (window.getSelection()?.toString()) return;
-                    handleSelectPlot(plot);
-                  }}
+                  onClick={
+                    plot.status === "Свободен" && onSelectPlot
+                      ? (event) => {
+                          if (
+                            (event.target instanceof Element &&
+                              event.target.closest("a, button")) ||
+                            window.getSelection()?.toString()
+                          )
+                            return;
+                          event.currentTarget
+                            .querySelector<HTMLAnchorElement>(".plot-booking")
+                            ?.click();
+                        }
+                      : undefined
+                  }
                 >
                   <td>{plot.id}</td>
                   <td>

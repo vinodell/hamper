@@ -1,5 +1,4 @@
 import type { Plot, PlotStatus } from "../lib/constants";
-import { normalizePlotNumber } from "../lib/plotNumbers";
 import type { MapZone, ZoneStatus } from "./Interactive.types";
 import { mapZones } from "./MapZones";
 
@@ -7,12 +6,6 @@ const statuses: Record<PlotStatus, ZoneStatus> = {
   Свободен: "available",
   Забронирован: "reserved",
   Продан: "sold",
-};
-
-const numericValue = (value: string | undefined) => {
-  if (!value) return undefined;
-  const number = Number(normalizePlotNumber(value));
-  return Number.isFinite(number) && number > 0 ? number : undefined;
 };
 
 export const isSelectableZone = (zone: MapZone) =>
@@ -25,14 +18,15 @@ export function resolveMapZones(plots: Plot[]): MapZone[] {
       .map((plot) => [plot.id, plot]),
   );
 
-  return mapZones.map((zone) => {
+  return mapZones.map((zone): MapZone => {
     const plot = byId.get(zone.plotId);
+    if (!plot) return { ...zone, status: "unknown" };
     return {
       ...zone,
-      status: plot ? (statuses[plot.status] ?? "unknown") : "unknown",
-      area: numericValue(plot?.area),
-      price: numericValue(plot?.price),
-      description: plot?.description ?? undefined,
+      status: statuses[plot.status],
+      area: Number(plot.area.replace(",", ".")),
+      price: Number(plot.price.replace(",", ".")),
+      description: plot.description ?? undefined,
     };
   });
 }

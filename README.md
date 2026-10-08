@@ -6,6 +6,8 @@ just private website
 
 Copy `.env.example` to `.env.local` and fill in the contact values. The local env file is ignored by Git.
 
+Telegram values are usernames without `@` or `https://t.me/`; WhatsApp values are phone numbers containing only digits. The interface adds the fixed link prefixes.
+
 ```bash
 npm install
 npm run dev
@@ -58,4 +60,6 @@ Local demo plots are used only with `VITE_USE_MOCK_DATA=true` on localhost in de
 
 To test real requests locally, create an ignored `worker/.dev.vars` with `ADMIN_LOGIN`, `ADMIN_PASSWORD_HASH`, `PUBLIC_ORIGIN=http://localhost:5173`, and the Telegram secrets, then run `npm run worker:dev`. Use `VITE_API_URL=http://localhost:8787` for the frontend. Local HTTP on localhost uses an HttpOnly `SameSite=Lax` cookie. Keep real contact sends disabled or use a test Telegram destination during development.
 
-Run `npm test`, `npm run worker:typecheck`, and `npm run build` before publishing. `npm run test:data` covers shared request cancellation, cache refresh/save races, sorting, map status resolution, contact links, and Telegram success/error responses.
+Run `npm test`, `npm run worker:typecheck`, and `npm run build` before publishing. `npm run test:data` covers shared request cancellation, cache refresh/save races, sorting, map status resolution, and Telegram success/error responses.
+
+Both deployment workflows run the full tests before publishing. The GitHub Pages build requires `VITE_API_URL` in the `github-pages` environment or repository secrets.

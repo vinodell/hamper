@@ -1,4 +1,3 @@
-import { useCallback, useMemo } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { InteractiveMap } from "../interactiveMap";
 import { chooseZemli, type Plot } from "../lib";
@@ -14,17 +13,10 @@ export const GeneralPlan = ({
   onSelectPlot?: (plot: Plot) => void;
 }) => {
   const { plots, loading, error } = usePlots();
-  const plotsById = useMemo(
-    () => new Map(plots.map((plot) => [plot.id, plot])),
-    [plots],
-  );
-  const handleZoneClick = useCallback(
-    (zone: MapZone) => {
-      const plot = plotsById.get(zone.plotId);
-      if (plot?.status === "Свободен") onSelectPlot?.(plot);
-    },
-    [onSelectPlot, plotsById],
-  );
+  const handleZoneClick = (zone: MapZone) => {
+    const plot = plots.find((plot) => plot.id === zone.plotId);
+    if (plot?.status === "Свободен") onSelectPlot?.(plot);
+  };
 
   return (
     <section className="section masterplan" id="genplan">

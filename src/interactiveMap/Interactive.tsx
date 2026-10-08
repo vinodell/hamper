@@ -1,10 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type KeyboardEvent,
-} from "react";
+import { useEffect, useMemo, useState } from "react";
 import { MapTooltip } from "./MapTooltip";
 import { ZoneModal } from "./ZoneModal";
 import { MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./MapZones";
@@ -60,29 +54,10 @@ export const InteractiveMap = ({
     if (hoveredZoneId && !hoveredZone) setHoveredZoneId(null);
   }, [selectedZoneId, selectedZone, hoveredZoneId, hoveredZone]);
 
-  const handleZoneClick = useCallback(
-    (zone: MapZone): void => {
-      if (!isSelectableZone(zone)) return;
-      setSelectedZoneId(zone.id);
-      setHoveredZoneId(null);
-      onZoneClick?.(zone);
-    },
-    [onZoneClick],
-  );
-
-  const closeModal = useCallback(() => setSelectedZoneId(null), []);
-
-  const handleZoneKeyDown = (
-    event: KeyboardEvent<SVGPathElement>,
-    zone: MapZone,
-  ): void => {
-    if (event.key !== "Enter" && event.key !== " ") {
-      return;
-    }
-
-    event.preventDefault();
-
-    handleZoneClick(zone);
+  const handleZoneClick = (zone: MapZone) => {
+    setSelectedZoneId(zone.id);
+    setHoveredZoneId(null);
+    onZoneClick?.(zone);
   };
 
   return (
@@ -111,9 +86,6 @@ export const InteractiveMap = ({
           viewBox={MAP_VIEW_BOX}
           role="group"
           aria-label={imageAlt}
-          onPointerLeave={() => {
-            setHoveredZoneId(null);
-          }}
         >
           <g transform={MAP_GROUP_TRANSFORM}>
             {zones.map((zone) => {
@@ -175,12 +147,19 @@ export const InteractiveMap = ({
                     onBlur={() => {
                       setHoveredZoneId(null);
                     }}
-                    onClick={() => {
-                      handleZoneClick(zone);
-                    }}
-                    onKeyDown={(event) => {
-                      handleZoneKeyDown(event, zone);
-                    }}
+                    onClick={
+                      selectable ? () => handleZoneClick(zone) : undefined
+                    }
+                    onKeyDown={
+                      selectable
+                        ? (event) => {
+                            if (event.key !== "Enter" && event.key !== " ")
+                              return;
+                            event.preventDefault();
+                            handleZoneClick(zone);
+                          }
+                        : undefined
+                    }
                   />
                   {selectable && (
                     <g
@@ -209,7 +188,12 @@ export const InteractiveMap = ({
         )}
       </div>
 
-      {selectedZone && <ZoneModal zone={selectedZone} onClose={closeModal} />}
+      {selectedZone && (
+        <ZoneModal
+          zone={selectedZone}
+          onClose={() => setSelectedZoneId(null)}
+        />
+      )}
     </>
   );
 };

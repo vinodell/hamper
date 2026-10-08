@@ -1,7 +1,7 @@
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import { api } from "../lib/api";
 import { PLOTS_REFRESH_MS } from "../lib/constants";
-import { PLOTS_UPDATED_EVENT } from "../lib/plotEvents";
+import { PLOTS_UPDATED_CHANNEL } from "../lib/plotEvents";
 import { getPlotsSnapshot, subscribePlots } from "../lib/plotsCache";
 import { PlotsContext } from "./PlotsContext";
 
@@ -22,16 +22,12 @@ export function PlotsProvider({ children }: { children: ReactNode }) {
     const refreshVisible = () => {
       if (!document.hidden) refresh();
     };
-    // A local save has already merged the response into memory. Reading that
-    // fresh snapshot avoids a second GET after every successful admin write.
-    const refreshSaved = () => refresh();
     const refreshRemote = () => refresh(true);
     const channel =
       typeof BroadcastChannel === "undefined"
         ? null
-        : new BroadcastChannel(PLOTS_UPDATED_EVENT);
+        : new BroadcastChannel(PLOTS_UPDATED_CHANNEL);
     channel?.addEventListener("message", refreshRemote);
-    window.addEventListener(PLOTS_UPDATED_EVENT, refreshSaved);
     window.addEventListener("focus", refreshVisible);
     document.addEventListener("visibilitychange", refreshVisible);
     const interval = window.setInterval(() => {
@@ -44,7 +40,6 @@ export function PlotsProvider({ children }: { children: ReactNode }) {
     return () => {
       channel?.close();
       window.clearInterval(interval);
-      window.removeEventListener(PLOTS_UPDATED_EVENT, refreshSaved);
       window.removeEventListener("focus", refreshVisible);
       document.removeEventListener("visibilitychange", refreshVisible);
     };

@@ -1,12 +1,6 @@
 import { isValidPlotNumber, normalizePlotNumber } from "../lib/plotNumbers";
 import { LogOut, Plus, Save, ShieldCheck, X } from "lucide-react";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   api,
   ApiError,
@@ -15,6 +9,7 @@ import {
   type PlotUpdate,
 } from "../lib/api";
 import { plotStatuses } from "../lib";
+import { clearLegacyAdminAuthorization } from "../lib/adminAuth";
 import { mergeAdminDrafts, toPlotUpdate } from "../lib/adminDrafts";
 import { notifyPlotsUpdated } from "../lib/plotEvents";
 import { LoadingIndicator } from "../components/LoadingIndicator";
@@ -30,17 +25,12 @@ const emptyPlot: PlotCreate = {
   description: "",
 };
 
-const samePlot = (left: AdminPlot, right: AdminPlot) => {
-  const a = toPlotUpdate(left);
-  const b = toPlotUpdate(right);
-  return (
-    a.area === b.area &&
-    a.status === b.status &&
-    a.price === b.price &&
-    a.street === b.street &&
-    a.description === b.description
-  );
-};
+const samePlot = (left: AdminPlot, right: AdminPlot) =>
+  normalizePlotNumber(left.area) === normalizePlotNumber(right.area) &&
+  left.status === right.status &&
+  normalizePlotNumber(left.price) === normalizePlotNumber(right.price) &&
+  (left.street ?? "") === (right.street ?? "") &&
+  (left.description ?? "") === (right.description ?? "");
 
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -49,15 +39,16 @@ export function Admin() {
   const [plots, setPlots] = useState<AdminPlot[]>([]);
   const [savedPlots, setSavedPlots] = useState<AdminPlot[]>([]);
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(() => Boolean(getAdminAuthorization()));
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [loggingIn, setLoggingIn] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [newPlot, setNewPlot] = useState<PlotCreate>({ ...emptyPlot });
+  const [newPlot, setNewPlot] = useState<PlotCreate>(emptyPlot);
   const [saveMessage, setSaveMessage] = useState("");
-  const busy = saving || creating;
+  const busy = saving || creating || loggingOut;
 
   const savedById = useMemo(
     () => new Map(savedPlots.map((plot) => [plot.id, plot])),
@@ -77,6 +68,7 @@ export function Admin() {
   );
 
   useEffect(() => {
+    clearLegacyAdminAuthorization();
     const controller = new AbortController();
     api
       .getAdminPlots({ signal: controller.signal })
@@ -102,75 +94,66 @@ export function Admin() {
     return () => controller.abort();
   }, []);
 
-  const handleLogin = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
-      if (loggingIn) return;
-      setLoggingIn(true);
-      setError("");
-      try {
-        const loaded = await api.login(login, password);
-        setSavedPlots(loaded);
-        setPlots(mergeAdminDrafts(loaded, changedPlots, savedById));
-        setLogin("");
-        setAuthenticated(true);
-      } catch (reason) {
-        setError(reason instanceof Error ? reason.message : "Не удалось войти");
-      } finally {
-        setPassword("");
-        setLoggingIn(false);
-      }
-    },
-    [changedPlots, login, loggingIn, password, savedById],
-  );
+  const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (loggingIn) return;
+    setLoggingIn(true);
+    setError("");
+    try {
+      const loaded = await api.login(login, password);
+      setSavedPlots(loaded);
+      setPlots(mergeAdminDrafts(loaded, changedPlots, savedById));
+      setLogin("");
+      setAuthenticated(true);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Не удалось войти");
+    } finally {
+      setPassword("");
+      setLoggingIn(false);
+    }
+  };
 
-  const updatePlot = useCallback(
-    (id: string, key: keyof PlotUpdate, value: string) => {
-      if (busy) return;
-      if (
-        (key === "area" || key === "price") &&
-        !/^\d*(?:[.,]\d{0,2})?$/.test(value)
-      )
-        return;
-      setSaveMessage("");
-      setError("");
-      setPlots((current) =>
-        current.map((plot) =>
-          plot.id === id ? { ...plot, [key]: value } : plot,
-        ),
-      );
-    },
-    [busy],
-  );
+  const updatePlot = (id: string, key: keyof PlotUpdate, value: string) => {
+    if (busy) return;
+    if (
+      (key === "area" || key === "price") &&
+      !/^\d*(?:[.,]\d{0,2})?$/.test(value)
+    )
+      return;
+    setSaveMessage("");
+    setError("");
+    setPlots((current) =>
+      current.map((plot) =>
+        plot.id === id ? { ...plot, [key]: value } : plot,
+      ),
+    );
+  };
 
-  const handleMutationError = useCallback(
-    (reason: unknown, fallback: string, forCreate = false) => {
-      if (reason instanceof ApiError && reason.status === 401) {
-        setAuthenticated(false);
-        setPassword("");
-        setError("Войдите снова — несохранённые изменения останутся в форме.");
-      } else if (forCreate) {
-        setCreateError(reason instanceof Error ? reason.message : fallback);
-      } else {
-        setError(reason instanceof Error ? reason.message : fallback);
-      }
-    },
-    [],
-  );
+  const handleMutationError = (
+    reason: unknown,
+    fallback: string,
+    forCreate = false,
+  ) => {
+    if (reason instanceof ApiError && reason.status === 401) {
+      setAuthenticated(false);
+      setPassword("");
+      setError("Войдите снова — несохранённые изменения останутся в форме.");
+    } else {
+      const setMessage = forCreate ? setCreateError : setError;
+      setMessage(reason instanceof Error ? reason.message : fallback);
+    }
+  };
 
-  const updateNewPlot = useCallback(
-    (key: keyof PlotCreate, value: string) => {
-      if (busy) return;
-      if (
-        (key === "area" || key === "price") &&
-        !/^\d*(?:[.,]\d{0,2})?$/.test(value)
-      )
-        return;
-      setCreateError("");
-      setNewPlot((current) => ({ ...current, [key]: value }));
-    },
-    [busy],
-  );
+  const updateNewPlot = (key: keyof PlotCreate, value: string) => {
+    if (busy) return;
+    if (
+      (key === "area" || key === "price") &&
+      !/^\d*(?:[.,]\d{0,2})?$/.test(value)
+    )
+      return;
+    setCreateError("");
+    setNewPlot((current) => ({ ...current, [key]: value }));
+  };
 
   const createPlot = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -209,7 +192,7 @@ export function Admin() {
       });
       setPlots((current) => [...current, created]);
       setSavedPlots((current) => [...current, created]);
-      setNewPlot({ ...emptyPlot });
+      setNewPlot(emptyPlot);
       setShowCreateForm(false);
       setSaveMessage(`Участок ${created.id} добавлен.`);
       notifyPlotsUpdated();
@@ -255,12 +238,9 @@ export function Admin() {
     }
   };
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     if (busy) return;
-    api.logout();
-    setAuthenticated(false);
-    setLogin("");
-    setPassword("");
+    setLoggingOut(true);
     setError("");
     try {
       await api.logout();
@@ -269,7 +249,7 @@ export function Admin() {
       setPassword("");
       setPlots([]);
       setSavedPlots([]);
-      setNewPlot({ ...emptyPlot });
+      setNewPlot(emptyPlot);
       setCreateError("");
       setShowCreateForm(false);
       setSaveMessage("");
@@ -282,7 +262,7 @@ export function Admin() {
     } finally {
       setLoggingOut(false);
     }
-  }, [busy]);
+  };
 
   const settlementGroups = useMemo(() => {
     const groups = new Map<string, AdminPlot[]>();

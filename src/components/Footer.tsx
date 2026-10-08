@@ -1,13 +1,10 @@
 import { Logo } from "../images";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { navigation, offertaMsg, siteConfig } from "../lib";
 
 import "./Footer.css";
 
 export const Footer = () => {
-  const { pathname } = useLocation();
-  const projectsHref = pathname === "/" ? "#poselki" : "/#poselki";
-
   return (
     <footer className="footer">
       <div className="container footer-top">
@@ -26,7 +23,7 @@ export const Footer = () => {
           {navigation.map(([label, href]) => (
             <Link
               key={`${label}-${href}`}
-              to={label === "Проекты" ? projectsHref : href}
+              to={label === "Проекты" ? "/#poselki" : href}
             >
               {label}
             </Link>

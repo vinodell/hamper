@@ -59,6 +59,14 @@ export const Header = () => {
         first?.focus();
       }
     };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleNavigation, menu.isOpen, projectsOpen]);
+
+  useEffect(() => {
+    if (!projectsOpen) return;
     const handleOutsideClick = (event: PointerEvent) => {
       if (
         event.target instanceof Node &&
@@ -67,14 +75,10 @@ export const Header = () => {
         setProjectsOpen(false);
       }
     };
-
-    document.addEventListener("keydown", handleKeyDown);
     document.addEventListener("pointerdown", handleOutsideClick);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
+    return () =>
       document.removeEventListener("pointerdown", handleOutsideClick);
-    };
-  }, [handleNavigation, menu.isOpen, projectsOpen]);
+  }, [projectsOpen]);
 
   useEffect(() => {
     if (menu.isOpen) {
@@ -84,10 +88,10 @@ export const Header = () => {
     }
   }, [menu.isOpen]);
 
-  const handleMenuToggle = useCallback(() => {
+  const handleMenuToggle = () => {
     setProjectsOpen(false);
     menu.toggle();
-  }, [menu.toggle]);
+  };
 
   return (
     <header className="site-header" ref={headerRef}>

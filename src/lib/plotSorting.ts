@@ -1,5 +1,4 @@
 import type { Plot } from "./constants";
-import { normalizePlotNumber } from "./plotNumbers";
 
 export type PlotSortKey = "id" | "category" | "area" | "status" | "price";
 
@@ -12,11 +11,6 @@ const statusOrder: Record<Plot["status"], number> = {
   Забронирован: 1,
   Продан: 2,
 };
-
-function numericValue(value: string): number {
-  const number = Number(normalizePlotNumber(value));
-  return Number.isFinite(number) ? number : 0;
-}
 
 /** Keep exact IDs intact: 2-2 precedes 2-10, including IDs with text prefixes. */
 export function comparePlots(
@@ -34,7 +28,9 @@ export function comparePlots(
       break;
     case "area":
     case "price":
-      result = numericValue(left[key]) - numericValue(right[key]);
+      result =
+        Number(left[key].replace(",", ".")) -
+        Number(right[key].replace(",", "."));
       break;
     case "status":
       result = statusOrder[left.status] - statusOrder[right.status];
