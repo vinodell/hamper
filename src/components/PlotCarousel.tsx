@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, ImageOff } from "lucide-react";
 import type { PlotPhoto } from "../data/individualPlots";
+
 import "./PlotCarousel.css";
 
 function Slide({ photo }: { photo: PlotPhoto }) {

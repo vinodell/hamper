@@ -50,13 +50,13 @@ export const Main = () => {
           </>
         )}
         <Table
-          key={slug}
+          key={`table:${slug}`}
           sortable={slug === "drugie-uchastki"}
           initialFilter={config.plotFilter}
           onSelectPlot={handleSelectPlot}
         />
         <Contacts
-          key={slug}
+          key={`contacts:${slug}`}
           selectedPlot={
             selectedPlot?.settlement === config.plotFilter ? selectedPlot : null
           }
