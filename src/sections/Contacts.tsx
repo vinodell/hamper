@@ -85,7 +85,7 @@ export const Contacts = ({
     try {
       await api.sendContact({
         name: String(form.get("name") ?? ""),
-        phone,
+        phone: formatPhone(phone),
         project: chosenProject,
         plot: availableChosenPlot,
         comment: String(form.get("comment") ?? ""),
@@ -197,7 +197,8 @@ export const Contacts = ({
             <input
               type="tel"
               value={phone}
-              onChange={(event) => setPhone(formatPhone(event.target.value))}
+              onChange={(event) => setPhone(event.target.value)}
+              onBlur={(event) => setPhone(formatPhone(event.target.value))}
               name="phone"
               placeholder="+7 (___) ___-__-__"
               pattern={PHONE_PATTERN}
