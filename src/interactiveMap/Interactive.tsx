@@ -22,8 +22,10 @@ export const InteractiveMap = ({
   imageSrc,
   imageSrcSet,
   imageSizes,
+  orientation = "portrait",
   imageAlt = "Карта участков",
   onZoneClick,
+  onBookPlot,
   className,
 }: InteractiveMapProps) => {
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
@@ -62,7 +64,10 @@ export const InteractiveMap = ({
 
   return (
     <>
-      <div className={[styles.map, className].filter(Boolean).join(" ")}>
+      <div
+        className={[styles.map, className].filter(Boolean).join(" ")}
+        data-orientation={orientation}
+      >
         <img
           className={styles.render}
           src={imageSrc}
@@ -83,99 +88,107 @@ export const InteractiveMap = ({
         )}
         <svg
           className={styles.svg}
-          viewBox={MAP_VIEW_BOX}
+          viewBox={orientation === "landscape" ? "0 0 1200 800" : MAP_VIEW_BOX}
           role="group"
           aria-label={imageAlt}
         >
-          <g transform={MAP_GROUP_TRANSFORM}>
-            {zones.map((zone) => {
-              const selectable = isSelectableZone(zone);
-              const isHovered = hoveredZoneId === zone.id;
+          <g
+            transform={
+              orientation === "landscape"
+                ? "translate(0,800) rotate(-90)"
+                : undefined
+            }
+          >
+            <g transform={MAP_GROUP_TRANSFORM}>
+              {zones.map((zone) => {
+                const selectable = isSelectableZone(zone);
+                const isHovered = hoveredZoneId === zone.id;
 
-              const isSelected = selectedZone?.id === zone.id;
+                const isSelected = selectedZone?.id === zone.id;
 
-              return (
-                <g key={zone.id}>
-                  <path
-                    data-number={zone.number}
-                    data-plot-id={zone.plotId}
-                    d={zone.d}
-                    className={styles.zone}
-                    data-status={zone.status}
-                    data-selectable={selectable}
-                    data-hovered={isHovered}
-                    data-selected={isSelected}
-                    vectorEffect="non-scaling-stroke"
-                    tabIndex={selectable ? 0 : undefined}
-                    role={selectable ? "button" : "img"}
-                    aria-label={`${zone.title}. ${
-                      selectable
-                        ? "Нажмите, чтобы посмотреть подробнее"
-                        : zone.status === "sold"
-                          ? "Продан"
-                          : "Статус уточняется"
-                    }`}
-                    aria-haspopup={selectable ? "dialog" : undefined}
-                    onPointerEnter={(event) => {
-                      /**
-                       * На touch нет настоящего hover.
-                       */
-                      if (!selectable || event.pointerType === "touch") {
-                        return;
+                return (
+                  <g key={zone.id}>
+                    <path
+                      data-number={zone.number}
+                      data-plot-id={zone.plotId}
+                      d={zone.d}
+                      className={styles.zone}
+                      data-status={zone.status}
+                      data-selectable={selectable}
+                      data-hovered={isHovered}
+                      data-selected={isSelected}
+                      vectorEffect="non-scaling-stroke"
+                      tabIndex={selectable ? 0 : undefined}
+                      role={selectable ? "button" : "img"}
+                      aria-label={`${zone.title}. ${
+                        selectable
+                          ? "Нажмите, чтобы посмотреть подробнее"
+                          : zone.status === "sold"
+                            ? "Продан"
+                            : "Статус уточняется"
+                      }`}
+                      aria-haspopup={selectable ? "dialog" : undefined}
+                      onPointerEnter={(event) => {
+                        /**
+                         * На touch нет настоящего hover.
+                         */
+                        if (!selectable || event.pointerType === "touch") {
+                          return;
+                        }
+
+                        setHoveredZoneId(zone.id);
+                        setPointerPosition({
+                          x: event.clientX,
+                          y: event.clientY,
+                        });
+                      }}
+                      onPointerLeave={() => {
+                        setHoveredZoneId(null);
+                      }}
+                      onFocus={(event) => {
+                        if (
+                          !selectable ||
+                          !event.currentTarget.matches(":focus-visible")
+                        )
+                          return;
+                        const bounds =
+                          event.currentTarget.getBoundingClientRect();
+                        setPointerPosition({ x: bounds.right, y: bounds.top });
+                        setHoveredZoneId(zone.id);
+                      }}
+                      onBlur={() => {
+                        setHoveredZoneId(null);
+                      }}
+                      onClick={
+                        selectable ? () => handleZoneClick(zone) : undefined
                       }
-
-                      setHoveredZoneId(zone.id);
-                      setPointerPosition({
-                        x: event.clientX,
-                        y: event.clientY,
-                      });
-                    }}
-                    onPointerLeave={() => {
-                      setHoveredZoneId(null);
-                    }}
-                    onFocus={(event) => {
-                      if (
-                        !selectable ||
-                        !event.currentTarget.matches(":focus-visible")
-                      )
-                        return;
-                      const bounds =
-                        event.currentTarget.getBoundingClientRect();
-                      setPointerPosition({ x: bounds.right, y: bounds.top });
-                      setHoveredZoneId(zone.id);
-                    }}
-                    onBlur={() => {
-                      setHoveredZoneId(null);
-                    }}
-                    onClick={
-                      selectable ? () => handleZoneClick(zone) : undefined
-                    }
-                    onKeyDown={
-                      selectable
-                        ? (event) => {
-                            if (event.key !== "Enter" && event.key !== " ")
-                              return;
-                            event.preventDefault();
-                            handleZoneClick(zone);
-                          }
-                        : undefined
-                    }
-                  />
-                  {selectable && (
-                    <g
-                      className={styles.marker}
-                      transform={`translate(${zone.labelPosition.x},${zone.labelPosition.y})`}
-                      aria-hidden="true"
-                    >
-                      <circle r="18" />
-                      <text textAnchor="middle" dy=".35em">
-                        {zone.number}
-                      </text>
-                    </g>
-                  )}
-                </g>
-              );
-            })}
+                      onKeyDown={
+                        selectable
+                          ? (event) => {
+                              if (event.key !== "Enter" && event.key !== " ")
+                                return;
+                              event.preventDefault();
+                              handleZoneClick(zone);
+                            }
+                          : undefined
+                      }
+                    />
+                    {(selectable || orientation === "landscape") && (
+                      <g
+                        className={styles.marker}
+                        transform={`translate(${zone.labelPosition.x},${zone.labelPosition.y})${orientation === "landscape" ? " rotate(90)" : ""}`}
+                        aria-hidden="true"
+                      >
+                        <circle r="18" />
+                        <text textAnchor="middle" dy=".35em">
+                          {zone.number}
+                        </text>
+                      </g>
+                    )}
+                  </g>
+                );
+              })}
+            </g>
           </g>
         </svg>
 
@@ -192,6 +205,7 @@ export const InteractiveMap = ({
         <ZoneModal
           zone={selectedZone}
           onClose={() => setSelectedZoneId(null)}
+          onBook={onBookPlot ? () => onBookPlot(selectedZone) : undefined}
         />
       )}
     </>

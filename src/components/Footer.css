@@ -7,8 +7,8 @@
 }
 
 .footer {
-    background: #1f2a25;
-    color: rgba(255, 255, 255, 0.68);
+    background: var(--footer-bg);
+    color: var(--footer-ink);
     padding: 1.5rem 0;
 }
 

@@ -22,12 +22,22 @@ const mobileContacts = [
     telegram: siteConfig.maksTelegram,
     whatsapp: siteConfig.maksWhatsapp,
   },
-];
+].filter(({ phone, telegram, whatsapp }) => phone || telegram || whatsapp);
 
-export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
+type ContactsProps = {
+  selectedPlot?: Plot | null;
+  initialProject?: string;
+  id?: string;
+};
+
+export const Contacts = ({
+  selectedPlot,
+  initialProject = "",
+  id = "form",
+}: ContactsProps) => {
   const [phone, setPhone] = useState("");
   const { plots, loading: plotsLoading, error: plotsError } = usePlots();
-  const [chosenProject, setChosenProject] = useState("");
+  const [chosenProject, setChosenProject] = useState(initialProject);
   const [chosenPlot, setChosenPlot] = useState("");
   const [formState, setFormState] = useState<
     "idle" | "sending" | "success" | "error"
@@ -80,7 +90,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
       setFormState("success");
       formElement.reset();
       setPhone("");
-      setChosenProject("");
+      setChosenProject(initialProject);
       setChosenPlot("");
     } catch (reason) {
       setFormState("error");
@@ -95,7 +105,7 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
   };
 
   return (
-    <section className="contact-section" id="form">
+    <section className="contact-section" id={id}>
       <div className="container contact-grid">
         <div className="contact-copy">
           <p className="eyebrow light my-text-bold">КОНТАКТЫ</p>
@@ -115,14 +125,16 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
             {mobileContacts.map(
               ({ id, phone, phoneHref, telegram, whatsapp }) => (
                 <div className="mobile-contacts" key={id}>
-                  <a
-                    className="contact-phone"
-                    href={phoneHref}
-                    aria-label={`Позвонить: ${phone}`}
-                  >
-                    <Phone size="1.125rem" />
-                    {phone}
-                  </a>
+                  {phone && (
+                    <a
+                      className="contact-phone"
+                      href={phoneHref}
+                      aria-label={`Позвонить: ${phone}`}
+                    >
+                      <Phone size="1.125rem" />
+                      {phone}
+                    </a>
+                  )}
                   {telegram && (
                     <a
                       className="social-logo"
@@ -144,12 +156,14 @@ export const Contacts = ({ selectedPlot }: { selectedPlot?: Plot | null }) => {
                 </div>
               ),
             )}
-            <div className="mobile-contacts email-container">
-              <a href={`mailto:${siteConfig.email}`}>
-                <Mail size="1.125rem" />
-                {siteConfig.email}
-              </a>
-            </div>
+            {siteConfig.email && (
+              <div className="mobile-contacts email-container">
+                <a href={`mailto:${siteConfig.email}`}>
+                  <Mail size="1.125rem" />
+                  {siteConfig.email}
+                </a>
+              </div>
+            )}
           </div>
         </div>
 

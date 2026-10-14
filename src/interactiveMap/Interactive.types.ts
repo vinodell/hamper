@@ -39,6 +39,8 @@ export type InteractiveMapProps = {
   imageSrc: string;
   imageSrcSet?: string;
   imageSizes?: string;
+  /** Rotate the image and parcel geometry together, keeping labels upright. */
+  orientation?: "portrait" | "landscape";
 
   /**
    * Accessible description изображения.
@@ -50,6 +52,8 @@ export type InteractiveMapProps = {
    * Можно использовать дополнительно к встроенной modal.
    */
   onZoneClick?: (zone: MapZone) => void;
+  /** Override the free parcel dialog's booking link with a page action. */
+  onBookPlot?: (zone: MapZone) => void;
 
   className?: string;
 };
@@ -62,4 +66,5 @@ export type MapTooltipProps = {
 export type ZoneModalProps = {
   zone: MapZone;
   onClose: () => void;
+  onBook?: () => void;
 };

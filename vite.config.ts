@@ -15,8 +15,6 @@ function githubPagesRoutes(): Plugin {
         if (!html || html.type !== "asset")
           this.error("GitHub Pages build is missing index.html");
 
-        // Pages resolves directories to index.html; BrowserRouter renders the
-        // matching screen after this shared application shell has loaded.
         const paths = [adminPath, ...projectRoutes.map(({ path }) => path)];
         const files = [
           "404.html",

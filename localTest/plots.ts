@@ -1,7 +1,5 @@
 import type { Plot } from "../src/lib/constants";
 
-// Village IDs match MapZones.ts, so the local table and map use the same records.
-// Sold plots are hidden in the table and disabled on the map.
 export const mockPlots: Plot[] = [
   { id: "1-01", settlement: "Ойнеловские дали", area: "7,56", price: "1500000", status: "Свободен" },
   { id: "1-02", settlement: "Ойнеловские дали", area: "8,12", price: "1800000", status: "Забронирован" },

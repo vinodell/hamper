@@ -1,0 +1,1508 @@
+.oinelovo-page {
+  --oinelovo-line: color-mix(in srgb, var(--line) 16%, transparent);
+  --zone-available-fill: color-mix(in srgb, var(--pine) 16%, transparent);
+  --zone-reserved-fill: color-mix(in srgb, var(--gold) 55%, transparent);
+  --zone-sold-fill: color-mix(in srgb, var(--ink) 50%, transparent);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.oinelovo-container {
+  width: min(90%, 84rem);
+  margin-inline: auto;
+}
+
+.oinelovo-page :is(h1, h2, h3) {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  line-height: 1.12;
+  letter-spacing: -0.025em;
+}
+
+.oinelovo-page :is(strong, b, .oinelovo-button, .oinelovo-header__inquiry) {
+  font-family: var(--font-heading);
+  font-weight: 400;
+}
+
+.oinelovo-page h2 {
+  margin: 0 0 0.875rem;
+  font-size: clamp(1.75rem, 2.3vw, 2.35rem);
+}
+
+.oinelovo-page h3 {
+  margin: 0 0 0.875rem;
+  font-size: clamp(1.125rem, 1.75vw, 1.65rem);
+}
+
+.oinelovo-page p {
+  margin-bottom: 0;
+}
+
+.oinelovo-page :is(ul, dl, figure) {
+  margin: 0;
+}
+
+.oinelovo-page :is(a, button, summary):focus-visible {
+  outline: 0.125rem solid var(--gold-dark);
+  outline-offset: 0.25rem;
+}
+
+.oinelovo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  min-height: 2.875rem;
+  padding: 0.75rem 1.6rem;
+  border: 0.0625rem solid transparent;
+  border-radius: 0.3125rem;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-align: center;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.oinelovo-button:hover {
+  background: color-mix(in srgb, var(--gold) 85%, white);
+}
+
+.oinelovo-button:active {
+  background: var(--gold-dark);
+}
+
+.oinelovo-button--outline {
+  border-color: var(--pine);
+  color: var(--pine);
+  background: transparent;
+}
+
+.oinelovo-button--outline:hover {
+  background: var(--bg);
+}
+
+.oinelovo-button--light {
+  border-color: rgb(255 255 255 / 0.7);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+  color: white;
+}
+
+.oinelovo-button--light:hover {
+  background: rgb(255 255 255 / 0.12);
+}
+
+.oinelovo-button--small {
+  min-height: 2rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.625rem;
+}
+
+.oinelovo-text-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  background: transparent;
+  color: var(--pine);
+  font-size: 0.75rem;
+  text-align: left;
+}
+
+.oinelovo-text-button:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.oinelovo-hero {
+  position: relative;
+  min-height: clamp(27rem, 32vw, 32rem);
+  overflow: hidden;
+  isolation: isolate;
+  color: white;
+  background: var(--pine);
+}
+
+.oinelovo-hero-image {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: cover;
+  object-position: center 54%;
+}
+
+.oinelovo-hero::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ink) 90%, transparent),
+      color-mix(in srgb, var(--ink) 48%, transparent) 42%,
+      color-mix(in srgb, var(--ink) 5%, transparent) 78%
+    ),
+    linear-gradient(
+      0deg,
+      color-mix(in srgb, var(--ink) 20%, transparent),
+      transparent 50%
+    );
+}
+
+.oinelovo-hero-content {
+  position: relative;
+  padding-block: 1.375rem 2.25rem;
+}
+
+.oinelovo-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin-bottom: 2rem;
+  color: color-mix(in srgb, var(--gold) 70%, white);
+  font-size: 0.6875rem;
+}
+
+.oinelovo-breadcrumbs a:hover {
+  text-decoration: underline;
+}
+
+.oinelovo-hero-copy {
+  max-width: 43rem;
+}
+
+.oinelovo-tag {
+  display: inline-block;
+  margin-bottom: 0.625rem;
+  padding: 0.25rem 0.6rem;
+  border-radius: 0.4rem;
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  font-size: 0.625rem;
+}
+
+.oinelovo-page .oinelovo-hero h1 {
+  margin: 0;
+  font-size: clamp(3rem, 4.6vw, 4.625rem);
+  line-height: 0.99;
+  letter-spacing: -0.02em;
+}
+
+.oinelovo-hero-copy > p {
+  margin-top: 1rem;
+  font-size: clamp(1rem, 1.4vw, 1.3rem);
+  line-height: 1.4;
+}
+
+.oinelovo-hero-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 1.875rem;
+  font-size: 0.6875rem;
+  line-height: 1.5;
+}
+
+.oinelovo-hero-facts > div {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.oinelovo-hero-facts > div + div {
+  padding-left: 1.25rem;
+  border-left: 0.0625rem solid rgb(255 255 255 / 0.4);
+}
+
+.oinelovo-hero-facts svg {
+  width: 1.625rem;
+  height: 1.625rem;
+  stroke-width: 1.4;
+}
+
+.oinelovo-hero-facts strong {
+  font-weight: 600;
+}
+
+.oinelovo-hero-actions {
+  display: flex;
+  gap: 0.875rem;
+  margin-top: 1.875rem;
+}
+
+.oinelovo-hero-actions .oinelovo-button:first-child {
+  min-width: 13rem;
+  background: var(--gold);
+}
+
+.oinelovo-hero-actions .oinelovo-button:first-child:hover {
+  background: color-mix(in srgb, var(--gold) 85%, white);
+}
+
+.oinelovo-hero-gallery {
+  position: absolute;
+  right: 0;
+  bottom: 2.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0;
+  background: transparent;
+  color: white;
+  font-size: 0.625rem;
+  line-height: 1.4;
+  text-align: left;
+}
+
+.oinelovo-hero-gallery > span {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0.0625rem solid rgb(255 255 255 / 0.8);
+  border-radius: 50%;
+  transition: background-color 160ms ease;
+}
+
+.oinelovo-hero-gallery:hover > span {
+  background: rgb(255 255 255 / 0.15);
+}
+
+.oinelovo-plan {
+  padding-block: 1.5rem;
+  background: linear-gradient(
+    120deg,
+    var(--paper),
+    var(--bg) 45%,
+    var(--paper)
+  );
+}
+
+.oinelovo-plan-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.24fr) minmax(0, 0.43fr) minmax(0, 0.33fr);
+  gap: 1.375rem;
+  align-items: center;
+}
+
+.oinelovo-plan-copy {
+  align-self: stretch;
+  padding-block: 1rem;
+}
+
+.oinelovo-plan-copy > p {
+  max-width: 18rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.oinelovo-legend {
+  display: grid;
+  gap: 1rem;
+  padding: 0;
+  margin-block: 1.75rem 2.25rem !important;
+  color: var(--pine);
+  font-size: 0.75rem;
+  list-style: none;
+}
+
+.oinelovo-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.oinelovo-legend i {
+  width: 0.8125rem;
+  height: 0.8125rem;
+  border-radius: 50%;
+}
+
+.oinelovo-status--free {
+  background: var(--pine);
+}
+.oinelovo-status--reserved {
+  background: var(--gold);
+}
+.oinelovo-status--sold {
+  background: var(--ink);
+}
+
+.oinelovo-plan-copy .oinelovo-button {
+  padding-inline: 1.25rem;
+  font-size: 0.6875rem;
+}
+
+.oinelovo-plan-map {
+  --map-image-mask: url("/images/oinelovo/masterplan-canopy-mask.svg");
+  position: relative;
+  min-width: 0;
+  padding-top: 1rem;
+}
+
+.oinelovo-plan-map figcaption {
+  padding-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.625rem;
+  text-align: center;
+}
+
+.oinelovo-plan-compass {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  display: grid;
+  justify-items: center;
+  color: var(--pine-light);
+  font-family: var(--font-heading);
+  font-size: 0.625rem;
+}
+
+.oinelovo-available {
+  min-width: 0;
+  padding: 1.4rem;
+  border: 0.0625rem solid color-mix(in srgb, var(--line) 16%, transparent);
+  border-radius: 0.75rem;
+  background: rgb(255 255 255 / 0.32);
+  box-shadow: 0 0.25rem 1.25rem color-mix(in srgb, var(--ink) 3.5%, transparent);
+}
+
+.oinelovo-available h3 {
+  font-size: 1.25rem;
+}
+
+.oinelovo-plot-list {
+  display: grid;
+  gap: 0.25rem;
+  padding: 0;
+  list-style: none;
+}
+
+.oinelovo-plot-list li {
+  display: grid;
+  grid-template-columns: 2.4rem 3.5rem minmax(5.5rem, 1fr) auto;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.875rem;
+  font-size: 0.75rem;
+}
+
+.oinelovo-plot-list li > span {
+  color: var(--muted);
+}
+
+.oinelovo-plot-list b {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.oinelovo-available-total {
+  margin-top: 1rem;
+  color: var(--pine);
+  font-size: 0.6875rem;
+}
+
+.oinelovo-data-error {
+  margin-block: 0.75rem;
+  color: #9e372d;
+  font-size: 0.8125rem;
+}
+
+.oinelovo-screen--life {
+  padding-top: 1.5rem;
+}
+
+.oinelovo-about-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.55fr);
+  gap: 2.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 0.0625rem solid var(--oinelovo-line);
+}
+
+.oinelovo-about-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-block: 0.5rem;
+}
+
+.oinelovo-about-copy > p {
+  max-width: 28rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.oinelovo-about-facts {
+  display: grid;
+  grid-template-columns: auto auto 1fr 1fr;
+  gap: 0.875rem;
+  width: 100%;
+  margin-block: 1.625rem 1.875rem;
+}
+
+.oinelovo-about-facts > div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  font-size: 0.6875rem;
+}
+
+.oinelovo-about-facts > div > span,
+.oinelovo-utilities dt > span {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--pine);
+}
+
+.oinelovo-about-facts svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  stroke-width: 1.25;
+}
+
+.oinelovo-about-facts strong {
+  font-size: 0.875rem;
+  line-height: 1.3;
+}
+
+.oinelovo-about-facts > div:nth-child(n + 3) strong {
+  font-size: 0.6875rem;
+}
+
+.oinelovo-about-facts small {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.625rem;
+  font-weight: 400;
+}
+
+.oinelovo-about-copy > .oinelovo-button {
+  margin-top: auto;
+}
+
+.oinelovo-about-photo {
+  position: relative;
+  min-width: 0;
+  height: clamp(17rem, 21vw, 20rem);
+  overflow: hidden;
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, var(--pine) 18%, var(--paper));
+}
+
+.oinelovo-about-photo > img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 55%;
+}
+
+.oinelovo-photo-arrows {
+  position: absolute;
+  right: 1.5rem;
+  bottom: 1.25rem;
+  display: flex;
+  gap: 0.625rem;
+}
+
+.oinelovo-photo-arrows button,
+.oinelovo-thumbnails > .oinelovo-thumbnail-prev,
+.oinelovo-thumbnails > .oinelovo-thumbnail-next {
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--pine);
+  box-shadow: 0 0.25rem 0.75rem color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.oinelovo-photo-arrows button:hover,
+.oinelovo-thumbnails > .oinelovo-thumbnail-prev:hover,
+.oinelovo-thumbnails > .oinelovo-thumbnail-next:hover {
+  background: var(--bg);
+}
+
+.oinelovo-amenities-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.32fr) minmax(0, 0.23fr);
+  gap: 2.5rem;
+  padding-block: 1.75rem;
+  border-bottom: 0.0625rem solid var(--oinelovo-line);
+}
+
+.oinelovo-thumbnails {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.875rem;
+}
+
+.oinelovo-thumbnails > button {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 0.375rem;
+  background: color-mix(in srgb, var(--pine) 18%, var(--paper));
+}
+
+.oinelovo-thumbnails img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.1;
+  object-fit: cover;
+  transition: opacity 160ms ease;
+}
+
+.oinelovo-thumbnails > button:hover img {
+  opacity: 0.84;
+}
+
+.oinelovo-thumbnails > .oinelovo-thumbnail-prev,
+.oinelovo-thumbnails > .oinelovo-thumbnail-next {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2.125rem;
+  height: 2.125rem;
+}
+
+.oinelovo-thumbnail-prev {
+  left: -0.8rem;
+}
+.oinelovo-thumbnail-next {
+  right: -0.8rem;
+}
+
+.oinelovo-gallery-block > .oinelovo-button {
+  min-height: 2.25rem;
+  padding: 0.5rem 1rem;
+  font-size: 0.6875rem;
+}
+
+.oinelovo-utilities {
+  display: grid;
+  gap: 0.875rem;
+  padding: 0;
+  font-size: 0.75rem;
+}
+
+.oinelovo-utilities > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 1rem;
+}
+
+.oinelovo-utilities dt {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--pine);
+}
+
+.oinelovo-utilities dt > span {
+  width: 1.875rem;
+  height: 1.875rem;
+}
+
+.oinelovo-utilities dd {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.6875rem;
+}
+
+.oinelovo-utilities > div:first-child dd {
+  color: var(--pine);
+}
+
+.oinelovo-documents {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1.375rem;
+  border-radius: 0.625rem;
+  background: var(--bg);
+  text-align: center;
+}
+
+.oinelovo-documents > svg {
+  color: var(--pine-light);
+}
+
+.oinelovo-documents > p {
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.oinelovo-documents .oinelovo-button {
+  width: 100%;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+  font-size: 0.6875rem;
+}
+
+.oinelovo-location-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.34fr) minmax(0, 0.36fr) minmax(0, 0.3fr);
+  gap: 3rem;
+  align-items: start;
+  padding-block: 1.75rem;
+}
+
+.oinelovo-location-copy > p {
+  max-width: 23rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.oinelovo-location-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.75rem;
+  font-size: 0.6875rem;
+}
+
+.oinelovo-location-facts > div {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+}
+
+.oinelovo-location-facts svg {
+  margin-bottom: 0.375rem;
+  stroke-width: 1.25;
+}
+
+.oinelovo-location-facts span {
+  color: var(--muted);
+  font-size: 0.625rem;
+}
+
+.oinelovo-region-map {
+  position: relative;
+  align-self: stretch;
+  min-height: 14rem;
+  overflow: hidden;
+  border-radius: 0.625rem;
+  background: var(--bg);
+}
+
+.oinelovo-region-map > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.oinelovo-map-label {
+  position: absolute;
+  top: 36%;
+  left: 17%;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  background: rgb(255 255 255 / 0.87);
+  color: var(--pine);
+  box-shadow: 0 0.25rem 0.75rem color-mix(in srgb, var(--ink) 8%, transparent);
+}
+
+.oinelovo-map-label strong {
+  font-size: 0.6875rem;
+}
+
+.oinelovo-map-label small {
+  display: block;
+  margin-top: 0.125rem;
+  color: var(--muted);
+  font-size: 0.5625rem;
+  font-weight: 400;
+}
+
+.oinelovo-map-route {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0.5rem 0.875rem;
+  border: 0.0625rem solid color-mix(in srgb, var(--line) 30%, transparent);
+  border-radius: 0.25rem;
+  background: var(--paper);
+  color: var(--pine);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.oinelovo-region-map:hover .oinelovo-map-route {
+  background: var(--bg);
+}
+
+.oinelovo-purchase ul {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  list-style: none;
+}
+
+.oinelovo-purchase li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.oinelovo-purchase li svg {
+  color: var(--pine);
+}
+
+.oinelovo-purchase li:last-child {
+  color: var(--pine);
+}
+
+.oinelovo-purchase .oinelovo-button {
+  margin-top: 1.75rem;
+}
+
+.oinelovo-closing {
+  padding-block: 1.5rem;
+  background: var(--bg);
+}
+
+.oinelovo-closing-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.34fr) minmax(0, 0.41fr) minmax(0, 0.25fr);
+  gap: 2.25rem;
+  align-items: center;
+}
+
+.oinelovo-faq h3 {
+  font-size: 1.125rem;
+}
+
+.oinelovo-question {
+  margin-bottom: 0.1875rem;
+  border-radius: 0.25rem;
+  background: rgb(255 255 255 / 0.65);
+}
+
+.oinelovo-question summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.625rem;
+  cursor: pointer;
+  font-size: 0.6875rem;
+  line-height: 1.3;
+  list-style: none;
+}
+
+.oinelovo-question summary::-webkit-details-marker {
+  display: none;
+}
+
+.oinelovo-question summary svg {
+  color: var(--pine);
+  transition: transform 160ms ease;
+}
+
+.oinelovo-question[open] summary svg {
+  transform: rotate(45deg);
+}
+
+.oinelovo-question p {
+  padding: 0 0.75rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+.oinelovo-faq .oinelovo-text-button {
+  margin-top: 0.5rem;
+  font-size: 0.6875rem;
+}
+
+.oinelovo-visit-card {
+  position: relative;
+  min-height: 14rem;
+  overflow: hidden;
+  isolation: isolate;
+  padding: 1.75rem 2rem;
+  border-radius: 0.625rem;
+  color: white;
+  background: var(--pine);
+}
+
+.oinelovo-visit-card > img {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.oinelovo-visit-card::after {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--ink) 85%, transparent),
+    color-mix(in srgb, var(--ink) 30%, transparent)
+  );
+}
+
+.oinelovo-visit-card h3 {
+  margin-bottom: 0.75rem;
+  font-size: clamp(1.125rem, 1.55vw, 1.5rem);
+  line-height: 1.2;
+}
+
+.oinelovo-visit-card p {
+  max-width: 26rem;
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+.oinelovo-visit-card .oinelovo-button {
+  min-height: 2.5rem;
+  margin-top: 1.25rem;
+  padding: 0.5rem 1.5rem;
+  background: var(--gold);
+  font-size: 0.6875rem;
+}
+
+.oinelovo-contact-card {
+  display: grid;
+  gap: 1.625rem;
+  padding: 1.625rem;
+  border-radius: 0.625rem;
+  background: rgb(255 255 255 / 0.64);
+  font-size: 0.75rem;
+  font-style: normal;
+}
+
+.oinelovo-contact-card > div {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.oinelovo-contact-card > div > svg {
+  color: var(--pine);
+  stroke-width: 1.25;
+}
+
+.oinelovo-contact-card a {
+  display: block;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.oinelovo-contact-card a:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.oinelovo-contact-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.625rem;
+}
+
+.oinelovo-messenger-icons {
+  display: flex;
+  gap: 0.5rem;
+  color: var(--pine);
+}
+
+.oinelovo-messenger-icons svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.oinelovo-page svg[aria-label="Telegram"] {
+  border-radius: 50%;
+  background: var(--pine);
+}
+
+.oinelovo-contact-action {
+  min-height: 2.25rem;
+  padding: 0;
+  background: transparent;
+  color: var(--pine);
+  text-align: left;
+}
+
+.oinelovo-contact-action:hover {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.oinelovo-contact-card .oinelovo-messengers {
+  gap: 0.75rem;
+  font-size: 0.625rem;
+}
+
+.oinelovo-page .project-dialog {
+  font-family: var(--font-body);
+}
+
+.oinelovo-page .project-dialog__title {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.oinelovo-page .project-dialog .oinelovo-plot-list li {
+  min-height: 3.5rem;
+  grid-template-columns: 4rem 1fr 1fr auto;
+  font-size: 0.875rem;
+}
+
+.oinelovo-page .project-dialog .oinelovo-utilities {
+  margin-bottom: 1.5rem;
+  font-size: 1rem;
+}
+
+.oinelovo-page .project-dialog .oinelovo-utilities dd {
+  font-size: 0.9375rem;
+}
+
+.oinelovo-page .project-dialog .oinelovo-question {
+  margin-bottom: 0.5rem;
+}
+
+.oinelovo-page .project-dialog .oinelovo-question summary {
+  padding: 1rem;
+  font-size: 0.9375rem;
+}
+
+.oinelovo-page .project-dialog__body > p {
+  margin-bottom: 1.5rem;
+}
+
+.oinelovo-detail {
+  display: flex;
+  gap: 1rem;
+  margin-block: 1.5rem;
+}
+
+.oinelovo-detail > svg {
+  color: var(--pine);
+}
+
+.oinelovo-detail h3 {
+  font-size: 1.25rem;
+}
+
+.oinelovo-page .oinelovo-inquiry {
+  width: min(57rem, calc(100% - 2rem));
+}
+
+.oinelovo-inquiry .contact-section {
+  padding: 0;
+  color: var(--ink);
+  background: transparent;
+}
+
+.oinelovo-inquiry .container {
+  width: 100%;
+}
+
+.oinelovo-inquiry .contact-grid {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 2.5rem;
+}
+
+.oinelovo-inquiry .contact-copy .eyebrow {
+  color: var(--pine);
+}
+
+.oinelovo-inquiry .contact-copy h2 {
+  font-family: var(--font-heading);
+  font-size: 2.125rem;
+  line-height: 1.2;
+}
+
+.oinelovo-inquiry .contact-copy h2 em {
+  color: var(--pine);
+  font-family: inherit;
+  font-style: normal;
+}
+
+.oinelovo-inquiry .contact-copy > p,
+.oinelovo-inquiry .contact-form :is(label, small) {
+  color: var(--muted);
+  font-family: inherit;
+}
+
+.oinelovo-inquiry .contact-copy > p {
+  font-size: 0.875rem;
+}
+
+.oinelovo-inquiry .contact-details {
+  margin-top: 1.25rem;
+}
+
+.oinelovo-inquiry .contact-details a {
+  color: var(--pine);
+  font-size: 0.9375rem;
+}
+
+.oinelovo-inquiry .contact-form :is(input, select, textarea) {
+  padding: 0.75rem;
+  border: 0.0625rem solid color-mix(in srgb, var(--line) 25%, transparent);
+  border-radius: 0.25rem;
+  color: var(--ink);
+  background: white;
+  font-size: 1rem;
+}
+
+.oinelovo-inquiry .contact-form :is(input, textarea)::placeholder {
+  color: var(--muted);
+}
+
+.oinelovo-inquiry .contact-form .button {
+  color: var(--ink);
+  background: var(--gold);
+  font-size: 0.875rem;
+}
+
+.oinelovo-inquiry .contact-form .form-success {
+  color: var(--pine) !important;
+}
+
+.oinelovo-inquiry .contact-form .form-error {
+  color: #a0342b !important;
+}
+
+.oinelovo-photo-dialog .plot-carousel {
+  background: var(--bg);
+}
+
+@media (min-width: 64em) and (max-width: 78em) {
+  .oinelovo-plan-grid {
+    grid-template-columns: minmax(0, 0.24fr) minmax(0, 0.4fr) minmax(0, 0.36fr);
+    gap: 1rem;
+  }
+  .oinelovo-available {
+    padding: 1rem;
+  }
+  .oinelovo-plot-list li {
+    grid-template-columns: 2rem 3rem minmax(5rem, 1fr) auto;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+  }
+  .oinelovo-about-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .oinelovo-amenities-grid {
+    gap: 1.5rem;
+  }
+  .oinelovo-location-grid {
+    gap: 1.75rem;
+  }
+  .oinelovo-closing-grid {
+    gap: 1.25rem;
+  }
+  .oinelovo-contact-card {
+    padding: 1.125rem;
+  }
+}
+
+@media (max-width: 63.999em) {
+  .oinelovo-container {
+    width: calc(100% - 3rem);
+  }
+  .oinelovo-hero {
+    min-height: 29rem;
+  }
+  .oinelovo-plan-grid {
+    grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+    gap: 1.5rem;
+  }
+  .oinelovo-plan-copy {
+    padding-block: 0.5rem;
+  }
+  .oinelovo-legend {
+    margin-block: 1.25rem 1.5rem !important;
+  }
+  .oinelovo-available {
+    grid-column: 1 / -1;
+  }
+  .oinelovo-plot-list li {
+    grid-template-columns: 3rem 1fr 1fr auto;
+  }
+  .oinelovo-about-grid {
+    gap: 1.5rem;
+  }
+  .oinelovo-about-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-block: 1.25rem;
+  }
+  .oinelovo-about-photo {
+    height: 100%;
+    min-height: 21rem;
+  }
+  .oinelovo-amenities-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  .oinelovo-documents {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+  .oinelovo-documents .oinelovo-button {
+    width: auto;
+  }
+  .oinelovo-location-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  .oinelovo-purchase {
+    grid-column: 1 / -1;
+  }
+  .oinelovo-purchase ul {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .oinelovo-closing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+  .oinelovo-contact-card {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+  .oinelovo-contact-card > div {
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 47.5em) {
+  .oinelovo-container {
+    width: calc(100% - 2.5rem);
+  }
+  .oinelovo-page {
+    font-size: 0.9375rem;
+  }
+  .oinelovo-page h2 {
+    font-size: 1.875rem;
+  }
+  .oinelovo-page h3 {
+    font-size: 1.375rem;
+  }
+  .oinelovo-hero {
+    min-height: 34rem;
+  }
+  .oinelovo-hero-content {
+    padding-block: 1.25rem 2rem;
+  }
+  .oinelovo-hero-image {
+    object-position: 60% center;
+  }
+  .oinelovo-hero::after {
+    background:
+      linear-gradient(
+        90deg,
+        color-mix(in srgb, var(--ink) 88%, transparent),
+        color-mix(in srgb, var(--ink) 40%, transparent)
+      ),
+      linear-gradient(
+        0deg,
+        color-mix(in srgb, var(--ink) 45%, transparent),
+        transparent
+      );
+  }
+  .oinelovo-breadcrumbs {
+    margin-bottom: 2rem;
+    font-size: 0.625rem;
+  }
+  .oinelovo-page .oinelovo-hero h1 {
+    font-size: clamp(2.75rem, 12vw, 4rem);
+  }
+  .oinelovo-hero-copy > p {
+    font-size: 1.0625rem;
+  }
+  .oinelovo-hero-facts {
+    gap: 1rem;
+    margin-top: 1.5rem;
+  }
+  .oinelovo-hero-facts > div {
+    gap: 0.5rem;
+  }
+  .oinelovo-hero-facts > div + div {
+    padding-left: 0;
+    border-left: 0;
+  }
+  .oinelovo-hero-facts > div:first-child {
+    width: 100%;
+  }
+  .oinelovo-hero-actions {
+    gap: 0.625rem;
+    margin-top: 1.5rem;
+  }
+  .oinelovo-hero-actions .oinelovo-button {
+    flex: 1;
+    min-width: 0;
+    min-height: 2.875rem;
+    padding-inline: 0.75rem;
+  }
+  .oinelovo-hero-gallery {
+    position: static;
+    width: fit-content;
+    margin-top: 1.5rem;
+  }
+  .oinelovo-hero-gallery > span {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+  .oinelovo-plan {
+    padding-block: 1.75rem;
+  }
+  .oinelovo-plan-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+  .oinelovo-plan-copy {
+    padding: 0;
+  }
+  .oinelovo-plan-copy > p {
+    max-width: none;
+    font-size: 0.9375rem;
+  }
+  .oinelovo-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    margin-block: 1.25rem !important;
+    font-size: 0.6875rem;
+  }
+  .oinelovo-legend li {
+    gap: 0.375rem;
+  }
+  .oinelovo-legend i {
+    width: 0.625rem;
+    height: 0.625rem;
+  }
+  .oinelovo-plan-copy .oinelovo-button {
+    min-height: 2.75rem;
+  }
+  .oinelovo-plan-map {
+    margin-inline: -0.5rem;
+  }
+  .oinelovo-plan-map figcaption {
+    font-size: 0.5625rem;
+  }
+  .oinelovo-available {
+    grid-column: auto;
+    padding: 1rem;
+  }
+  .oinelovo-plot-list li {
+    grid-template-columns: 2rem 3.5rem minmax(0, 1fr) auto;
+    gap: 0.375rem;
+    min-height: 3.25rem;
+    font-size: 0.6875rem;
+  }
+  .oinelovo-button--small {
+    min-height: 2.75rem;
+    padding-inline: 0.625rem;
+  }
+  .oinelovo-screen--life {
+    padding-top: 0.5rem;
+  }
+  .oinelovo-about-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-bottom: 1.75rem;
+  }
+  .oinelovo-about-copy > p {
+    max-width: none;
+    font-size: 0.9375rem;
+  }
+  .oinelovo-about-facts {
+    gap: 1.25rem;
+    margin-block: 1.5rem;
+  }
+  .oinelovo-about-facts strong {
+    font-size: 1rem;
+  }
+  .oinelovo-about-facts > div:nth-child(n + 3) strong {
+    font-size: 0.8125rem;
+  }
+  .oinelovo-about-facts small {
+    font-size: 0.6875rem;
+  }
+  .oinelovo-about-photo {
+    height: auto;
+    min-height: 0;
+    aspect-ratio: 1.55;
+  }
+  .oinelovo-photo-arrows {
+    right: 0.75rem;
+    bottom: 0.75rem;
+  }
+  .oinelovo-photo-arrows button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .oinelovo-amenities-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    padding-block: 1.75rem;
+  }
+  .oinelovo-thumbnails > .oinelovo-thumbnail-prev,
+  .oinelovo-thumbnails > .oinelovo-thumbnail-next {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+  .oinelovo-thumbnails img {
+    aspect-ratio: 0.85;
+  }
+  .oinelovo-gallery-block > .oinelovo-button {
+    min-height: 2.75rem;
+  }
+  .oinelovo-utilities {
+    gap: 1rem;
+    font-size: 0.8125rem;
+  }
+  .oinelovo-utilities dd {
+    font-size: 0.8125rem;
+  }
+  .oinelovo-documents {
+    grid-column: auto;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .oinelovo-documents .oinelovo-button {
+    min-height: 2.75rem;
+  }
+  .oinelovo-location-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
+    padding-block: 1.75rem;
+  }
+  .oinelovo-location-copy > p {
+    max-width: none;
+    font-size: 0.9375rem;
+  }
+  .oinelovo-location-facts {
+    margin-top: 1.25rem;
+    font-size: 0.8125rem;
+  }
+  .oinelovo-location-facts span {
+    font-size: 0.6875rem;
+  }
+  .oinelovo-region-map {
+    min-height: 13rem;
+  }
+  .oinelovo-map-route {
+    min-height: 2.75rem;
+  }
+  .oinelovo-purchase {
+    grid-column: auto;
+  }
+  .oinelovo-purchase ul {
+    grid-template-columns: minmax(0, 1fr);
+    font-size: 0.875rem;
+  }
+  .oinelovo-purchase .oinelovo-button {
+    margin-top: 1.25rem;
+  }
+  .oinelovo-closing {
+    padding-block: 1.75rem;
+  }
+  .oinelovo-closing-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.75rem;
+  }
+  .oinelovo-faq h3 {
+    font-size: 1.375rem;
+  }
+  .oinelovo-question summary {
+    min-height: 2.75rem;
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+  }
+  .oinelovo-visit-card {
+    padding: 1.5rem;
+  }
+  .oinelovo-visit-card h3 {
+    font-size: 1.5rem;
+  }
+  .oinelovo-visit-card p {
+    font-size: 0.875rem;
+  }
+  .oinelovo-visit-card .oinelovo-button {
+    min-height: 2.75rem;
+  }
+  .oinelovo-contact-card {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+    font-size: 0.875rem;
+  }
+  .oinelovo-contact-card a {
+    min-height: 2.25rem;
+    line-height: 2.25rem;
+  }
+  .oinelovo-contact-card small {
+    font-size: 0.75rem;
+  }
+  .oinelovo-contact-card .oinelovo-messengers {
+    font-size: 0.75rem;
+  }
+  .oinelovo-inquiry .contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.5rem;
+  }
+  .oinelovo-page .project-dialog .oinelovo-plot-list li {
+    grid-template-columns: 2rem 3.5rem minmax(0, 1fr) auto;
+    gap: 0.375rem;
+    font-size: 0.6875rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oinelovo-page *,
+  .oinelovo-page *::before,
+  .oinelovo-page *::after {
+    transition: none;
+  }
+}

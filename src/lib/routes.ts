@@ -1,4 +1,3 @@
-// GitHub Pages serves directory routes with a trailing slash.
 export const adminPath = "/admin/";
 
 export const projectRoutes = [

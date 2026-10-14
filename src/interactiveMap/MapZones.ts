@@ -1,6 +1,5 @@
 import type { MapZoneLayout } from "./Interactive.types";
 
-// The render adds forest margins around the unchanged 21-plot geometry.
 export const MAP_VIEW_BOX = "0 0 800 1200";
 export const MAP_GROUP_TRANSFORM = "translate(-137.88668,215.17998)";
 export const mapZones: MapZoneLayout[] = [

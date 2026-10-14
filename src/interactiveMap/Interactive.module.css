@@ -17,8 +17,49 @@
   height: 100%;
 }
 
-.render { object-fit: contain; }
-.render[hidden] { display: none; }
+.render {
+  object-fit: contain;
+}
+.render[hidden] {
+  display: none;
+}
+
+.map[data-orientation="landscape"] {
+  aspect-ratio: 3 / 2;
+  background: transparent;
+}
+
+.map[data-orientation="landscape"] .render {
+  /* Preserve the same coordinate plane as the rotated SVG, without cropping. */
+  inset: -25% auto auto 16.6666667%;
+  width: 66.6666667%;
+  height: 150%;
+  transform: rotate(-90deg);
+  mask-image: var(
+    --map-image-mask,
+    radial-gradient(ellipse at center, #000 70%, transparent 100%)
+  );
+  -webkit-mask-image: var(
+    --map-image-mask,
+    radial-gradient(ellipse at center, #000 70%, transparent 100%)
+  );
+  mask-size: 100% 100%;
+  -webkit-mask-size: 100% 100%;
+  mask-repeat: no-repeat;
+  -webkit-mask-repeat: no-repeat;
+}
+
+.map[data-orientation="landscape"] .fallback {
+  color: #0f261f;
+}
+
+.map[data-orientation="landscape"] .marker circle {
+  r: 1.625rem;
+}
+
+.map[data-orientation="landscape"] .marker text {
+  font-size: 1.875rem;
+}
 
 .svg {
   user-select: none;
@@ -40,45 +81,58 @@
   stroke-width: 1;
   cursor: pointer;
   outline: none;
-  transition: fill 180ms ease, stroke 180ms ease, stroke-width 180ms ease;
+  transition:
+    fill 180ms ease,
+    stroke 180ms ease,
+    stroke-width 180ms ease;
   pointer-events: all;
 }
 
-.zone[data-status='available'] { fill: rgb(146 183 117 / 0.12); }
-.zone[data-selectable='true']:hover,
-.zone[data-selectable='true'][data-hovered='true'],
-.zone[data-selectable='true'][data-selected='true'] {
-  fill: var(--zone-hover-fill, rgb(249 231 177 / 0.22));
+.zone[data-status="available"] {
+  fill: var(--zone-available-fill, rgb(146 183 117 / 0.12));
+}
+.zone[data-selectable="true"]:hover,
+.zone[data-selectable="true"][data-hovered="true"],
+.zone[data-selectable="true"][data-selected="true"] {
+  fill: var(
+    --zone-hover-fill,
+    var(--zone-available-fill, rgb(249 231 177 / 0.22))
+  );
   stroke: #fff4cf;
   stroke-width: 2;
 }
 
-.zone[data-selectable='true']:focus-visible {
-  fill: var(--zone-hover-fill, rgb(249 231 177 / 0.3));
+.zone[data-selectable="true"]:focus-visible {
+  fill: var(
+    --zone-hover-fill,
+    var(--zone-available-fill, rgb(249 231 177 / 0.3))
+  );
   stroke: white;
   stroke-width: 3;
 }
 
 /* Status fills stay visible while hovering, focusing or opening the parcel. */
-.zone[data-status='reserved'] {
-  --zone-hover-fill: rgb(250 204 21 / 0.5);
-  fill: rgb(250 204 21 / 0.5);
+.zone[data-status="reserved"] {
+  --zone-hover-fill: var(--zone-reserved-fill, rgb(250 204 21 / 0.5));
+  fill: var(--zone-reserved-fill, rgb(250 204 21 / 0.5));
 }
 
-.zone[data-status='sold'] {
-  fill: rgb(220 38 38 / 0.6);
+.zone[data-status="sold"] {
+  fill: var(--zone-sold-fill, rgb(220 38 38 / 0.6));
 }
 
-.zone[data-status='unknown'] {
+.zone[data-status="unknown"] {
   fill: rgb(67 58 47 / 0.32);
 }
 
-.zone[data-selectable='false'] {
+.zone[data-selectable="false"] {
   cursor: default;
   pointer-events: none;
 }
 
-.marker { pointer-events: none; }
+.marker {
+  pointer-events: none;
+}
 
 .marker circle {
   fill: #faf5e9;
@@ -97,27 +151,33 @@
 }
 
 .zone:hover + .marker circle,
-.zone[data-hovered='true'] + .marker circle,
-.zone[data-selected='true'] + .marker circle,
+.zone[data-hovered="true"] + .marker circle,
+.zone[data-selected="true"] + .marker circle,
 .zone:focus-visible + .marker circle {
   fill: #0f261f;
   stroke: #faf5e9;
 }
 
 .zone:hover + .marker text,
-.zone[data-hovered='true'] + .marker text,
-.zone[data-selected='true'] + .marker text,
+.zone[data-hovered="true"] + .marker text,
+.zone[data-selected="true"] + .marker text,
 .zone:focus-visible + .marker text {
   fill: #faf5e9;
 }
 
 @media (max-width: 40rem) {
-  .marker circle { r: 1.75rem; }
-  .marker text { font-size: 1.6875rem; }
+  .marker circle {
+    r: 1.75rem;
+  }
+  .marker text {
+    font-size: 1.6875rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .zone,
   .marker circle,
-  .marker text { transition: none; }
+  .marker text {
+    transition: none;
+  }
 }

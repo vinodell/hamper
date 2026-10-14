@@ -4,7 +4,6 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { transformWithOxc } from "vite";
 
-// Compile the real Worker in memory, without a deployment or generated files.
 const sourceRoot = new URL("../worker/src/", import.meta.url);
 const asModule = (code) =>
   `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
@@ -351,7 +350,6 @@ test("cookie established by login permits all admin operations without password 
       assert.ok(calls.length > 0);
       if (options.method === "POST") assert.ok(rows.has("new-1"));
       if (operation === "bulk update") assert.ok(calls.includes("batch"));
-      // A normal read/write must not extend the one-day authentication lifetime.
       assert.equal(response.headers.has("Set-Cookie"), false);
     });
 });

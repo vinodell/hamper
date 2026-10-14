@@ -8,53 +8,41 @@
 
   border-radius: 62.4375rem;
 
-  background:
-    rgb(255 255 255 / 0.08);
+  background: color-mix(in srgb, var(--paper) 8%, transparent);
 
   font-size: 0.625rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 400;
   line-height: 1;
 
   white-space: nowrap;
 }
 
-.status[data-status='available'] {
-  background:
-    rgb(74 222 128 / 0.16);
-
-  color: rgb(134 239 172);
+.status[data-status="available"] {
+  background: color-mix(in srgb, var(--pine) 80%, var(--paper));
+  color: var(--paper);
 }
 
-.status[data-status='reserved'] {
-  background:
-    rgb(251 191 36 / 0.16);
-
-  color: rgb(253 224 71);
+.status[data-status="reserved"] {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: color-mix(in srgb, var(--gold) 40%, var(--paper));
 }
 
-.status[data-status='sold'] {
-  background:
-    rgb(248 113 113 / 0.16);
+.status[data-status="sold"] {
+  background: rgb(248 113 113 / 0.16);
 
   color: rgb(252 165 165);
 }
 
-.status[data-status='unknown'] {
-  background:
-    rgb(255 255 255 / 0.08);
-
-  color:
-    rgb(255 255 255 / 0.65);
+.status[data-status="unknown"] {
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
 }
 
 .modal {
-  width:
-    min(32.5rem,
-      calc(100vw - 2rem));
+  width: min(32.5rem, calc(100vw - 2rem));
 
-  max-height:
-    min(45rem,
-      calc(100dvh - 2rem));
+  max-height: min(45rem, calc(100dvh - 2rem));
 
   margin: auto;
 
@@ -66,25 +54,21 @@
   background: transparent;
 
   color: inherit;
+  font-family: var(--font-body);
 
   overflow-y: auto;
   overscroll-behavior: contain;
 }
 
 .modal::backdrop {
-  background:
-    rgb(0 0 0 / 0.58);
+  background: color-mix(in srgb, var(--ink) 58%, transparent);
 
   backdrop-filter: blur(0.5rem);
   -webkit-backdrop-filter: blur(0.5rem);
 }
 
 .modal[open] {
-  animation:
-    modal-enter 220ms cubic-bezier(0.22,
-      1,
-      0.36,
-      1);
+  animation: modal-enter 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .modalContent {
@@ -96,18 +80,13 @@
 
   padding: 1.75rem;
 
-  border:
-    0.0625rem solid rgb(255 255 255 / 0.1);
+  border: 0.0625rem solid color-mix(in srgb, var(--paper) 10%, transparent);
 
   border-radius: inherit;
 
-  background:
-    rgb(20 20 20 / 0.97);
-
-  box-shadow:
-    0 1.875rem 6.25rem rgb(0 0 0 / 0.45);
-
-  color: #fff;
+  background: color-mix(in srgb, var(--pine) 97%, transparent);
+  box-shadow: 0 1.875rem 6.25rem color-mix(in srgb, var(--ink) 45%, transparent);
+  color: var(--paper);
 }
 
 .modalClose {
@@ -124,15 +103,12 @@
 
   padding: 0;
 
-  border:
-    0.0625rem solid rgb(255 255 255 / 0.1);
+  border: 0.0625rem solid color-mix(in srgb, var(--paper) 10%, transparent);
 
   border-radius: 50%;
 
-  background:
-    rgb(255 255 255 / 0.06);
-
-  color: #fff;
+  background: color-mix(in srgb, var(--paper) 6%, transparent);
+  color: var(--paper);
 
   font: inherit;
   font-size: 1.5rem;
@@ -146,15 +122,13 @@
 }
 
 .modalClose:hover {
-  background:
-    rgb(255 255 255 / 0.12);
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
 
   transform: scale(1.04);
 }
 
 .modalClose:focus-visible {
-  outline:
-    0.125rem solid rgb(255 255 255 / 0.9);
+  outline: 0.125rem solid var(--gold);
 
   outline-offset: 0.1875rem;
 }
@@ -169,11 +143,11 @@
 }
 
 .modalEyebrow {
-  color:
-    rgb(255 255 255 / 0.48);
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
 
   font-size: 0.75rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 400;
 
   letter-spacing: 0.08em;
 
@@ -183,12 +157,10 @@
 .modalTitle {
   margin: 0;
 
-  font-size:
-    clamp(1.75rem,
-      5vw,
-      2.5rem);
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
 
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 400;
   line-height: 1.05;
 
   letter-spacing: -0.035em;
@@ -196,9 +168,7 @@
 
 .modalDetails {
   display: grid;
-  grid-template-columns:
-    repeat(2,
-      minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 
   gap: 0.75rem;
 }
@@ -210,34 +180,31 @@
 
   padding: 1rem;
 
-  border:
-    0.0625rem solid rgb(255 255 255 / 0.08);
+  border: 0.0625rem solid color-mix(in srgb, var(--paper) 8%, transparent);
 
   border-radius: 0.875rem;
 
-  background:
-    rgb(255 255 255 / 0.04);
+  background: color-mix(in srgb, var(--paper) 4%, transparent);
 }
 
 .modalDetailLabel {
-  color:
-    rgb(255 255 255 / 0.45);
+  color: color-mix(in srgb, var(--paper) 70%, transparent);
 
   font-size: 0.75rem;
 }
 
 .modalDetailValue {
-  color: #fff;
+  color: var(--paper);
 
   font-size: 1rem;
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-weight: 400;
 }
 
 .modalDescription {
   margin: 0;
 
-  color:
-    rgb(255 255 255 / 0.65);
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
 
   font-size: 0.875rem;
   line-height: 1.6;
@@ -252,14 +219,14 @@
 .secondaryButton {
   min-height: 3rem;
 
-  padding:
-    0 1.125rem;
+  padding: 0 1.125rem;
 
   border-radius: 0.75rem;
 
   font: inherit;
   font-size: 0.875rem;
-  font-weight: 500;
+  font-family: var(--font-heading);
+  font-weight: 400;
 
   cursor: pointer;
 
@@ -277,35 +244,28 @@
 
   border: 0;
 
-  background: #fff;
-
-  color: #111;
+  background: var(--gold);
+  color: var(--ink);
 }
 
 .primaryButton:hover {
-  transform:
-    translateY(-0.0625rem);
+  background: color-mix(in srgb, var(--gold) 85%, var(--paper));
+  transform: translateY(-0.0625rem);
 }
 
 .secondaryButton {
-  border:
-    0.0625rem solid rgb(255 255 255 / 0.12);
-
-  background:
-    rgb(255 255 255 / 0.06);
-
-  color: #fff;
+  border: 0.0625rem solid color-mix(in srgb, var(--paper) 35%, transparent);
+  background: transparent;
+  color: var(--paper);
 }
 
 .secondaryButton:hover {
-  background:
-    rgb(255 255 255 / 0.1);
+  background: color-mix(in srgb, var(--paper) 10%, transparent);
 }
 
 .primaryButton:focus-visible,
 .secondaryButton:focus-visible {
-  outline:
-    0.125rem solid #fff;
+  outline: 0.125rem solid var(--gold);
 
   outline-offset: 0.1875rem;
 }
@@ -314,26 +274,21 @@
   from {
     opacity: 0;
 
-    transform:
-      translateY(0.625rem) scale(0.98);
+    transform: translateY(0.625rem) scale(0.98);
   }
 
   to {
     opacity: 1;
 
-    transform:
-      translateY(0) scale(1);
+    transform: translateY(0) scale(1);
   }
 }
 
 @media (max-width: 40rem) {
-
   .modal {
-    width:
-      calc(100vw - 1.25rem);
+    width: calc(100vw - 1.25rem);
 
-    max-height:
-      calc(100dvh - 1.25rem);
+    max-height: calc(100dvh - 1.25rem);
   }
 
   .modalContent {
@@ -351,16 +306,15 @@
   }
 
   .primaryButton,
-.secondaryButton {
+  .secondaryButton {
     width: 100%;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .modalClose,
-.primaryButton,
-.secondaryButton {
+  .primaryButton,
+  .secondaryButton {
     transition: none;
   }
 

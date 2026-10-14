@@ -1,10 +1,10 @@
-import { IndividualPlots } from "../sections/IndividualPlots";
 import { useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Footer, Header } from "../components";
 import { projectPageConfig, type Plot, type ProjectSlug } from "../lib";
-import { Contacts, Info, GeneralPlan, Table } from "../sections";
+import { Contacts, IndividualPlots, Table } from "../sections";
+import { Oinelovo } from "./Oinelovo";
 
 import "./Main.css";
 
@@ -28,6 +28,8 @@ export const Main = () => {
     return <Navigate to="/" replace />;
   }
 
+  if (slug === "oynelovskie-dali") return <Oinelovo />;
+
   return (
     <div className="app">
       <Header />
@@ -41,14 +43,7 @@ export const Main = () => {
             <h1>{config.title}</h1>
           </div>
         </section>
-        {slug === "drugie-uchastki" ? (
-          <IndividualPlots onSelectPlot={handleSelectPlot} />
-        ) : (
-          <>
-            <Info />
-            <GeneralPlan onSelectPlot={handleSelectPlot} />
-          </>
-        )}
+        <IndividualPlots onSelectPlot={handleSelectPlot} />
         <Table
           key={`table:${slug}`}
           sortable={slug === "drugie-uchastki"}

@@ -11,29 +11,24 @@
 
   padding: 0.875rem 1rem;
 
-  border:
-    0.0625rem solid rgb(255 255 255 / 0.16);
+  border: 0.0625rem solid color-mix(in srgb, var(--paper) 16%, transparent);
 
   border-radius: 0.875rem;
 
-  background:
-    rgb(17 17 17 / 0.92);
-
-  box-shadow:
-    0 1rem 3.125rem rgb(0 0 0 / 0.28);
+  background: color-mix(in srgb, var(--ink) 92%, transparent);
+  box-shadow: 0 1rem 3.125rem color-mix(in srgb, var(--ink) 28%, transparent);
 
   backdrop-filter: blur(1rem);
   -webkit-backdrop-filter: blur(1rem);
 
-  color: #fff;
+  color: var(--paper);
+  font-family: var(--font-body);
 
   pointer-events: none;
 
-  transform:
-    translate3d(0, 0, 0);
+  transform: translate3d(0, 0, 0);
 
-  animation:
-    tooltip-enter 140ms ease-out;
+  animation: tooltip-enter 140ms ease-out;
 }
 
 .tooltipHeader {
@@ -44,6 +39,8 @@
 }
 
 .tooltipTitle {
+  font-family: var(--font-heading);
+  font-weight: 400;
   font-size: 0.9375rem;
   line-height: 1.25;
 }
@@ -57,14 +54,13 @@
   font-size: 0.8125rem;
   line-height: 1.4;
 
-  color:
-    rgb(255 255 255 / 0.65);
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
 }
 
 .tooltipRow strong {
-  color: #fff;
-
-  font-weight: 500;
+  color: var(--paper);
+  font-family: var(--font-heading);
+  font-weight: 400;
 
   text-align: right;
 }
@@ -75,8 +71,7 @@
   font-size: 0.6875rem;
   line-height: 1.3;
 
-  color:
-    rgb(255 255 255 / 0.45);
+  color: color-mix(in srgb, var(--paper) 65%, transparent);
 }
 
 .status {
@@ -89,62 +84,48 @@
 
   border-radius: 62.4375rem;
 
-  background:
-    rgb(255 255 255 / 0.08);
+  background: color-mix(in srgb, var(--paper) 8%, transparent);
 
   font-size: 0.625rem;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-weight: 400;
   line-height: 1;
 
   white-space: nowrap;
 }
 
-.status[data-status='available'] {
-  background:
-    rgb(74 222 128 / 0.16);
-
-  color: rgb(134 239 172);
+.status[data-status="available"] {
+  background: color-mix(in srgb, var(--pine) 80%, var(--paper));
+  color: var(--paper);
 }
 
-.status[data-status='reserved'] {
-  background:
-    rgb(251 191 36 / 0.16);
-
-  color: rgb(253 224 71);
+.status[data-status="reserved"] {
+  background: color-mix(in srgb, var(--gold) 16%, transparent);
+  color: color-mix(in srgb, var(--gold) 40%, var(--paper));
 }
 
-.status[data-status='sold'] {
-  background:
-    rgb(248 113 113 / 0.16);
+.status[data-status="sold"] {
+  background: rgb(248 113 113 / 0.16);
 
   color: rgb(252 165 165);
 }
 
-.status[data-status='unknown'] {
-  background:
-    rgb(255 255 255 / 0.08);
-
-  color:
-    rgb(255 255 255 / 0.65);
+.status[data-status="unknown"] {
+  background: color-mix(in srgb, var(--muted) 16%, transparent);
+  color: color-mix(in srgb, var(--paper) 75%, transparent);
 }
 
 @keyframes tooltip-enter {
   from {
     opacity: 0;
 
-    transform:
-      translate3d(0,
-        0.25rem,
-        0);
+    transform: translate3d(0, 0.25rem, 0);
   }
 
   to {
     opacity: 1;
 
-    transform:
-      translate3d(0,
-        0,
-        0);
+    transform: translate3d(0, 0, 0);
   }
 }
 
@@ -155,7 +136,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-
   .tooltip {
     animation: none;
   }

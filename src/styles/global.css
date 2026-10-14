@@ -24,6 +24,10 @@
     --gold: #c9a36e;
     --gold-dark: #a98454;
     --line: #00592e;
+    --font-body: "hamper-regular", sans-serif;
+    --font-heading: "hamper-bold", sans-serif;
+    --footer-bg: #1f2a25;
+    --footer-ink: rgba(255, 255, 255, 0.68);
     --radius: 0.1875rem;
     --container: 77.5rem;
     --section-offset: 1.5rem;

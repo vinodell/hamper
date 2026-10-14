@@ -147,8 +147,6 @@ test("a refresh failure preserves visible rows and a successful retry clears the
   );
   assert.equal(cache.getPlotsSnapshot().plots[0], existing);
   assert.equal(cache.getPlotsSnapshot().error, "Нет соединения");
-  // Focus or a route change must retry immediately after a failed refresh,
-  // even when the preserved snapshot is still inside the cache lifetime.
   await cache.loadCachedPlots(async () => [plot()]);
   assert.equal(cache.getPlotsSnapshot().plots[0], existing);
   assert.equal(cache.getPlotsSnapshot().error, "");

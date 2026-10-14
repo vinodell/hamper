@@ -9,7 +9,6 @@ export const toPlotUpdate = (plot: AdminPlot): PlotUpdate => ({
   description: plot.description ?? "",
 });
 
-/** Restore local edits after re-entry while retaining other server changes. */
 export function mergeAdminDrafts(
   loaded: AdminPlot[],
   drafts: AdminPlot[],

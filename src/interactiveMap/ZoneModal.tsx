@@ -5,7 +5,7 @@ import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
 import styles from "./ZoneModal.module.css";
 
-export function ZoneModal({ zone, onClose }: ZoneModalProps) {
+export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const titleId = useId();
@@ -88,7 +88,15 @@ export function ZoneModal({ zone, onClose }: ZoneModalProps) {
 
         <div className={styles.modalActions}>
           {zone.status === "available" && (
-            <a className={styles.primaryButton} href="#form" onClick={onClose}>
+            <a
+              className={styles.primaryButton}
+              href="#form"
+              onClick={(event) => {
+                if (onBook) event.preventDefault();
+                onClose();
+                onBook?.();
+              }}
+            >
               Оставить заявку
             </a>
           )}
