@@ -305,6 +305,50 @@ test("contact rejects invalid or excessive inputs before sending a Telegram mess
   }
 });
 
+test("contact rejects and cancels oversized streamed JSON despite a small declared length", async (context) => {
+  mockFetch(context, async () => Response.json({ ok: true }));
+  const bytes = new TextEncoder().encode(
+    JSON.stringify({ ...contactPayload, padding: "x".repeat(100_000) }),
+  );
+  let offset = 0;
+  let cancelled = false;
+  const body = new ReadableStream({
+    pull(controller) {
+      if (offset === bytes.length) {
+        controller.close();
+        return;
+      }
+      controller.enqueue(bytes.slice(offset, offset + 16_000));
+      offset = Math.min(offset + 16_000, bytes.length);
+    },
+    cancel() {
+      cancelled = true;
+    },
+  });
+  const response = await worker.fetch(
+    new Request("https://worker.test/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Content-Length": "1" },
+      body,
+      duplex: "half",
+    }),
+    contactEnv,
+  );
+  assert.equal(response.status, 413);
+  assert.equal(typeof (await response.json()).error, "string");
+  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
+  assert.equal(cancelled, true);
+});
+
+test("contact request limits count UTF-8 bytes when Content-Length is absent", async (context) => {
+  mockFetch(context, async () => Response.json({ ok: true }));
+  const response = await worker.fetch(
+    contactRequest({ ...contactPayload, padding: "я".repeat(17_000) }),
+    contactEnv,
+  );
+  assert.equal(response.status, 413);
+});
+
 test("contact sends selected project and plot once and confirms only Telegram success", async (context) => {
   let sends = 0;
   mockFetch(context, async (url, options) => {

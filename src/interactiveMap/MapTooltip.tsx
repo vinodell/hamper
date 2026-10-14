@@ -4,7 +4,7 @@ import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
 import styles from "./MapTooltip.module.css";
 
-export function MapTooltip({ zone, position }: MapTooltipProps) {
+export function MapTooltip({ id, zone, position }: MapTooltipProps) {
   const tooltipRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const element = tooltipRef.current;
@@ -59,8 +59,9 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
   }, [position]);
 
   return (
-    <div ref={tooltipRef} className={styles.tooltip} role="tooltip">
-      <div className={styles.tooltipHeader}>
+    <div id={id} ref={tooltipRef} className={styles.tooltip} role="tooltip">
+      {/* The parcel's accessible name already includes these details. */}
+      <div className={styles.tooltipHeader} aria-hidden="true">
         <strong className={styles.tooltipTitle}>{zone.title}</strong>
 
         <span className={styles.status} data-status={zone.status}>
@@ -69,7 +70,7 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
       </div>
 
       {zone.area !== undefined && (
-        <div className={styles.tooltipRow}>
+        <div className={styles.tooltipRow} aria-hidden="true">
           <span>Площадь</span>
 
           <strong>{zone.area.toLocaleString("ru-RU")} сот.</strong>
@@ -77,7 +78,7 @@ export function MapTooltip({ zone, position }: MapTooltipProps) {
       )}
 
       {zone.price !== undefined && (
-        <div className={styles.tooltipRow}>
+        <div className={styles.tooltipRow} aria-hidden="true">
           <span>Стоимость</span>
 
           <strong>{formatZonePrice(zone.price)}</strong>

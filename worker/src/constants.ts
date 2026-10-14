@@ -11,6 +11,8 @@ export const PLOT_ID_MAX_LENGTH = 80;
 export const PLOT_STREET_MAX_LENGTH = 200;
 export const PLOT_DESCRIPTION_MAX_LENGTH = 4_000;
 export const BULK_PLOTS_MAX_LENGTH = 500;
+export const REQUEST_BODY_MAX_BYTES = 32 * 1024;
+export const BULK_REQUEST_BODY_MAX_BYTES = 12 * 1024 * 1024;
 
 export const plotStatuses = ["Свободен", "Забронирован", "Продан"] as const;
 export type PlotStatus = (typeof plotStatuses)[number];

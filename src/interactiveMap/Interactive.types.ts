@@ -59,6 +59,7 @@ export type InteractiveMapProps = {
 };
 
 export type MapTooltipProps = {
+  id: string;
   zone: MapZone;
   position: PointerPosition;
 };

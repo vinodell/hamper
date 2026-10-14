@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { createHmac, pbkdf2Sync } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { transformWithOxc } from "vite";
 
 const sourceRoot = new URL("../worker/src/", import.meta.url);
@@ -78,7 +80,12 @@ function fixture() {
         async all() {
           if (sql === "SELECT id FROM plots")
             return { results: [...rows.keys()].map((id) => ({ id })) };
-          assert.equal(sql, "SELECT * FROM plots ORDER BY settlement, id");
+          assert.ok(
+            [
+              "SELECT * FROM plots ORDER BY settlement, id",
+              "SELECT id, settlement, area, status, price, description FROM plots ORDER BY settlement, id",
+            ].includes(sql),
+          );
           return { results: [...rows.values()] };
         },
         async first() {
@@ -285,6 +292,34 @@ test("JSON login accepts UTF-8 and colons without retaining credentials", async 
     env,
   );
   assert.equal(read.status, 200);
+});
+
+test("password hash CLI produces hashes accepted by admin login at valid password boundaries", async () => {
+  const script = fileURLToPath(
+    new URL("create-password-hash.mjs", import.meta.url),
+  );
+  for (const secret of ["x", "пароль:🔐", "x".repeat(4096)]) {
+    const generated = spawnSync(process.execPath, [script], {
+      input: `${secret}\n`,
+      encoding: "utf8",
+    });
+    assert.equal(generated.status, 0);
+    const encoded = generated.stdout.match(
+      /[A-Za-z0-9_-]{22}:[A-Za-z0-9_-]{43}/,
+    )?.[0];
+    assert.ok(encoded);
+    const { env } = fixture();
+    env.ADMIN_PASSWORD_HASH = encoded;
+    const response = await worker.fetch(
+      request("/api/admin/login", {
+        method: "POST",
+        body: { login, password: secret },
+      }),
+      env,
+    );
+    assert.equal(response.status, 200);
+    assert.ok(response.headers.get("Set-Cookie"));
+  }
 });
 
 test("every protected read and write rejects invalid cookies before accessing D1", async (t) => {
@@ -517,6 +552,8 @@ test("public requests remain cookie-free and work without authentication", async
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
   const data = await response.json();
   assert.equal(data[0].id, plot.id);
+  assert.equal("street" in data[0], false);
+  assert.equal("updatedAt" in data[0], false);
 });
 
 test("admin validation preserves atomic bulk saves and reports missing/duplicate plots", async (t) => {
@@ -541,4 +578,74 @@ test("admin validation preserves atomic bulk saves and reports missing/duplicate
       assert.deepEqual([...rows], before);
       assert.equal(calls.includes("batch"), false);
     });
+});
+
+test("bulk saves accept complete plot descriptions larger than the single-request limit", async () => {
+  const { env, rows } = fixture();
+  const updates = Array.from({ length: 5 }, (_, index) => ({
+    ...plot,
+    id: `bulk-${index}`,
+    description: "я".repeat(4000),
+  }));
+  for (const update of updates)
+    rows.set(update.id, {
+      ...update,
+      settlement: "Тестовый посёлок",
+      updated_at: "2026-01-01 00:00:00",
+    });
+  const response = await worker.fetch(
+    request("/api/admin/plots", {
+      method: "PUT",
+      body: { plots: updates },
+      headers: { Cookie: await loginCookie(env) },
+    }),
+    env,
+  );
+  assert.equal(response.status, 200);
+  const saved = await response.json();
+  assert.equal(saved.length, updates.length);
+  assert.equal(saved[0].description, updates[0].description);
+});
+
+test("admin login and individual mutations reject oversized JSON with credentialed CORS", async () => {
+  for (const [path, method, data] of [
+    ["/api/admin/login", "POST", { login, password }],
+    ["/api/admin/plots", "POST", { ...plot, id: "new-1" }],
+    [`/api/admin/plots/${plot.id}`, "PUT", plot],
+  ]) {
+    const { env, calls } = fixture();
+    const response = await worker.fetch(
+      request(path, {
+        method,
+        body: { ...data, padding: "x".repeat(32_769) },
+        headers: { Cookie: signedCookie(env) },
+      }),
+      env,
+    );
+    assert.equal(response.status, 413);
+    assert.equal(typeof (await response.json()).error, "string");
+    assert.equal(
+      response.headers.get("Access-Control-Allow-Origin"),
+      env.PUBLIC_ORIGIN,
+    );
+    assert.equal(
+      response.headers.get("Access-Control-Allow-Credentials"),
+      "true",
+    );
+    assert.deepEqual(calls, []);
+  }
+});
+
+test("bulk saves reject JSON above their larger request limit", async () => {
+  const { env, calls } = fixture();
+  const response = await worker.fetch(
+    request("/api/admin/plots", {
+      method: "PUT",
+      body: { plots: [plot], padding: "x".repeat(12 * 1024 * 1024) },
+      headers: { Cookie: signedCookie(env) },
+    }),
+    env,
+  );
+  assert.equal(response.status, 413);
+  assert.deepEqual(calls, []);
 });

@@ -1,12 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { lazy, useCallback, useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Link, Navigate, useParams } from "react-router-dom";
-import { Footer, Header } from "../components";
+import { Footer } from "../components/Footer";
+import { Header } from "../components/Header";
 import { projectPageConfig, type Plot, type ProjectSlug } from "../lib";
-import { Contacts, IndividualPlots, Table } from "../sections";
-import { Oinelovo } from "./Oinelovo";
+import { Contacts } from "../sections/Contacts";
+import { IndividualPlots } from "../sections/IndividualPlots";
+import { Table } from "../sections/Table";
 
 import "./Main.css";
+
+const Oinelovo = lazy(() =>
+  import("./Oinelovo").then((module) => ({ default: module.Oinelovo })),
+);
 
 export const Main = () => {
   const { slug } = useParams<{ slug: string }>();

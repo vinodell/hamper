@@ -28,12 +28,14 @@ type ContactsProps = {
   selectedPlot?: Plot | null;
   initialProject?: string;
   id?: string;
+  onSubmittingChange?: (submitting: boolean) => void;
 };
 
 export const Contacts = ({
   selectedPlot,
   initialProject = "",
   id = "form",
+  onSubmittingChange,
 }: ContactsProps) => {
   const [phone, setPhone] = useState("");
   const { plots, loading: plotsLoading, error: plotsError } = usePlots();
@@ -78,6 +80,7 @@ export const Contacts = ({
     const form = new FormData(formElement);
     pendingSubmission.current = true;
     setFormState("sending");
+    onSubmittingChange?.(true);
     setSubmitError("");
     try {
       await api.sendContact({
@@ -101,6 +104,7 @@ export const Contacts = ({
       );
     } finally {
       pendingSubmission.current = false;
+      onSubmittingChange?.(false);
     }
   };
 

@@ -62,6 +62,15 @@ To test real requests locally, create an ignored `worker/.dev.vars` with `ADMIN_
 
 Run `npm test`, `npm run worker:typecheck`, and `npm run build` before publishing. `npm run test:data` covers shared request cancellation, cache refresh/save races, sorting, map status resolution, and Telegram success/error responses.
 
+`npm run typecheck` checks the frontend, Vite configuration, and Worker together.
+The public plots API omits administrative street and update timestamp fields.
+JSON bodies are limited by their actual UTF-8 size: 32 KiB for ordinary requests
+and 12 MiB for bulk plot updates; larger requests return HTTP 413.
+The build output in `dist` is generated locally and by CI, and is not versioned.
+
+The [code quality audit](docs/code-quality-audit.md) records the verified fixes,
+validation results, and remaining work.
+
 Both deployment workflows run the full tests before publishing. The GitHub Pages build requires `VITE_API_URL` in the `github-pages` environment or repository secrets.
 
 Project and admin links end in `/`, matching the directory URLs served by GitHub Pages and avoiding an extra redirect on direct visits or reloads.

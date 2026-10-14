@@ -220,6 +220,7 @@ function RegionalMap() {
 export function Oinelovo() {
   const { plots, loading, error } = usePlots();
   const [dialog, setDialog] = useState<OpenDialog>(null);
+  const [inquirySubmitting, setInquirySubmitting] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
   const [photoIndex, setPhotoIndex] = useState(0);
   const projectPlots = useMemo(
@@ -825,11 +826,13 @@ export function Oinelovo() {
           title="Записаться на просмотр"
           onClose={closeDialog}
           className="oinelovo-inquiry"
+          closeDisabled={inquirySubmitting}
         >
           <Contacts
             selectedPlot={selectedPlot}
             initialProject={project.plotFilter}
             id="inquiry-form"
+            onSubmittingChange={setInquirySubmitting}
           />
         </ProjectDialog>
       )}

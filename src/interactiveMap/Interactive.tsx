@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { MapTooltip } from "./MapTooltip";
 import { ZoneModal } from "./ZoneModal";
 import { MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./MapZones";
 import { isSelectableZone, resolveMapZones } from "./resolveMapZones";
+import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
 import type {
   InteractiveMapProps,
@@ -28,6 +29,7 @@ export const InteractiveMap = ({
   onBookPlot,
   className,
 }: InteractiveMapProps) => {
+  const tooltipId = useId();
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
   const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [imageFailed, setImageFailed] = useState(false);
@@ -49,6 +51,15 @@ export const InteractiveMap = ({
     : undefined;
 
   useEffect(() => setImageFailed(false), [imageSrc]);
+
+  useEffect(() => {
+    if (!hoveredZone) return;
+    const dismissTooltip = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setHoveredZoneId(null);
+    };
+    document.addEventListener("keydown", dismissTooltip);
+    return () => document.removeEventListener("keydown", dismissTooltip);
+  }, [hoveredZone]);
 
   useEffect(() => {
     // Close a sold/deleted parcel immediately; don't reopen it on a later update.
@@ -120,13 +131,19 @@ export const InteractiveMap = ({
                       vectorEffect="non-scaling-stroke"
                       tabIndex={selectable ? 0 : undefined}
                       role={selectable ? "button" : "img"}
-                      aria-label={`${zone.title}. ${
-                        selectable
-                          ? "Нажмите, чтобы посмотреть подробнее"
-                          : zone.status === "sold"
-                            ? "Продан"
-                            : "Статус уточняется"
-                      }`}
+                      aria-label={[
+                        zone.title,
+                        zoneStatusLabels[zone.status],
+                        zone.area !== undefined &&
+                          `Площадь ${zone.area.toLocaleString("ru-RU")} соток`,
+                        zone.price !== undefined &&
+                          `Стоимость ${formatZonePrice(zone.price)}`,
+                      ]
+                        .filter(Boolean)
+                        .join(". ")}
+                      aria-describedby={
+                        hoveredZone?.id === zone.id ? tooltipId : undefined
+                      }
                       aria-haspopup={selectable ? "dialog" : undefined}
                       onPointerEnter={(event) => {
                         /**
@@ -195,6 +212,7 @@ export const InteractiveMap = ({
         {hoveredZone && (
           <MapTooltip
             key={hoveredZone.id}
+            id={tooltipId}
             zone={hoveredZone}
             position={pointerPosition}
           />

@@ -11,6 +11,7 @@
     "preview": "npm run build && wrangler dev",
     "worker:dev": "wrangler dev --config worker/wrangler.jsonc",
     "worker:typecheck": "tsc -p tsconfig.worker.json",
+    "typecheck": "tsc -b",
     "test:auth": "node --test scripts/admin-auth.test.mjs scripts/frontend-auth.test.mjs",
     "test:data": "node --test scripts/data.test.mjs",
     "test": "node --test scripts/*.test.mjs",
@@ -18,12 +19,12 @@
     "deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
-    "@vitejs/plugin-react": "latest",
-    "lucide-react": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "react-router-dom": "latest",
-    "vite": "latest"
+    "@vitejs/plugin-react": "^6.1.1",
+    "lucide-react": "^1.45.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-router-dom": "^7.18.4",
+    "vite": "^8.3.0"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.60.2",

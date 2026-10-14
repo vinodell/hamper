@@ -66,6 +66,21 @@ export function Admin() {
     () => new Set(changedPlots.map((plot) => plot.id)),
     [changedPlots],
   );
+  const hasUnsavedChanges =
+    changedPlots.length > 0 ||
+    Object.entries(newPlot).some(
+      ([key, value]) => value !== emptyPlot[key as keyof PlotCreate],
+    );
+
+  useEffect(() => {
+    if (!hasUnsavedChanges) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [hasUnsavedChanges]);
 
   useEffect(() => {
     clearLegacyAdminAuthorization();
@@ -240,6 +255,11 @@ export function Admin() {
 
   const logout = async () => {
     if (busy) return;
+    if (
+      hasUnsavedChanges &&
+      !window.confirm("Есть несохранённые изменения. Выйти и потерять их?")
+    )
+      return;
     setLoggingOut(true);
     setError("");
     try {

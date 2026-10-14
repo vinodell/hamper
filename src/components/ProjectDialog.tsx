@@ -8,6 +8,7 @@ type ProjectDialogProps = {
   children: ReactNode;
   onClose: () => void;
   className?: string;
+  closeDisabled?: boolean;
 };
 
 export const ProjectDialog = ({
@@ -15,6 +16,7 @@ export const ProjectDialog = ({
   children,
   onClose,
   className,
+  closeDisabled = false,
 }: ProjectDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -48,9 +50,10 @@ export const ProjectDialog = ({
       aria-labelledby={titleId}
       onCancel={(event) => {
         event.preventDefault();
-        onClose();
+        if (!closeDisabled) onClose();
       }}
       onClick={(event) => {
+        if (closeDisabled) return;
         if (event.target !== event.currentTarget) return;
         const bounds = event.currentTarget.getBoundingClientRect();
         if (
@@ -70,6 +73,7 @@ export const ProjectDialog = ({
           className="project-dialog__close"
           type="button"
           onClick={onClose}
+          disabled={closeDisabled}
         >
           <X size="1.125rem" aria-hidden="true" />
           <span>Закрыть</span>

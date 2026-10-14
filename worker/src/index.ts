@@ -13,6 +13,8 @@ import {
   PLOT_STREET_MAX_LENGTH,
   PLOT_DESCRIPTION_MAX_LENGTH,
   BULK_PLOTS_MAX_LENGTH,
+  REQUEST_BODY_MAX_BYTES,
+  BULK_REQUEST_BODY_MAX_BYTES,
   type PlotStatus,
 } from "./constants";
 import type { Env, PlotRow } from "./types";
@@ -199,12 +201,33 @@ async function hasAdminAccess(request: Request, env: Env) {
   }
 }
 
-async function readBody(request: Request): Promise<Record<string, unknown>> {
+async function readBody(
+  request: Request,
+  maxBytes = REQUEST_BODY_MAX_BYTES,
+): Promise<Record<string, unknown>> {
+  const reader = request.body?.getReader();
+  if (!reader) throw new RequestError(400, "Некорректный JSON");
   let value: unknown;
   try {
-    value = await request.json();
-  } catch {
+    const decoder = new TextDecoder();
+    let bodyText = "";
+    let size = 0;
+    while (true) {
+      const { done, value: chunk } = await reader.read();
+      if (done) break;
+      size += chunk.byteLength;
+      if (size > maxBytes) {
+        await reader.cancel().catch(() => undefined);
+        throw new RequestError(413, "Слишком большой размер запроса");
+      }
+      bodyText += decoder.decode(chunk, { stream: true });
+    }
+    value = JSON.parse(bodyText + decoder.decode());
+  } catch (error) {
+    if (error instanceof RequestError) throw error;
     throw new RequestError(400, "Некорректный JSON");
+  } finally {
+    reader.releaseLock();
   }
   if (typeof value !== "object" || value === null || Array.isArray(value))
     throw new RequestError(400, "Некорректный формат данных");
@@ -262,15 +285,21 @@ function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
   ).bind(plot.area, plot.status, plot.price, plot.street, plot.description, id);
 }
 
-function mapPlot(row: PlotRow) {
+function mapPublicPlot(row: Omit<PlotRow, "street" | "updated_at">) {
   return {
     id: row.id,
     settlement: row.settlement,
     area: row.area,
     status: row.status,
     price: row.price,
-    street: row.street,
     description: row.description,
+  };
+}
+
+function mapPlot(row: PlotRow) {
+  return {
+    ...mapPublicPlot(row),
+    street: row.street,
     updatedAt: row.updated_at,
   };
 }
@@ -316,9 +345,9 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === "/api/plots" && request.method === "GET") {
     const result = await env.DB.prepare(
-      "SELECT * FROM plots ORDER BY settlement, id",
-    ).all<PlotRow>();
-    return json(result.results.map(mapPlot), 200, request, env);
+      "SELECT id, settlement, area, status, price, description FROM plots ORDER BY settlement, id",
+    ).all<Omit<PlotRow, "street" | "updated_at">>();
+    return json(result.results.map(mapPublicPlot), 200, request, env);
   }
 
   if (url.pathname === "/api/contact" && request.method === "POST") {
@@ -394,7 +423,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       return json(result.results.map(mapPlot), 200, request, env);
     }
 
-    const body = await readBody(request);
+    const body = await readBody(
+      request,
+      request.method === "PUT"
+        ? BULK_REQUEST_BODY_MAX_BYTES
+        : REQUEST_BODY_MAX_BYTES,
+    );
     if (request.method === "POST") {
       const id = validatePlotId(body.id);
       const plot = validatePlotUpdate(body);
