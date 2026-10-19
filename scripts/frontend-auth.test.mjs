@@ -520,6 +520,18 @@ test("legacy plots normalize missing sales metadata and validated metadata survi
   assert.equal(cache.cached[0].buildingPermitDone, false);
 });
 
+test("public plot reads enforce the mortgage URL limit after percent encoding", async (context) => {
+  let mortgageUrl = "https://domclick.ru/card/" + "я".repeat(500);
+  mockBrowser(context, async () => response([{ ...fixture, mortgageUrl }]));
+  const { api, cache } = await loadApi();
+  await assert.rejects(api.getPlots(), /некорректные данные/);
+  assert.deepEqual(cache.cached, []);
+  mortgageUrl = "https://domclick.ru/card/" + "я".repeat(300);
+  assert.equal((await api.getPlots())[0].mortgageUrl, mortgageUrl);
+  mortgageUrl = "https://domclick.ru/card/" + "%D1%8F".repeat(300);
+  assert.equal((await api.getPlots())[0].mortgageUrl, mortgageUrl);
+});
+
 test("promotion settings use public reads, authenticated admin writes and publish confirmed saves", async (context) => {
   const calls = [];
   const settings = { promotion: { enabled: true, discountPercent: 15 } };

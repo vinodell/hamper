@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: worker-api-production
+  cancel-in-progress: false
+
 jobs:
   deploy-worker:
     runs-on: ubuntu-latest

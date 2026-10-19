@@ -304,6 +304,33 @@ test("mortgage listings reject invalid hosts and unsafe URL schemes without crea
   assert.deepEqual(await (await request("/api/plots")).json(), []);
 });
 
+test("mortgage URL limits include percent encoding so saved plots remain readable", async (context) => {
+  const { request } = fixture(context);
+  const oversized = await request("/api/admin/plots", {
+    method: "POST",
+    admin: true,
+    body: {
+      ...plot,
+      mortgageUrl: "https://domclick.ru/card/" + "я".repeat(500),
+    },
+  });
+  assert.equal(oversized.status, 400);
+  assert.deepEqual(await (await request("/api/plots")).json(), []);
+  const accepted = await request("/api/admin/plots", {
+    method: "POST",
+    admin: true,
+    body: {
+      ...plot,
+      mortgageUrl: "https://domclick.ru/card/" + "я".repeat(300),
+    },
+  });
+  assert.equal(accepted.status, 201);
+  const expected = "https://domclick.ru/card/" + "%D1%8F".repeat(300);
+  assert.equal((await accepted.json()).mortgageUrl, expected);
+  const [visible] = await (await request("/api/plots")).json();
+  assert.equal(visible.mortgageUrl, expected);
+});
+
 test("bulk plot edits save document flags and preserve omitted details across older bulk requests", async (context) => {
   const { request } = fixture(context);
   await request("/api/admin/plots", {

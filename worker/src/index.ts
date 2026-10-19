@@ -298,7 +298,8 @@ function mortgageUrl(value: unknown) {
       ) &&
       !url.username &&
       !url.password &&
-      !url.port
+      !url.port &&
+      url.href.length <= PLOT_MORTGAGE_URL_MAX_LENGTH
     )
       return url.href;
   } catch {

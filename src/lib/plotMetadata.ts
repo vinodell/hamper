@@ -19,6 +19,7 @@ export function isValidMortgageUrl(value: string): boolean {
       !url.username &&
       !url.password &&
       !url.port &&
+      url.href.length <= 2048 &&
       /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*domclick\.ru$/.test(
         url.hostname,
       )
