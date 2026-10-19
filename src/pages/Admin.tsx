@@ -1,6 +1,12 @@
 import { isValidPlotNumber, normalizePlotNumber } from "../lib/plotNumbers";
 import { LogOut, Plus, Save, ShieldCheck, X } from "lucide-react";
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
 import {
   api,
   ApiError,
@@ -13,6 +19,13 @@ import { clearLegacyAdminAuthorization } from "../lib/adminAuth";
 import { mergeAdminDrafts, toPlotUpdate } from "../lib/adminDrafts";
 import { notifyPlotsUpdated } from "../lib/plotEvents";
 import { LoadingIndicator } from "../components/LoadingIndicator";
+import { AdminPlotMetadata } from "../components/AdminPlotMetadata";
+import { AdminPromotion } from "../components/AdminPromotion";
+import { createPromotionDraft } from "../lib/promotionDrafts";
+import {
+  isValidCadastralNumber,
+  isValidMortgageUrl,
+} from "../lib/plotMetadata";
 
 import "./Admin.css";
 
@@ -23,6 +36,10 @@ const emptyPlot: PlotCreate = {
   price: "",
   street: "",
   description: "",
+  cadastralNumber: "",
+  gpzuDone: false,
+  buildingPermitDone: false,
+  mortgageUrl: "",
 };
 
 const samePlot = (left: AdminPlot, right: AdminPlot) =>
@@ -30,7 +47,11 @@ const samePlot = (left: AdminPlot, right: AdminPlot) =>
   left.status === right.status &&
   normalizePlotNumber(left.price) === normalizePlotNumber(right.price) &&
   (left.street ?? "") === (right.street ?? "") &&
-  (left.description ?? "") === (right.description ?? "");
+  (left.description ?? "") === (right.description ?? "") &&
+  (left.cadastralNumber ?? "") === (right.cadastralNumber ?? "") &&
+  (left.gpzuDone ?? false) === (right.gpzuDone ?? false) &&
+  (left.buildingPermitDone ?? false) === (right.buildingPermitDone ?? false) &&
+  (left.mortgageUrl ?? "") === (right.mortgageUrl ?? "");
 
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
@@ -48,7 +69,10 @@ export function Admin() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newPlot, setNewPlot] = useState<PlotCreate>(emptyPlot);
   const [saveMessage, setSaveMessage] = useState("");
-  const busy = saving || creating || loggingOut;
+  const [promotionDirty, setPromotionDirty] = useState(false);
+  const [promotionSaving, setPromotionSaving] = useState(false);
+  const [promotionDraft, setPromotionDraft] = useState(createPromotionDraft);
+  const busy = saving || creating || loggingOut || promotionSaving;
 
   const savedById = useMemo(
     () => new Map(savedPlots.map((plot) => [plot.id, plot])),
@@ -67,6 +91,7 @@ export function Admin() {
     [changedPlots],
   );
   const hasUnsavedChanges =
+    promotionDirty ||
     changedPlots.length > 0 ||
     Object.entries(newPlot).some(
       ([key, value]) => value !== emptyPlot[key as keyof PlotCreate],
@@ -144,15 +169,19 @@ export function Admin() {
     );
   };
 
+  const handleAuthenticationError = useCallback(() => {
+    setAuthenticated(false);
+    setPassword("");
+    setError("Войдите снова — несохранённые изменения останутся в форме.");
+  }, []);
+
   const handleMutationError = (
     reason: unknown,
     fallback: string,
     forCreate = false,
   ) => {
     if (reason instanceof ApiError && reason.status === 401) {
-      setAuthenticated(false);
-      setPassword("");
-      setError("Войдите снова — несохранённые изменения останутся в форме.");
+      handleAuthenticationError();
     } else {
       const setMessage = forCreate ? setCreateError : setError;
       setMessage(reason instanceof Error ? reason.message : fallback);
@@ -192,6 +221,15 @@ export function Admin() {
       );
       return;
     }
+    if (
+      !isValidCadastralNumber(newPlot.cadastralNumber) ||
+      !isValidMortgageUrl(newPlot.mortgageUrl)
+    ) {
+      setCreateError(
+        "Проверьте кадастровый номер и HTTPS-ссылку на объявление Домклик. Поля можно оставить пустыми.",
+      );
+      return;
+    }
     setCreating(true);
     setCreateError("");
     setSaveMessage("");
@@ -204,6 +242,8 @@ export function Admin() {
         price: normalizePlotNumber(newPlot.price),
         street: newPlot.street.trim(),
         description: newPlot.description.trim(),
+        cadastralNumber: newPlot.cadastralNumber.trim(),
+        mortgageUrl: newPlot.mortgageUrl.trim(),
       });
       setPlots((current) => [...current, created]);
       setSavedPlots((current) => [...current, created]);
@@ -226,6 +266,17 @@ export function Admin() {
     if (invalid.length) {
       setError(
         `Проверьте участки ${invalid.map((plot) => plot.id).join(", ")}: площадь и цена должны быть больше нуля, не более двух знаков после запятой.`,
+      );
+      return;
+    }
+    const invalidMetadata = changedPlots.filter(
+      (plot) =>
+        !isValidCadastralNumber(plot.cadastralNumber ?? "") ||
+        !isValidMortgageUrl(plot.mortgageUrl ?? ""),
+    );
+    if (invalidMetadata.length) {
+      setError(
+        `Проверьте участки ${invalidMetadata.map((plot) => plot.id).join(", ")}: кадастровый номер и HTTPS-ссылку на объявление Домклик. Поля можно оставить пустыми.`,
       );
       return;
     }
@@ -273,6 +324,8 @@ export function Admin() {
       setCreateError("");
       setShowCreateForm(false);
       setSaveMessage("");
+      setPromotionDirty(false);
+      setPromotionDraft(createPromotionDraft());
     } catch (reason) {
       setError(
         reason instanceof Error
@@ -375,6 +428,14 @@ export function Admin() {
             <LogOut size="1.0625rem" /> {loggingOut ? "Выходим…" : "Выйти"}
           </button>
         </header>
+        <AdminPromotion
+          disabled={saving || creating || loggingOut}
+          draft={promotionDraft}
+          onDraftChange={setPromotionDraft}
+          onAuthenticationError={handleAuthenticationError}
+          onDirtyChange={setPromotionDirty}
+          onSavingChange={setPromotionSaving}
+        />
         <div className="admin-savebar">
           <p className="admin-save-status" role="status">
             {saving
@@ -390,7 +451,7 @@ export function Admin() {
             onClick={saveAllChanges}
           >
             <Save size="1.0625rem" />
-            {saving ? "Сохраняем…" : "Сохранить все изменения"}
+            {saving ? "Сохраняем…" : "Сохранить участки"}
           </button>
         </div>
         {error && (
@@ -509,6 +570,20 @@ export function Admin() {
                           ))}
                         </select>
                       </label>
+                      <div className="admin-create-wide">
+                        <AdminPlotMetadata
+                          value={newPlot}
+                          disabled={busy}
+                          onChange={(metadata) => {
+                            if (busy) return;
+                            setCreateError("");
+                            setNewPlot((current) => ({
+                              ...current,
+                              ...metadata,
+                            }));
+                          }}
+                        />
+                      </div>
                       <label className="admin-create-wide">
                         Улица или адрес
                         <input
@@ -574,6 +649,7 @@ export function Admin() {
                         <th>Цена, ₽</th>
                         <th>Улица</th>
                         <th>Описание</th>
+                        <th>Документы и ипотека</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -654,6 +730,35 @@ export function Admin() {
                               }
                               aria-label={`Описание ${plot.id}`}
                             />
+                          </td>
+                          <td>
+                            <details className="admin-metadata-details">
+                              <summary>
+                                Документы и ссылка
+                                <span>
+                                  {Number(plot.gpzuDone ?? false) +
+                                    Number(plot.buildingPermitDone ?? false)}
+                                  /2 выполнено
+                                </span>
+                              </summary>
+                              <AdminPlotMetadata
+                                value={toPlotUpdate(plot)}
+                                plotId={plot.id}
+                                disabled={busy}
+                                onChange={(metadata) => {
+                                  if (busy) return;
+                                  setSaveMessage("");
+                                  setError("");
+                                  setPlots((current) =>
+                                    current.map((row) =>
+                                      row.id === plot.id
+                                        ? { ...row, ...metadata }
+                                        : row,
+                                    ),
+                                  );
+                                }}
+                              />
+                            </details>
                           </td>
                         </tr>
                       ))}

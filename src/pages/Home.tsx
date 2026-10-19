@@ -1,12 +1,8 @@
 import { Footer, Header } from "../components";
-import { siteConfig } from "../lib";
+import { PromotionBanner } from "../components/PromotionBanner";
 import { Contacts } from "../sections/Contacts";
 import { Projects } from "../sections/Projects";
 import { AboutUs } from "../sections/AboutUs";
-
-import "./Home.css";
-
-const tickerItems = Array.from({ length: 16 }, () => siteConfig.ticker);
 
 export const Home = () => {
   return (
@@ -14,20 +10,7 @@ export const Home = () => {
       <Header />
       <main>
         <AboutUs />
-        <div
-          className="ticker"
-          role="region"
-          aria-label={`Акция: ${siteConfig.ticker}`}
-        >
-          <div className="ticker-track" aria-hidden="true">
-            {tickerItems.map((item, index) => (
-              <span className="ticker-item" key={`${item}-${index}`}>
-                <span className="ticker-text">{item}</span>
-                <span className="ticker-dot">✦</span>
-              </span>
-            ))}
-          </div>
-        </div>
+        <PromotionBanner />
         <Projects />
         <Contacts />
       </main>

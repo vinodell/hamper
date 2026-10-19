@@ -1,0 +1,173 @@
+.promotion-ribbon {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 4.625rem;
+  overflow: hidden;
+  border-block: 0.0625rem solid rgb(58 60 43 / 0.14);
+  background: linear-gradient(180deg, #f9d4a4 0%, #efc58e 100%);
+  color: #1b1d18;
+  white-space: nowrap;
+}
+
+.promotion-ribbon__track {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.125rem;
+  width: max-content;
+  padding-inline: 1.5rem;
+  animation: promotion-ticker 70s linear infinite;
+}
+
+.promotion-ribbon__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 1.125rem;
+  padding-top: 0.125rem;
+  font-size: clamp(1.125rem, 2vw, 1.5625rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: 0 0.0625rem 0 rgb(255 255 255 / 0.35);
+}
+
+.promotion-ribbon__dot {
+  color: rgb(42 44 34 / 0.8);
+  font-size: 0.8em;
+}
+
+.promotion-ribbon__pause {
+  position: absolute;
+  right: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 0.0625rem solid rgb(58 60 43 / 0.2);
+  border-radius: 50%;
+  background: #f8d2a1;
+  color: inherit;
+  cursor: pointer;
+  box-shadow: 0 0 1rem 0.625rem #f3ca96;
+}
+
+.promotion-ribbon__pause:hover {
+  background: #ffe5c4;
+}
+
+.promotion-ribbon__pause:focus-visible,
+.promotion-card__link:focus-visible {
+  outline: 0.125rem solid var(--pine);
+  outline-offset: 0.1875rem;
+}
+
+.promotion-ribbon[data-paused="true"] .promotion-ribbon__track {
+  animation-play-state: paused;
+}
+
+.promotion-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
+  padding: 1.25rem 1.5rem;
+  border: 0.0625rem solid color-mix(in srgb, var(--gold-dark) 18%, transparent);
+  border-radius: 1rem;
+  background: linear-gradient(105deg, #f8dfbf, #f4cfa2);
+  color: var(--ink);
+}
+
+.promotion-card__copy {
+  min-width: 0;
+}
+
+.promotion-card__icon {
+  display: grid;
+  flex: 0 0 auto;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.35);
+  color: #805b31;
+}
+
+.promotion-card strong {
+  display: block;
+  font-size: 1rem;
+  line-height: 1.4;
+}
+
+.promotion-card p {
+  margin: 0.25rem 0 0;
+  color: #745332;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.promotion-card__link {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 0.0625rem solid rgb(116 83 50 / 0.25);
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+}
+
+.promotion-card__link:hover {
+  background: rgb(255 255 255 / 0.3);
+}
+
+@keyframes promotion-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (max-width: 47.5rem) {
+  .promotion-ribbon {
+    min-height: 3.75rem;
+  }
+  .promotion-ribbon__item {
+    gap: 0.75rem;
+    letter-spacing: 0.04em;
+  }
+  .promotion-ribbon__pause {
+    right: 0.75rem;
+  }
+  .promotion-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.125rem;
+  }
+  .promotion-card__link {
+    align-self: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .promotion-ribbon__track {
+    width: 100%;
+    padding: 0.875rem 1rem;
+    animation: none;
+  }
+  .promotion-ribbon__item {
+    white-space: normal;
+    letter-spacing: 0.03em;
+  }
+  .promotion-ribbon__item:not(:first-child),
+  .promotion-ribbon__dot {
+    display: none;
+  }
+  .promotion-ribbon__pause {
+    display: none;
+  }
+}

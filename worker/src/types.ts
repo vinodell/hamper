@@ -18,5 +18,14 @@ export interface PlotRow {
   price: string;
   street: string | null;
   description: string | null;
+  cadastral_number: string | null;
+  gpzu_done: number;
+  building_permit_done: number;
+  mortgage_url: string | null;
   updated_at: string;
+}
+
+export interface SiteSettingsRow {
+  promotion_enabled: number;
+  promotion_discount_percent: number;
 }

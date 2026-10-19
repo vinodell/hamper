@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
 import { cloudflare } from "@cloudflare/vite-plugin";
+import tailwindcss from "@tailwindcss/vite";
 import { adminPath, projectRoutes } from "./src/lib/routes.ts";
 
 function githubPagesRoutes(): Plugin {
@@ -41,7 +42,11 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [react(), githubPages ? githubPagesRoutes() : cloudflare()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      githubPages ? githubPagesRoutes() : cloudflare(),
+    ],
     base: githubPages ? "/hamper/" : "/",
   };
 });

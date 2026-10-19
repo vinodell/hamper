@@ -1,12 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  ArrowUpRight,
-  BadgePercent,
-  Check,
-  CircleDollarSign,
-} from "lucide-react";
+import { ArrowUpRight, CircleDollarSign } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
+import { PlotDetailsDialog } from "../components/PlotDetailsDialog";
+import { FullPaymentBadge } from "../components/PlotDetailsContent";
+import { PromotionBanner } from "../components/PromotionBanner";
 import { plotFilters, type TableSectionProps, type PlotFilter } from "../lib";
 import { formatPlotNumber } from "../lib/plotNumbers";
 import { comparePlots, type PlotSortKey } from "../lib/plotSorting";
@@ -39,12 +37,22 @@ export const Table = ({
   const tableRef = useRef<HTMLDivElement>(null);
   const [tableVisible, setTableVisible] = useState(false);
   const [filter, setFilter] = useState<PlotFilter>(initialFilter ?? "Все");
+  const [selectedPlotId, setSelectedPlotId] = useState<string | null>(null);
   const [sort, setSort] = useState<{
     key: PlotSortKey;
     direction: SortDirection;
   }>({ key: "id", direction: "asc" });
   const { plots, loading, error } = usePlots();
   const activeFilter = initialFilter ?? filter;
+  const selectedPlot = selectedPlotId
+    ? plots.find(
+        (plot) => plot.id === selectedPlotId && plot.status !== "Продан",
+      )
+    : undefined;
+
+  useEffect(() => {
+    if (selectedPlotId && !selectedPlot) setSelectedPlotId(null);
+  }, [selectedPlotId, selectedPlot]);
 
   useEffect(() => {
     const element = tableRef.current;
@@ -117,18 +125,7 @@ export const Table = ({
               : "Актуальные участки всех проектов."}
           </p>
         </div>
-        <div className="sale-banner">
-          <div>
-            <BadgePercent size="1.5rem" />
-            <div>
-              <strong>Успейте забронировать на старте продаж</strong>
-              <span>Выбирайте лучшие участки по стартовым ценам.</span>
-            </div>
-          </div>
-          <a className="text-link" href="#form">
-            Забронировать <ArrowUpRight size="1.0625rem" />
-          </a>
-        </div>
+        <PromotionBanner variant="card" />
         {!initialFilter && (
           <div
             className="filter-tabs"
@@ -186,27 +183,20 @@ export const Table = ({
               {filteredPlots.map((plot, index) => (
                 <tr
                   key={plot.id}
-                  className={
-                    plot.status === "Свободен" && onSelectPlot
-                      ? "plot-row-selectable"
-                      : undefined
-                  }
+                  className="plot-row-selectable"
                   style={{ animationDelay: `${Math.min(index, 8) * 35}ms` }}
-                  onClick={
-                    plot.status === "Свободен" && onSelectPlot
-                      ? (event) => {
-                          if (
-                            (event.target instanceof Element &&
-                              event.target.closest("a, button")) ||
-                            window.getSelection()?.toString()
-                          )
-                            return;
-                          event.currentTarget
-                            .querySelector<HTMLAnchorElement>(".plot-booking")
-                            ?.click();
-                        }
-                      : undefined
-                  }
+                  onClick={(event) => {
+                    if (
+                      (event.target instanceof Element &&
+                        event.target.closest("a, button")) ||
+                      window.getSelection()?.toString()
+                    )
+                      return;
+                    event.currentTarget
+                      .querySelector<HTMLButtonElement>(".plot-details-button")
+                      ?.focus({ preventScroll: true });
+                    setSelectedPlotId(plot.id);
+                  }}
                 >
                   <td>{plot.id}</td>
                   <td>
@@ -222,18 +212,26 @@ export const Table = ({
                       {plot.status}
                     </span>
                   </td>
-                  <td className="price">{formatPlotNumber(plot.price)}</td>
+                  <td className="price">
+                    <span className="plot-price-value">
+                      {formatPlotNumber(plot.price)}
+                    </span>
+                    <FullPaymentBadge />
+                  </td>
                   <td>
-                    {plot.status === "Свободен" && (
-                      <a
-                        className="plot-booking"
-                        onClick={() => onSelectPlot?.(plot)}
-                        href="#form"
-                        aria-label={`Забронировать участок ${plot.id}`}
-                      >
-                        <Check size="1.125rem" />
-                      </a>
-                    )}
+                    <button
+                      type="button"
+                      className="plot-details-button tw:motion-safe:transition tw:motion-safe:duration-200"
+                      onClick={(event) => {
+                        event.currentTarget.focus({ preventScroll: true });
+                        setSelectedPlotId(plot.id);
+                      }}
+                      aria-label={`Подробнее об участке ${plot.id}`}
+                      aria-haspopup="dialog"
+                    >
+                      <span>Подробнее</span>
+                      <ArrowUpRight size="1rem" aria-hidden="true" />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -245,6 +243,13 @@ export const Table = ({
           <span>Возможна рассрочка и ипотека.</span>
         </div>
       </div>
+      {selectedPlot && (
+        <PlotDetailsDialog
+          plot={selectedPlot}
+          onClose={() => setSelectedPlotId(null)}
+          onSelectPlot={onSelectPlot}
+        />
+      )}
     </section>
   );
 };

@@ -27,6 +27,10 @@ export function resolveMapZones(plots: Plot[]): MapZone[] {
       area: Number(plot.area.replace(",", ".")),
       price: Number(plot.price.replace(",", ".")),
       description: plot.description ?? undefined,
+      cadastralNumber: plot.cadastralNumber,
+      gpzuDone: plot.gpzuDone,
+      buildingPermitDone: plot.buildingPermitDone,
+      mortgageUrl: plot.mortgageUrl,
     };
   });
 }

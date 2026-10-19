@@ -1,5 +1,10 @@
 import { useEffect, useId, useRef } from "react";
+import { ArrowUpRight } from "lucide-react";
 
+import {
+  FullPaymentBadge,
+  PlotDocuments,
+} from "../components/PlotDetailsContent";
 import type { ZoneModalProps } from "./Interactive.types";
 import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
 
@@ -18,8 +23,24 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
       return;
     }
 
+    const previousFocus = document.activeElement;
+    const previousOverflow = document.body.style.overflow;
+    const previousScrollbarGutter =
+      document.documentElement.style.scrollbarGutter;
+    document.body.style.overflow = "hidden";
+    document.documentElement.style.scrollbarGutter = "stable";
     dialog.showModal();
-    return () => dialog.close();
+    return () => {
+      if (dialog.open) dialog.close();
+      document.body.style.overflow = previousOverflow;
+      document.documentElement.style.scrollbarGutter = previousScrollbarGutter;
+      if (
+        (previousFocus instanceof HTMLElement ||
+          previousFocus instanceof SVGElement) &&
+        previousFocus.isConnected
+      )
+        previousFocus.focus({ preventScroll: true });
+    };
   }, []);
 
   return (
@@ -33,7 +54,15 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
         onClose();
       }}
       onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target !== event.currentTarget) return;
+        const bounds = event.currentTarget.getBoundingClientRect();
+        if (
+          event.clientX < bounds.left ||
+          event.clientX > bounds.right ||
+          event.clientY < bounds.top ||
+          event.clientY > bounds.bottom
+        )
+          onClose();
       }}
     >
       <div className={styles.modalContent}>
@@ -76,9 +105,16 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
               <strong className={styles.modalDetailValue}>
                 {formatZonePrice(zone.price)}
               </strong>
+              <FullPaymentBadge />
             </div>
           )}
         </div>
+
+        <PlotDocuments
+          cadastralNumber={zone.cadastralNumber}
+          gpzuDone={zone.gpzuDone}
+          buildingPermitDone={zone.buildingPermitDone}
+        />
 
         {zone.description && (
           <p id={descriptionId} className={styles.modalDescription}>
@@ -97,7 +133,19 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
                 onBook?.();
               }}
             >
-              Оставить заявку
+              Забронировать участок
+            </a>
+          )}
+
+          {zone.status === "available" && zone.mortgageUrl && (
+            <a
+              className={`${styles.mortgageButton} tw:motion-safe:transition tw:motion-safe:duration-200`}
+              href={zone.mortgageUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Купить в ипотеку
+              <ArrowUpRight size="1rem" aria-hidden="true" />
             </a>
           )}
 

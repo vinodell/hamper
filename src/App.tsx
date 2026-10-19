@@ -12,6 +12,7 @@ import { LoadingIndicator } from "./components/LoadingIndicator";
 import { RouteScroll } from "./components/RouteScroll";
 import { adminPath } from "./lib/routes";
 
+import "./styles/tailwind.css";
 import "./styles/global.css";
 import "./App.css";
 
@@ -21,14 +22,6 @@ const Main = lazy(() =>
 const Admin = lazy(() =>
   import("./pages/Admin").then((module) => ({ default: module.Admin })),
 );
-
-// TODO: сделать тумблер на включение ленты со скидкой/акцией и динамическая цифра по скидке
-// на таблице popup с кадастровым номером/получен ГПЗУ/разрешение на строительство и другой инфой по участку (а там уже кнопка забронировать) 
-// сделать анализ по нейрику на текущий сайт
-// чекбокс на обработку персональных данных
-// наклейку на стоимость (стоимость при 100% оплате)
-// на мобилке сделать "построить маршрут" к массиву
-// кнопка купить в ипотеку - redirect на объяву в сбере
 
 const App = () => {
   return (

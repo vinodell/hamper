@@ -26,6 +26,8 @@ import { OinelovoFooter, OinelovoHeader } from "../components/OinelovoChrome";
 import { ProjectDialog } from "../components/ProjectDialog";
 import { PlotCarousel } from "../components/PlotCarousel";
 import { LoadingIndicator } from "../components/LoadingIndicator";
+import { FullPaymentBadge } from "../components/PlotDetailsContent";
+import { PromotionBanner } from "../components/PromotionBanner";
 import { Contacts } from "../sections/Contacts";
 import { usePlots } from "../hooks/usePlots";
 import { InteractiveMap } from "../interactiveMap";
@@ -119,7 +121,10 @@ function AvailablePlots({
             № {plotNumbers.get(plot.id) ?? plot.id}
           </strong>
           <span>{formatPlotNumber(plot.area)} сот.</span>
-          <b>{formatPlotNumber(plot.price)} ₽</b>
+          <b className="tw:flex tw:flex-col tw:items-start tw:gap-1">
+            {formatPlotNumber(plot.price)} ₽
+            <FullPaymentBadge />
+          </b>
           <button
             className="oinelovo-button oinelovo-button--small"
             type="button"
@@ -287,6 +292,7 @@ export function Oinelovo() {
   return (
     <div className="oinelovo-page">
       <OinelovoHeader onInquiry={openInquiry} />
+      <PromotionBanner />
       <main>
         <section
           className="oinelovo-screen oinelovo-screen--choose"

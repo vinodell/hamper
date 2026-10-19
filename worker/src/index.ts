@@ -12,12 +12,14 @@ import {
   PLOT_ID_MAX_LENGTH,
   PLOT_STREET_MAX_LENGTH,
   PLOT_DESCRIPTION_MAX_LENGTH,
+  PLOT_CADASTRAL_NUMBER_MAX_LENGTH,
+  PLOT_MORTGAGE_URL_MAX_LENGTH,
   BULK_PLOTS_MAX_LENGTH,
   REQUEST_BODY_MAX_BYTES,
   BULK_REQUEST_BODY_MAX_BYTES,
   type PlotStatus,
 } from "./constants";
-import type { Env, PlotRow } from "./types";
+import type { Env, PlotRow, SiteSettingsRow } from "./types";
 
 const textEncoder = new TextEncoder();
 
@@ -34,8 +36,12 @@ interface PlotUpdate {
   area: string;
   status: PlotStatus;
   price: string;
-  street: string | null;
-  description: string | null;
+  street?: string | null;
+  description?: string | null;
+  cadastralNumber?: string | null;
+  gpzuDone?: boolean;
+  buildingPermitDone?: boolean;
+  mortgageUrl?: string | null;
 }
 
 function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
@@ -264,6 +270,43 @@ function optionalText(value: unknown, maxLength: number) {
   return value.trim() || null;
 }
 
+function cadastralNumber(value: unknown) {
+  if (value === undefined) return undefined;
+  const number = optionalText(value, PLOT_CADASTRAL_NUMBER_MAX_LENGTH);
+  if (number !== null && !/^\d{2}:\d{2}:\d{6,7}:\d{1,10}$/.test(number))
+    throw new RequestError(400, "Некорректный кадастровый номер");
+  return number;
+}
+
+function optionalBoolean(value: unknown) {
+  if (value === undefined) return undefined;
+  if (typeof value !== "boolean")
+    throw new RequestError(400, "Некорректное значение отметки документа");
+  return value;
+}
+
+function mortgageUrl(value: unknown) {
+  if (value === undefined) return undefined;
+  const text = optionalText(value, PLOT_MORTGAGE_URL_MAX_LENGTH);
+  if (text === null) return null;
+  try {
+    const url = new URL(text);
+    if (
+      url.protocol === "https:" &&
+      /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*domclick\.ru$/.test(
+        url.hostname,
+      ) &&
+      !url.username &&
+      !url.password &&
+      !url.port
+    )
+      return url.href;
+  } catch {
+    // Invalid URLs receive the same validation error as disallowed hosts.
+  }
+  throw new RequestError(400, "Укажите HTTPS-ссылку на объявление Домклик");
+}
+
 function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
   if (
     typeof body.status !== "string" ||
@@ -274,15 +317,52 @@ function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
     area: positiveDecimal(body.area),
     status: body.status as PlotStatus,
     price: positiveDecimal(body.price),
-    street: optionalText(body.street, PLOT_STREET_MAX_LENGTH),
-    description: optionalText(body.description, PLOT_DESCRIPTION_MAX_LENGTH),
+    street:
+      body.street === undefined
+        ? undefined
+        : optionalText(body.street, PLOT_STREET_MAX_LENGTH),
+    description:
+      body.description === undefined
+        ? undefined
+        : optionalText(body.description, PLOT_DESCRIPTION_MAX_LENGTH),
+    cadastralNumber: cadastralNumber(body.cadastralNumber),
+    gpzuDone: optionalBoolean(body.gpzuDone),
+    buildingPermitDone: optionalBoolean(body.buildingPermitDone),
+    mortgageUrl: mortgageUrl(body.mortgageUrl),
   };
 }
 
 function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
+  const assignments = ["area = ?", "status = ?", "price = ?"];
+  const values: (string | number | null)[] = [
+    plot.area,
+    plot.status,
+    plot.price,
+  ];
+  const optionalColumns = [
+    ["street", plot.street],
+    ["description", plot.description],
+    ["cadastral_number", plot.cadastralNumber],
+    [
+      "gpzu_done",
+      plot.gpzuDone === undefined ? undefined : Number(plot.gpzuDone),
+    ],
+    [
+      "building_permit_done",
+      plot.buildingPermitDone === undefined
+        ? undefined
+        : Number(plot.buildingPermitDone),
+    ],
+    ["mortgage_url", plot.mortgageUrl],
+  ] as const;
+  for (const [column, value] of optionalColumns) {
+    if (value === undefined) continue;
+    assignments.push(`${column} = ?`);
+    values.push(value);
+  }
   return env.DB.prepare(
-    "UPDATE plots SET area = ?, status = ?, price = ?, street = ?, description = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *",
-  ).bind(plot.area, plot.status, plot.price, plot.street, plot.description, id);
+    `UPDATE plots SET ${assignments.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ? RETURNING *`,
+  ).bind(...values, id);
 }
 
 function mapPublicPlot(row: Omit<PlotRow, "street" | "updated_at">) {
@@ -293,6 +373,10 @@ function mapPublicPlot(row: Omit<PlotRow, "street" | "updated_at">) {
     status: row.status,
     price: row.price,
     description: row.description,
+    cadastralNumber: row.cadastral_number,
+    gpzuDone: row.gpzu_done === 1,
+    buildingPermitDone: row.building_permit_done === 1,
+    mortgageUrl: row.mortgage_url,
   };
 }
 
@@ -301,6 +385,15 @@ function mapPlot(row: PlotRow) {
     ...mapPublicPlot(row),
     street: row.street,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapSettings(row: SiteSettingsRow) {
+  return {
+    promotion: {
+      enabled: row.promotion_enabled === 1,
+      discountPercent: row.promotion_discount_percent,
+    },
   };
 }
 
@@ -343,15 +436,65 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
   if (url.pathname === "/api/health")
     return json({ ok: true }, 200, request, env);
 
+  if (
+    ["/api/settings", "/api/admin/settings"].includes(url.pathname) &&
+    request.method === "GET"
+  ) {
+    const row = await env.DB.prepare(
+      "SELECT promotion_enabled, promotion_discount_percent FROM site_settings WHERE id = 1",
+    ).first<SiteSettingsRow>();
+    return json(
+      mapSettings(
+        row ?? { promotion_enabled: 1, promotion_discount_percent: 10 },
+      ),
+      200,
+      request,
+      env,
+    );
+  }
+
+  if (url.pathname === "/api/admin/settings" && request.method === "PUT") {
+    const body = await readBody(request);
+    const promotion = body.promotion;
+    if (
+      typeof promotion !== "object" ||
+      promotion === null ||
+      Array.isArray(promotion) ||
+      !("enabled" in promotion) ||
+      typeof promotion.enabled !== "boolean" ||
+      !("discountPercent" in promotion) ||
+      typeof promotion.discountPercent !== "number" ||
+      !Number.isInteger(promotion.discountPercent) ||
+      promotion.discountPercent < 1 ||
+      promotion.discountPercent > 100
+    )
+      throw new RequestError(
+        400,
+        "Укажите состояние акции и целую скидку от 1 до 100%",
+      );
+    const row = await env.DB.prepare(
+      "INSERT INTO site_settings (id, promotion_enabled, promotion_discount_percent) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET promotion_enabled = excluded.promotion_enabled, promotion_discount_percent = excluded.promotion_discount_percent RETURNING promotion_enabled, promotion_discount_percent",
+    )
+      .bind(Number(promotion.enabled), promotion.discountPercent)
+      .first<SiteSettingsRow>();
+    if (!row) throw new Error("Settings save returned no row");
+    return json(mapSettings(row), 200, request, env);
+  }
+
   if (url.pathname === "/api/plots" && request.method === "GET") {
     const result = await env.DB.prepare(
-      "SELECT id, settlement, area, status, price, description FROM plots ORDER BY settlement, id",
+      "SELECT id, settlement, area, status, price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
     ).all<Omit<PlotRow, "street" | "updated_at">>();
     return json(result.results.map(mapPublicPlot), 200, request, env);
   }
 
   if (url.pathname === "/api/contact" && request.method === "POST") {
     const body = await readBody(request);
+    if (body.consent !== true)
+      throw new RequestError(
+        400,
+        "Подтвердите согласие на обработку персональных данных",
+      );
     if (
       typeof body.name !== "string" ||
       typeof body.phone !== "string" ||
@@ -374,6 +517,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       `🏡 Проект: ${project || "не указан"}`,
       `📍 Участок: ${plot || "не указан"}`,
       `💬 Комментарий: ${comment || "—"}`,
+      "✓ Согласие на обработку персональных данных: получено",
     ].join("\n");
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS);
@@ -433,7 +577,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       const id = validatePlotId(body.id);
       const plot = validatePlotUpdate(body);
       const row = await env.DB.prepare(
-        "INSERT INTO plots (id, settlement, area, status, price, street, description) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING RETURNING *",
+        "INSERT INTO plots (id, settlement, area, status, price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING RETURNING *",
       )
         .bind(
           id,
@@ -441,8 +585,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
           plot.area,
           plot.status,
           plot.price,
-          plot.street,
-          plot.description,
+          plot.street ?? null,
+          plot.description ?? null,
+          plot.cadastralNumber ?? null,
+          plot.gpzuDone ? 1 : 0,
+          plot.buildingPermitDone ? 1 : 0,
+          plot.mortgageUrl ?? null,
         )
         .first<PlotRow>();
       if (!row)

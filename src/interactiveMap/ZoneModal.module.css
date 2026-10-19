@@ -72,6 +72,16 @@
 }
 
 .modalContent {
+  --plot-details-muted: color-mix(in srgb, var(--paper) 75%, transparent);
+  --plot-details-border: color-mix(in srgb, var(--paper) 15%, transparent);
+  --plot-details-soft: color-mix(in srgb, var(--paper) 6%, transparent);
+  --plot-details-done-background: color-mix(
+    in srgb,
+    var(--paper) 12%,
+    transparent
+  );
+  --plot-details-done-ink: #c5e6b9;
+  --plot-details-badge-ink: #f4d3a4;
   position: relative;
 
   display: flex;
@@ -208,15 +218,19 @@
 
   font-size: 0.875rem;
   line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
 }
 
 .modalActions {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.625rem;
 }
 
 .primaryButton,
-.secondaryButton {
+.secondaryButton,
+.mortgageButton {
   min-height: 3rem;
 
   padding: 0 1.125rem;
@@ -240,12 +254,28 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  flex: 1 1 100%;
 
   border: 0;
 
   background: var(--gold);
   color: var(--ink);
+}
+
+.mortgageButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border: 0.0625rem solid color-mix(in srgb, var(--paper) 35%, transparent);
+  background: color-mix(in srgb, var(--paper) 5%, transparent);
+  color: var(--paper);
+  text-align: center;
+}
+
+.mortgageButton:hover {
+  background: color-mix(in srgb, var(--paper) 12%, transparent);
 }
 
 .primaryButton:hover {
@@ -264,7 +294,8 @@
 }
 
 .primaryButton:focus-visible,
-.secondaryButton:focus-visible {
+.secondaryButton:focus-visible,
+.mortgageButton:focus-visible {
   outline: 0.125rem solid var(--gold);
 
   outline-offset: 0.1875rem;
@@ -306,7 +337,8 @@
   }
 
   .primaryButton,
-  .secondaryButton {
+  .secondaryButton,
+  .mortgageButton {
     width: 100%;
   }
 }
@@ -314,11 +346,17 @@
 @media (prefers-reduced-motion: reduce) {
   .modalClose,
   .primaryButton,
-  .secondaryButton {
+  .secondaryButton,
+  .mortgageButton {
     transition: none;
   }
 
   .modal[open] {
     animation: none;
+  }
+
+  .modalClose:hover,
+  .primaryButton:hover {
+    transform: none;
   }
 }

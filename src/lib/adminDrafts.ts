@@ -7,6 +7,10 @@ export const toPlotUpdate = (plot: AdminPlot): PlotUpdate => ({
   price: normalizePlotNumber(plot.price),
   street: plot.street ?? "",
   description: plot.description ?? "",
+  cadastralNumber: plot.cadastralNumber?.trim() ?? "",
+  gpzuDone: plot.gpzuDone ?? false,
+  buildingPermitDone: plot.buildingPermitDone ?? false,
+  mortgageUrl: plot.mortgageUrl?.trim() ?? "",
 });
 
 export function mergeAdminDrafts(
@@ -31,6 +35,20 @@ export function mergeAdminDrafts(
         edited.description !== before.description
           ? draft.description
           : plot.description,
+      cadastralNumber:
+        edited.cadastralNumber !== before.cadastralNumber
+          ? draft.cadastralNumber
+          : plot.cadastralNumber,
+      gpzuDone:
+        edited.gpzuDone !== before.gpzuDone ? draft.gpzuDone : plot.gpzuDone,
+      buildingPermitDone:
+        edited.buildingPermitDone !== before.buildingPermitDone
+          ? draft.buildingPermitDone
+          : plot.buildingPermitDone,
+      mortgageUrl:
+        edited.mortgageUrl !== before.mortgageUrl
+          ? draft.mortgageUrl
+          : plot.mortgageUrl,
     };
   });
 }

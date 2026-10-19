@@ -37,7 +37,6 @@ export const siteConfig = {
   maksTelegram: env.VITE_TELEGRAM_MAKS,
   hours: "ежедневно с 10 до 20",
   email: env.VITE_CONTACT_EMAIL,
-  ticker: "Осенние скидки до 10%!",
   copyright: "© 2026 Hamper",
 } as const;
 
@@ -60,6 +59,10 @@ export interface Plot {
   status: PlotStatus;
   price: string;
   description?: string | null;
+  cadastralNumber?: string | null;
+  gpzuDone?: boolean;
+  buildingPermitDone?: boolean;
+  mortgageUrl?: string | null;
 }
 
 export interface InfoItem {
@@ -173,9 +176,6 @@ export const offertaMsg =
 export const closeMenuMsg = "Закрыть меню";
 export const openMenuMsg = "Открыть меню";
 export const chooseZemli = "Выбрать участок";
-export const policyMsg =
-  "Нажимая на кнопку, вы соглашаетесь с политикой конфиденциальности";
-
 export const PHONE_PATTERN =
   /\s*(?:\+\s*7|7|8)?(?:[\s.\-\(\)]*\d){10}[\s.\-\(\)]*/.source;
 

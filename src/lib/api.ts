@@ -1,5 +1,13 @@
 import { isValidPlotNumber, normalizePlotNumber } from "./plotNumbers";
 import { apiUrl, plotStatuses, type Plot, type PlotStatus } from "./constants";
+import { isValidCadastralNumber, isValidMortgageUrl } from "./plotMetadata";
+import {
+  getSiteSettingsRevision,
+  isValidSiteSettings,
+  loadCachedSiteSettings,
+  publishSavedSiteSettings,
+  type SiteSettings,
+} from "./siteSettings";
 import {
   getPlotsRevision,
   loadCachedPlots,
@@ -137,6 +145,10 @@ export interface PlotUpdate {
   price: string;
   street: string;
   description: string;
+  cadastralNumber: string;
+  gpzuDone: boolean;
+  buildingPermitDone: boolean;
+  mortgageUrl: string;
 }
 
 export interface PlotCreate extends PlotUpdate {
@@ -149,6 +161,7 @@ export interface ContactPayload {
   project: string;
   plot: string;
   comment: string;
+  consent: boolean;
 }
 
 function isPlotStatus(value: unknown): value is PlotStatus {
@@ -168,6 +181,23 @@ function parsePublicPlot(value: unknown): Plot {
     typeof value.price !== "string" ||
     !isPlotStatus(value.status) ||
     !(
+      value.cadastralNumber === undefined ||
+      value.cadastralNumber === null ||
+      (typeof value.cadastralNumber === "string" &&
+        isValidCadastralNumber(value.cadastralNumber))
+    ) ||
+    !(value.gpzuDone === undefined || typeof value.gpzuDone === "boolean") ||
+    !(
+      value.buildingPermitDone === undefined ||
+      typeof value.buildingPermitDone === "boolean"
+    ) ||
+    !(
+      value.mortgageUrl === undefined ||
+      value.mortgageUrl === null ||
+      (typeof value.mortgageUrl === "string" &&
+        isValidMortgageUrl(value.mortgageUrl))
+    ) ||
+    !(
       value.description === undefined ||
       value.description === null ||
       typeof value.description === "string"
@@ -185,6 +215,10 @@ function parsePublicPlot(value: unknown): Plot {
     status: value.status,
     price: price.replace(".", ","),
     description: value.description,
+    cadastralNumber: value.cadastralNumber?.trim() || null,
+    gpzuDone: value.gpzuDone ?? false,
+    buildingPermitDone: value.buildingPermitDone ?? false,
+    mortgageUrl: value.mortgageUrl?.trim() || null,
   };
 }
 
@@ -227,6 +261,16 @@ function toPublicPlot({ street, updatedAt, ...plot }: AdminPlot): Plot {
 function parseOk(value: unknown): { ok: true } {
   if (!isRecord(value) || value.ok !== true) throw invalidResponse();
   return { ok: true };
+}
+
+function parseSettings(value: unknown): SiteSettings {
+  if (!isValidSiteSettings(value)) throw invalidResponse();
+  return {
+    promotion: {
+      enabled: value.promotion.enabled,
+      discountPercent: value.promotion.discountPercent,
+    },
+  };
 }
 
 async function fetchPublicPlots(): Promise<Plot[]> {
@@ -280,6 +324,34 @@ export const api = {
   getPlots: (
     options: RequestOptions & { force?: boolean; maxAgeMs?: number } = {},
   ) => loadCachedPlots(fetchPublicPlots, options),
+  getSettings: (
+    options: RequestOptions & { force?: boolean; maxAgeMs?: number } = {},
+  ) =>
+    loadCachedSiteSettings(
+      async () => parseSettings(await request("/api/settings")),
+      options,
+    ),
+  getAdminSettings: async (options: RequestOptions = {}) => {
+    const revision = getSiteSettingsRevision();
+    const settings = parseSettings(
+      await request("/api/admin/settings", options),
+    );
+    publishSavedSiteSettings(settings, revision);
+    return settings;
+  },
+  updateSettings: async (data: SiteSettings, options: RequestOptions = {}) => {
+    if (!isValidSiteSettings(data))
+      throw new ApiError("Укажите скидку целым числом от 1 до 100%.", 400);
+    const settings = parseSettings(
+      await request("/api/admin/settings", {
+        ...options,
+        method: "PUT",
+        body: JSON.stringify(data),
+      }),
+    );
+    publishSavedSiteSettings(settings);
+    return settings;
+  },
   getAdminPlots: async (options: RequestOptions = {}) => {
     const revision = getPlotsRevision();
     const plots = parseList(
@@ -335,14 +407,20 @@ export const api = {
     mergeSavedPlots([toPublicPlot(plot)]);
     return plot;
   },
-  sendContact: async (data: ContactPayload, options: RequestOptions = {}) =>
-    parseOk(
+  sendContact: async (data: ContactPayload, options: RequestOptions = {}) => {
+    if (data.consent !== true)
+      throw new ApiError(
+        "Подтвердите согласие на обработку персональных данных.",
+        400,
+      );
+    return parseOk(
       await request("/api/contact", {
         ...options,
         method: "POST",
         body: JSON.stringify(data),
       }),
-    ),
+    );
+  },
 };
 
 /** Start the shared request before the first React render or route transition. */

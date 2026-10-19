@@ -173,6 +173,48 @@
     min-width: 0;
 }
 
+.contact-form .contact-consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    padding: 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.22);
+    border-radius: 0.5rem;
+    color: inherit;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    letter-spacing: normal;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.contact-form .contact-consent input[type="checkbox"] {
+    flex: 0 0 1.25rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    min-height: 0;
+    margin: 0.1875rem 0 0;
+    padding: 0;
+    accent-color: var(--gold);
+    cursor: inherit;
+}
+
+.contact-form .contact-consent:has(:focus-visible) {
+    outline: 2px solid var(--gold);
+    outline-offset: 3px;
+}
+
+.oinelovo-inquiry .contact-form .contact-consent {
+    color: var(--ink);
+    border-color: color-mix(in srgb, var(--line) 28%, transparent);
+}
+
+.oinelovo-inquiry .contact-form .contact-consent input[type="checkbox"] {
+    padding: 0;
+    border-radius: 0.25rem;
+    accent-color: var(--pine);
+}
+
 @media (min-width: 47.5625rem) and (max-width: 64rem) {
     .contact-grid {
         grid-template-columns: minmax(0, 1fr);

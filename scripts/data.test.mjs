@@ -264,6 +264,7 @@ const contactPayload = {
   project: "Ойнеловские дали",
   plot: "1-01",
   comment: " Хочу записаться на просмотр ",
+  consent: true,
 };
 const contactEnv = {
   PUBLIC_ORIGIN: "https://site.test",
@@ -282,6 +283,23 @@ function mockFetch(context, handler) {
     globalThis.fetch = original;
   });
 }
+
+test("contact requires explicit personal data consent before sending to Telegram", async (context) => {
+  let sends = 0;
+  mockFetch(context, async () => {
+    sends += 1;
+    return Response.json({ ok: true });
+  });
+  for (const consent of [undefined, false, "true", 1, null]) {
+    const response = await worker.fetch(
+      contactRequest({ ...contactPayload, consent }),
+      contactEnv,
+    );
+    assert.equal(response.status, 400);
+    assert.equal(typeof (await response.json()).error, "string");
+  }
+  assert.equal(sends, 0);
+});
 
 test("contact rejects invalid or excessive inputs before sending a Telegram message", async (context) => {
   mockFetch(context, () => {
@@ -359,6 +377,11 @@ test("contact sends selected project and plot once and confirms only Telegram su
     assert.ok(payload.text.includes("👤 Имя: Анна"));
     assert.ok(payload.text.includes("🏡 Проект: Ойнеловские дали"));
     assert.ok(payload.text.includes("📍 Участок: 1-01"));
+    assert.ok(
+      payload.text.includes(
+        "Согласие на обработку персональных данных: получено",
+      ),
+    );
     assert.ok(
       payload.text.includes("💬 Комментарий: Хочу записаться на просмотр"),
     );

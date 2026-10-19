@@ -64,6 +64,10 @@ function fixture() {
       {
         ...plot,
         settlement: "Тестовый посёлок",
+        cadastral_number: null,
+        gpzu_done: 0,
+        building_permit_done: 0,
+        mortgage_url: null,
         updated_at: "2026-01-01 00:00:00",
       },
     ],
@@ -83,34 +87,41 @@ function fixture() {
           assert.ok(
             [
               "SELECT * FROM plots ORDER BY settlement, id",
-              "SELECT id, settlement, area, status, price, description FROM plots ORDER BY settlement, id",
+              "SELECT id, settlement, area, status, price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
             ].includes(sql),
           );
           return { results: [...rows.values()] };
         },
         async first() {
           if (sql.startsWith("INSERT INTO plots")) {
-            const [id, settlement, area, status, price, street, description] =
-              values;
+            const columns = sql
+              .match(/^INSERT INTO plots \(([^)]+)\)/)[1]
+              .split(", ");
+            const inserted = Object.fromEntries(
+              columns.map((column, index) => [column, values[index]]),
+            );
+            const { id } = inserted;
             if (rows.has(id)) return null;
             const row = {
-              id,
-              settlement,
-              area,
-              status,
-              price,
-              street,
-              description,
+              ...inserted,
               updated_at: "2026-01-01 00:00:00",
             };
             rows.set(id, row);
             return row;
           }
           assert.ok(sql.startsWith("UPDATE plots SET"));
-          const [area, status, price, street, description, id] = values;
+          const id = values.at(-1);
           const existing = rows.get(id);
           if (!existing) return null;
-          const row = { ...existing, area, status, price, street, description };
+          const columns = [...sql.matchAll(/([a-z_]+) = \?/g)].map(
+            (match) => match[1],
+          );
+          const changes = Object.fromEntries(
+            columns
+              .slice(0, -1)
+              .map((column, index) => [column, values[index]]),
+          );
+          const row = { ...existing, ...changes };
           rows.set(id, row);
           return row;
         },

@@ -15,6 +15,7 @@ const compile = async (name) =>
   ).code;
 const authUrl = asModule(await compile("adminAuth"));
 const numbersUrl = asModule(await compile("plotNumbers"));
+const metadataUrl = asModule(await compile("plotMetadata"));
 const { mergeAdminDrafts, toPlotUpdate } = await import(
   asModule(
     (await compile("adminDrafts")).replace(
@@ -24,6 +25,7 @@ const { mergeAdminDrafts, toPlotUpdate } = await import(
   )
 );
 const apiCode = await compile("api");
+const settingsCode = await compile("siteSettings");
 let sequence = 0;
 
 async function loadApi(env = { DEV: false }) {
@@ -43,22 +45,32 @@ async function loadApi(env = { DEV: false }) {
     export const loadCachedPlots = async (load) => { const plots = await load(); cached = plots; return plots; };
   `)}#${++sequence}`;
   const constantsUrl = asModule(`export const apiUrl = "https://worker.test";
-    export const plotStatuses = ["Свободен", "Забронирован", "Продан"];`);
+    export const plotStatuses = ["Свободен", "Забронирован", "Продан"];
+    export const PLOTS_REFRESH_MS = 30000;`);
+  const settingsUrl = `${asModule(
+    settingsCode.replace(
+      /(["'])\.\/constants\1/g,
+      JSON.stringify(constantsUrl),
+    ),
+  )}#${sequence}`;
   const replacements = {
     adminAuth: authUrl,
     plotNumbers: numbersUrl,
     constants: constantsUrl,
     plotsCache: cacheUrl,
+    plotMetadata: metadataUrl,
+    siteSettings: settingsUrl,
   };
   const code = apiCode
     .replace(
-      /(["'])\.\/(adminAuth|plotNumbers|constants|plotsCache)\1/g,
+      /(["'])\.\/(adminAuth|plotNumbers|constants|plotsCache|plotMetadata|siteSettings)\1/g,
       (_, _quote, name) => JSON.stringify(replacements[name]),
     )
     .replaceAll("import.meta.env", JSON.stringify(env));
   return {
     ...(await import(`${asModule(code)}#${sequence}`)),
     cache: await import(cacheUrl),
+    settingsStore: await import(settingsUrl),
   };
 }
 
@@ -270,6 +282,47 @@ test("draft restoration ignores formatting changes and preserves explicit local 
   );
 });
 
+test("draft restoration merges edited cadastral and permit fields without reverting remote metadata", () => {
+  const saved = {
+    ...fixture,
+    cadastralNumber: "47:07:0123456:100",
+    gpzuDone: false,
+    buildingPermitDone: false,
+    mortgageUrl: "https://domclick.ru/card/100",
+  };
+  const draft = {
+    ...saved,
+    cadastralNumber: "",
+    gpzuDone: true,
+  };
+  const remote = {
+    ...saved,
+    cadastralNumber: "47:07:0123456:200",
+    buildingPermitDone: true,
+    mortgageUrl: "https://domclick.ru/card/200",
+  };
+  const [restored] = mergeAdminDrafts(
+    [remote],
+    [draft],
+    new Map([[saved.id, saved]]),
+  );
+  assert.equal(restored.cadastralNumber, "");
+  assert.equal(restored.gpzuDone, true);
+  assert.equal(restored.buildingPermitDone, true);
+  assert.equal(restored.mortgageUrl, "https://domclick.ru/card/200");
+  assert.deepEqual(toPlotUpdate(fixture), {
+    area: "8.12",
+    status: "Свободен",
+    price: "1200000",
+    street: "",
+    description: "",
+    cadastralNumber: "",
+    gpzuDone: false,
+    buildingPermitDone: false,
+    mortgageUrl: "",
+  });
+});
+
 test("logout calls the server to expire the cookie and reports network failures", async (context) => {
   let fail = false;
   mockBrowser(context, async (url, options) => {
@@ -306,10 +359,34 @@ test("public plots and contact requests omit cookies, authorization and unnecess
     project: "Другие участки",
     plot: fixture.id,
     comment: "Вопрос",
+    consent: true,
   };
   await api.sendContact(contact);
   assert.equal(calls[1][1].method, "POST");
   assert.deepEqual(JSON.parse(calls[1][1].body), contact);
+});
+
+test("contact submission requires an explicit consent before any network request", async (context) => {
+  let calls = 0;
+  mockBrowser(context, async () => {
+    calls += 1;
+    return response({ ok: true });
+  });
+  const { api, ApiError } = await loadApi();
+  for (const consent of [undefined, false, null, "true", 1]) {
+    await assert.rejects(
+      api.sendContact({
+        name: "Анна",
+        phone: "+7 999 123-45-67",
+        project: "",
+        plot: "",
+        comment: "",
+        consent,
+      }),
+      (error) => error instanceof ApiError && error.status === 400,
+    );
+  }
+  assert.equal(calls, 0);
 });
 
 test("protected mutations use cookie authentication and return validated data", async (context) => {
@@ -399,6 +476,17 @@ test("malformed public plot payloads are rejected before caching", async (contex
     [{ ...fixture, status: "unknown" }],
     [fixture, fixture],
     [{ ...fixture, description: {} }],
+    [{ ...fixture, cadastralNumber: "47:07:12345:1" }],
+    [{ ...fixture, cadastralNumber: 123 }],
+    [{ ...fixture, gpzuDone: "true" }],
+    [{ ...fixture, gpzuDone: null }],
+    [{ ...fixture, buildingPermitDone: 1 }],
+    [{ ...fixture, mortgageUrl: "http://domclick.ru/card/1" }],
+    [{ ...fixture, mortgageUrl: "https://domclick.ru.evil.test/card/1" }],
+    [{ ...fixture, mortgageUrl: "https://user@domclick.ru/card/1" }],
+    [{ ...fixture, mortgageUrl: "https://domclick.ru:8443/card/1" }],
+    [{ ...fixture, mortgageUrl: "https://.domclick.ru/card/1" }],
+    [{ ...fixture, mortgageUrl: "https://fake..domclick.ru/card/1" }],
   ]) {
     body = invalid;
     await assert.rejects(api.getPlots(), /некорректные данные/);
@@ -406,6 +494,96 @@ test("malformed public plot payloads are rejected before caching", async (contex
   }
   body = [{ ...fixture, area: "8,12 сот.", price: "1 200 000 ₽" }];
   assert.equal((await api.getPlots())[0].price, "1200000");
+});
+
+test("legacy plots normalize missing sales metadata and validated metadata survives admin saves", async (context) => {
+  let body = [fixture];
+  mockBrowser(context, async () => response(body));
+  const { api, cache } = await loadApi();
+  const legacy = (await api.getPlots())[0];
+  assert.equal(legacy.cadastralNumber, null);
+  assert.equal(legacy.gpzuDone, false);
+  assert.equal(legacy.buildingPermitDone, false);
+  assert.equal(legacy.mortgageUrl, null);
+  const detailed = {
+    ...fixture,
+    cadastralNumber: " 47:07:0123456:123 ",
+    gpzuDone: true,
+    buildingPermitDone: false,
+    mortgageUrl: " https://spb.domclick.ru/card/123 ",
+  };
+  body = [detailed];
+  const result = (await api.getAdminPlots())[0];
+  assert.equal(result.cadastralNumber, "47:07:0123456:123");
+  assert.equal(result.mortgageUrl, "https://spb.domclick.ru/card/123");
+  assert.equal(cache.cached[0].gpzuDone, true);
+  assert.equal(cache.cached[0].buildingPermitDone, false);
+});
+
+test("promotion settings use public reads, authenticated admin writes and publish confirmed saves", async (context) => {
+  const calls = [];
+  const settings = { promotion: { enabled: true, discountPercent: 15 } };
+  mockBrowser(context, async (url, options) => {
+    calls.push([url, options]);
+    return response(settings);
+  });
+  const { api } = await loadApi();
+  assert.deepEqual(await api.getSettings(), settings);
+  assert.equal(calls[0][0], "https://worker.test/api/settings");
+  assert.equal(calls[0][1].credentials, "omit");
+  assert.equal(calls[0][1].headers.has("Content-Type"), false);
+  assert.deepEqual(await api.getAdminSettings(), settings);
+  assertCookieRequest(calls[1][1]);
+  assert.equal(calls[1][0], "https://worker.test/api/admin/settings");
+  assert.deepEqual(await api.updateSettings(settings), settings);
+  assert.equal(calls[2][1].method, "PUT");
+  assertCookieRequest(calls[2][1]);
+  assert.deepEqual(JSON.parse(calls[2][1].body), settings);
+  assert.deepEqual(await api.getSettings(), settings);
+  assert.equal(calls.length, 3);
+});
+
+test("malformed promotion reads and saves never replace confirmed settings", async (context) => {
+  const confirmed = { promotion: { enabled: false, discountPercent: 10 } };
+  let body = confirmed;
+  let calls = 0;
+  mockBrowser(context, async () => {
+    calls += 1;
+    return response(body);
+  });
+  const { api, settingsStore } = await loadApi();
+  await api.getSettings();
+  for (const invalid of [
+    null,
+    {},
+    { promotion: null },
+    { promotion: { enabled: "true", discountPercent: 10 } },
+    { promotion: { enabled: true, discountPercent: "10" } },
+    { promotion: { enabled: true, discountPercent: 0 } },
+    { promotion: { enabled: true, discountPercent: 101 } },
+    { promotion: { enabled: true, discountPercent: 1.5 } },
+  ]) {
+    body = invalid;
+    await assert.rejects(
+      api.getSettings({ force: true }),
+      /некорректные данные/,
+    );
+    assert.deepEqual(
+      settingsStore.getSiteSettingsSnapshot().settings,
+      confirmed,
+    );
+    await assert.rejects(api.getAdminSettings(), /некорректные данные/);
+    assert.deepEqual(
+      settingsStore.getSiteSettingsSnapshot().settings,
+      confirmed,
+    );
+    const callsBeforeUpdate = calls;
+    await assert.rejects(api.updateSettings(invalid), /целым числом/);
+    assert.equal(calls, callsBeforeUpdate);
+  }
+  body = { promotion: { enabled: true, discountPercent: 100 } };
+  assert.deepEqual(await api.getSettings(), body);
+  assert.equal(settingsStore.getSiteSettingsSnapshot().error, "");
 });
 
 test("HTML fallback, malformed JSON and HTTP errors produce readable API errors", async (context) => {

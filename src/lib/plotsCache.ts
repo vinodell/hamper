@@ -34,6 +34,10 @@ function samePlot(left: Plot, right: Plot): boolean {
     left.status === right.status &&
     left.price === right.price &&
     left.description === right.description &&
+    left.cadastralNumber === right.cadastralNumber &&
+    left.gpzuDone === right.gpzuDone &&
+    left.buildingPermitDone === right.buildingPermitDone &&
+    left.mortgageUrl === right.mortgageUrl &&
     left.title === right.title &&
     left.category === right.category &&
     // Photos come from static metadata or the immutable local mock, not the API.

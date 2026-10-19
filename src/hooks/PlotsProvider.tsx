@@ -18,6 +18,9 @@ export function PlotsProvider({ children }: { children: ReactNode }) {
       void api.getPlots({ force, maxAgeMs }).catch(() => {
         // The store reports the error while preserving previously loaded rows.
       });
+      void api.getSettings({ force, maxAgeMs }).catch(() => {
+        // A promotion is shown only after a successful settings response.
+      });
     };
     const refreshVisible = () => {
       if (!document.hidden) refresh();

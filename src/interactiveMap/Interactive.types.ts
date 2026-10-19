@@ -21,6 +21,10 @@ export type MapZone = MapZoneLayout & {
   area?: number;
   price?: number;
   description?: string;
+  cadastralNumber?: string | null;
+  gpzuDone?: boolean;
+  buildingPermitDone?: boolean;
+  mortgageUrl?: string | null;
 };
 
 export type PointerPosition = {

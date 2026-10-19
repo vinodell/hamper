@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Mail, Phone } from "lucide-react";
 import { formatPhone, usePlots } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
-import { policyMsg, siteConfig, PHONE_PATTERN, type Plot } from "../lib";
+import { siteConfig, PHONE_PATTERN, type Plot } from "../lib";
 import { api } from "../lib/api";
 
 import "./Contacts.css";
@@ -38,6 +38,7 @@ export const Contacts = ({
   onSubmittingChange,
 }: ContactsProps) => {
   const [phone, setPhone] = useState("");
+  const [consent, setConsent] = useState(false);
   const { plots, loading: plotsLoading, error: plotsError } = usePlots();
   const [chosenProject, setChosenProject] = useState(initialProject);
   const [chosenPlot, setChosenPlot] = useState("");
@@ -76,6 +77,13 @@ export const Contacts = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (pendingSubmission.current) return;
+    if (!consent) {
+      setFormState("error");
+      setSubmitError(
+        "Для отправки заявки необходимо согласие на обработку персональных данных.",
+      );
+      return;
+    }
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
     pendingSubmission.current = true;
@@ -89,10 +97,12 @@ export const Contacts = ({
         project: chosenProject,
         plot: availableChosenPlot,
         comment: String(form.get("comment") ?? ""),
+        consent,
       });
       setFormState("success");
       formElement.reset();
       setPhone("");
+      setConsent(false);
       setChosenProject(initialProject);
       setChosenPlot("");
     } catch (reason) {
@@ -274,10 +284,24 @@ export const Contacts = ({
               disabled={formState === "sending"}
             />
           </label>
+          <label className="contact-consent tw:motion-safe:transition-colors tw:duration-200">
+            <input
+              type="checkbox"
+              name="consent"
+              checked={consent}
+              onChange={(event) => setConsent(event.target.checked)}
+              required
+              disabled={formState === "sending"}
+            />
+            <span>
+              Я согласен на обработку персональных данных для связи по моей
+              заявке.
+            </span>
+          </label>
           <button
             className="button button-gold"
             type="submit"
-            disabled={formState === "sending"}
+            disabled={formState === "sending" || !consent}
           >
             {formState === "sending" ? "Отправляем…" : "Отправить заявку"}
             <ArrowUpRight size="1.0625rem" />
@@ -292,7 +316,6 @@ export const Contacts = ({
               {submitError}
             </small>
           )}
-          <small>{policyMsg}</small>
         </form>
       </div>
     </section>

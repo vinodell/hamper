@@ -1,304 +1,285 @@
 .filter-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 1.3125rem;
-    flex-wrap: wrap;
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.3125rem;
+  flex-wrap: wrap;
 }
 
 .filter-tabs button {
-    padding: 0.75rem 1.125rem;
-    border: 0.0625rem solid var(--line);
-    background: transparent;
-    color: var(--muted);
-    transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease, color 180ms ease;
+  padding: 0.75rem 1.125rem;
+  border: 0.0625rem solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease;
 }
 
 .filter-tabs button.active {
-    background: var(--pine);
-    color: white;
-    border-color: var(--pine);
+  background: var(--pine);
+  color: white;
+  border-color: var(--pine);
 }
 
 .filter-tabs button:hover {
-    transform: translateY(-0.0625rem);
-}
-
-.sale-banner {
-    background: #f6c89d;
-    padding: 1.375rem 1.875rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1.75rem;
-}
-
-.sale-banner>div {
-    display: flex;
-    gap: 1.0625rem;
-    align-items: center;
-}
-
-.sale-banner>div>svg {
-    color: #8d6740;
-}
-
-.sale-banner strong,
-.sale-banner span {
-    display: block;
-}
-
-.sale-banner strong {
-    margin-bottom: 0.25rem;
-}
-
-.sale-banner span {
-    color: #805f43;
-    font-size: 0.875rem;
+  transform: translateY(-0.0625rem);
 }
 
 .plots-table-wrap {
-    overflow-x: auto;
-    border: 0.0625rem solid rgba(15, 38, 31, 0.08);
-    border-radius: 1.125rem;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(0.375rem);
+  overflow-x: auto;
+  border: 0.0625rem solid rgba(15, 38, 31, 0.08);
+  border-radius: 1.125rem;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(0.375rem);
 }
 
 .plots-table-wrap table {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 45rem;
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 45rem;
 }
 
 .plots-table-wrap thead th {
-    padding: 0.875rem 1rem;
-    text-align: left;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--muted);
-    background: rgba(15, 38, 31, 0.03);
-    border-bottom: 0.0625rem solid rgba(15, 38, 31, 0.08);
+  padding: 0.875rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: rgba(15, 38, 31, 0.03);
+  border-bottom: 0.0625rem solid rgba(15, 38, 31, 0.08);
 }
 
 .plots-table-wrap tbody td {
-    padding: 1rem;
-    border-bottom: 0.0625rem solid rgba(15, 38, 31, 0.06);
-    vertical-align: middle;
+  padding: 1rem;
+  border-bottom: 0.0625rem solid rgba(15, 38, 31, 0.06);
+  vertical-align: middle;
 }
 
 .sort-button {
-    appearance: none;
-    border: 0;
-    background: transparent;
-    padding: 0;
-    color: inherit;
-    font: inherit;
-    letter-spacing: inherit;
-    text-transform: inherit;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.375rem;
-    transition: color 180ms ease;
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  transition: color 180ms ease;
 }
 
 .sort-button:hover {
-    color: var(--pine);
+  color: var(--pine);
 }
 
 .sort-button span {
-    font-size: 0.6875rem;
-    opacity: 0.75;
+  font-size: 0.6875rem;
+  opacity: 0.75;
 }
 
 .status {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 7.375rem;
-    font-size: 0.75rem;
-    padding: 0.4375rem 0.625rem;
-    border-radius: 6.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 7.375rem;
+  font-size: 0.75rem;
+  padding: 0.4375rem 0.625rem;
+  border-radius: 6.25rem;
 }
 
 .status-free {
-    color: #4b7051;
-    background: #dce8d8;
+  color: #4b7051;
+  background: #dce8d8;
 }
 
 .status-muted {
-    color: #84847b;
-    background: #e8e6df;
+  color: #84847b;
+  background: #e8e6df;
 }
 
 .price {
-    font-weight: 700;
+  font-weight: 700;
+}
+
+.plot-price-value {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .price-note {
-    display: flex;
-    align-items: center;
-    gap: 0.625rem;
-    color: var(--muted);
-    font-size: 0.8125rem;
-    margin-top: 1.375rem;
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  margin-top: 1.375rem;
 }
 
 .price-note svg {
-    color: var(--gold-dark);
-    width: 1.1875rem;
+  color: var(--gold-dark);
+  width: 1.1875rem;
 }
 
 @media (max-width: 47.5rem) {
+  .filter-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
 
-    .filter-tabs {
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .filter-tabs button {
-        white-space: nowrap;
-    }
-
-    .sale-banner {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 1.25rem;
-        padding: 1.375rem;
-    }
+  .filter-tabs button {
+    white-space: nowrap;
+  }
 }
 
 .plots-table-wrap tbody tr {
-    transition: background-color 180ms ease, transform 180ms ease;
+  transition:
+    background-color 180ms ease,
+    transform 180ms ease;
 }
 
 .plots-table-wrap tbody tr:focus-within {
-    background-color: rgba(15, 38, 31, 0.05);
+  background-color: rgba(15, 38, 31, 0.05);
 }
 
 @media (hover: hover) {
-    .plots-table-wrap tbody tr:hover {
-        background-color: rgba(15, 38, 31, 0.05);
-    }
+  .plots-table-wrap tbody tr:hover {
+    background-color: rgba(15, 38, 31, 0.05);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .plots-table-wrap tbody tr {
-        transition: none;
-    }
+  .plots-table-wrap tbody tr {
+    transition: none;
+  }
 }
 
 @keyframes plot-row-reveal {
-    from {
-        opacity: 0;
-        transform: translateY(0.5rem);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .plots-table-visible tbody tr {
-    animation: plot-row-reveal 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation: plot-row-reveal 320ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
-.plots-table-wrap .plot-booking {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 50%;
-    color: var(--pine);
-    background: rgba(15, 38, 31, 0.06);
-    transition: transform 180ms ease, background-color 180ms ease, color 180ms ease;
+.plots-table-wrap .plot-details-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  font: inherit;
+  font-size: 0.75rem;
+  cursor: pointer;
+  white-space: nowrap;
+  border-radius: 0.625rem;
+  color: var(--pine);
+  background: rgba(15, 38, 31, 0.06);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    color 180ms ease;
 }
 
-.plots-table-wrap .plot-booking svg {
-    transition: transform 180ms ease;
+.plots-table-wrap .plot-details-button svg {
+  transition: transform 180ms ease;
 }
 
-.plots-table-wrap .plot-booking:focus-visible {
-    outline: 0.125rem solid var(--gold-dark);
-    outline-offset: 0.1875rem;
-    background: var(--pine);
-    color: white;
+.plots-table-wrap .plot-details-button:focus-visible {
+  outline: 0.125rem solid var(--gold-dark);
+  outline-offset: 0.1875rem;
+  background: var(--pine);
+  color: white;
 }
 
 @media (hover: hover) {
-    .plots-table-wrap tbody tr:hover .plot-booking {
-        background: var(--pine);
-        color: white;
-    }
+  .plots-table-wrap tbody tr:hover .plot-details-button {
+    background: var(--pine);
+    color: white;
+  }
 
-    .plots-table-wrap .plot-booking:hover {
-        transform: translateY(-0.125rem);
-    }
+  .plots-table-wrap .plot-details-button:hover {
+    transform: translateY(-0.125rem);
+  }
 
-    .plots-table-wrap .plot-booking:hover svg {
-        transform: scale(1.12);
-    }
+  .plots-table-wrap .plot-details-button:hover svg {
+    transform: scale(1.12);
+  }
 }
 
-.plots-table-wrap .plot-booking:active {
-    transform: scale(0.94);
+.plots-table-wrap .plot-details-button:active {
+  transform: scale(0.94);
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .plots-table-visible tbody tr {
-        animation: none;
-    }
+  .plots-table-visible tbody tr {
+    animation: none;
+  }
 
-    .plots-table-wrap .plot-booking,
-    .plots-table-wrap .plot-booking svg {
-        transition: none;
-        transform: none;
-    }
+  .plots-table-wrap .plot-details-button,
+  .plots-table-wrap .plot-details-button svg {
+    transition: none;
+    transform: none;
+  }
 
-    .plots-table-wrap .plot-booking:hover,
-    .plots-table-wrap .plot-booking:hover svg,
-    .plots-table-wrap .plot-booking:active {
-        transform: none;
-    }
+  .plots-table-wrap .plot-details-button:hover,
+  .plots-table-wrap .plot-details-button:hover svg,
+  .plots-table-wrap .plot-details-button:active {
+    transform: none;
+  }
 }
 
 .plots-table-wrap .plot-row-selectable {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 .plot-controls {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: end;
-    gap: 1.25rem;
-    margin-bottom: 1.75rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 1.25rem;
+  margin-bottom: 1.75rem;
 }
 
 .plot-controls label {
-    display: grid;
-    gap: 0.5rem;
-    flex: 1 1 13.75rem;
-    font-size: 0.8125rem;
-    color: var(--ink);
+  display: grid;
+  gap: 0.5rem;
+  flex: 1 1 13.75rem;
+  font-size: 0.8125rem;
+  color: var(--ink);
 }
 
 .plot-controls select {
-    min-height: 3rem;
-    width: 100%;
-    min-width: 0;
-    padding: 0.625rem 0.75rem;
-    font-size: 1rem;
-    color: var(--ink);
-    background: var(--paper);
-    border: 0.0625rem solid var(--line);
-    border-radius: var(--radius);
+  min-height: 3rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.625rem 0.75rem;
+  font-size: 1rem;
+  color: var(--ink);
+  background: var(--paper);
+  border: 0.0625rem solid var(--line);
+  border-radius: var(--radius);
 }
 
-.plot-controls>span {
-    padding-bottom: 0.875rem;
-    color: var(--muted);
-    font-size: 0.875rem;
+.plot-controls > span {
+  padding-bottom: 0.875rem;
+  color: var(--muted);
+  font-size: 0.875rem;
 }

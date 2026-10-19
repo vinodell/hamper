@@ -19,8 +19,8 @@ Create the D1 database and update `worker/wrangler.jsonc` with its ID:
 
 ```bash
 npx wrangler d1 create hamper-production
-npx wrangler d1 execute hamper-production --remote --file=worker/schema.sql
-npx wrangler d1 execute hamper-production --remote --file=worker/seed.sql
+npx wrangler d1 migrations apply hamper-production --remote --config worker/wrangler.jsonc
+npx wrangler d1 execute hamper-production --remote --config worker/wrangler.jsonc --file=worker/seed.sql
 ```
 
 ```bash
@@ -50,7 +50,64 @@ Every admin read/write checks the cookie signature and expiry on the server. Cha
 
 HTTPS cookies use `HttpOnly; Secure; SameSite=None; Partitioned` so separate GitHub Pages and Worker sites can work with browsers supporting partitioned cookies. Browser settings that block these cookies will produce a readable sign-in error. Using the same site for the frontend and API also avoids third-party-cookie restrictions. Admin requests accept only the configured frontend origin; public plot/contact requests send no auth cookies or Authorization header.
 
-In `/admin`, **Добавить участок** in **Другие участки** creates a plot with a unique number. Area and price must be positive with up to two decimal places. **Сохранить все изменения** sends one `PUT /api/admin/plots` with `{ plots: [...] }`; the Worker validates the whole batch and saves it in a database transaction. No database migration is required.
+In `/admin`, **Добавить участок** in **Другие участки** creates a plot with a unique number. Area and price must be positive with up to two decimal places. **Сохранить участки** sends one `PUT /api/admin/plots` with `{ plots: [...] }`; the Worker validates the whole batch and saves it in a database transaction.
+
+## Promotions, plot documents and applications
+
+The admin promotion panel saves its own settings with **Сохранить акцию**. Its
+switch controls the home/project ribbons and the promotion card above the plots
+table. The discount is an integer from 1 to 100; it changes the displayed offer,
+while plot prices remain the values entered by the administrator.
+
+Expand **Документы и ссылка** for a plot to enter its cadastral number, mark
+**ГПЗУ получен** / **Разрешение на строительство**, and set the mortgage listing
+URL. Empty cadastral numbers and unmarked documents are shown as unconfirmed.
+Mortgage links accept HTTPS URLs on `domclick.ru` and its subdomains. **Купить в
+ипотеку** appears in the selected available plot's map popup only after its
+listing URL is saved; no listing URLs or document completion are invented.
+
+The table's **Подробнее** opens the plot details. **Забронировать участок**
+selects that plot in the application form. Applications are requests for contact;
+the administrator confirms a reservation by changing the plot status.
+The price badge **При 100% оплате** clarifies the payment condition.
+
+The personal-data checkbox starts unchecked, resets after a successful send,
+and is required to enable submission. Both the client and the Worker reject a
+request unless `consent` is the boolean `true`; the Telegram message records the
+confirmation.
+
+### Database upgrade
+
+Before publishing this Worker against an existing database, apply the checked-in
+migrations. They preserve the plots and add metadata columns plus the singleton
+promotion settings. The Worker deploy workflow applies pending migrations before
+deployment. On an empty database the same migration command initializes all tables.
+
+```bash
+npx wrangler d1 migrations apply hamper-production --remote --config worker/wrangler.jsonc
+```
+
+Use migrations for setup and upgrades. `worker/schema.sql` is a reference snapshot
+of the latest schema for isolated fixtures; applying it to an existing table does
+not add missing columns. Do not apply `0001_sales_features.sql` a second time
+manually; the migrations command tracks which files have already run.
+
+### Browser verification
+
+`npm run test:browser` builds an isolated Pages version and checks the real UI,
+Worker, and a temporary SQLite database in Chrome/Chromium. It uses synthetic
+credentials/plots and intercepts Telegram sends; it does not use production D1.
+It checks promotion saves across tabs, plot document edits, popup booking,
+mandatory consent, per-plot mortgage links, and layouts at 375/768/1440/1920 px.
+The command prints a directory containing screenshots and its JSON report.
+Set `CHROME_BIN` if the browser is not at a standard installation path. Node 24+
+is needed for the SQLite-backed tests.
+
+Tailwind is a Vite build-time dependency for scoped `tw:` utilities, with the
+existing theme and CSS retained. Preflight is omitted to preserve the site's
+existing defaults. See the [Tailwind Vite setup](https://tailwindcss.com/docs/installation/using-vite)
+and [individual imports](https://tailwindcss.com/docs/preflight#disabling-preflight)
+for the integration used here.
 
 ## Local API and public data
 
