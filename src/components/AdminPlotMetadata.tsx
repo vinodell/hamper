@@ -75,7 +75,7 @@ export function AdminPlotMetadata({
       </div>
       <label>
         <span>
-          <Link2 size={15} aria-hidden="true" /> Объявление для ипотеки
+          <Link2 size={15} aria-hidden="true" /> Объявление в Домклик
         </span>
         <input
           type="url"
@@ -89,7 +89,9 @@ export function AdminPlotMetadata({
           spellCheck={false}
           autoCapitalize="none"
         />
-        <small>Ссылка на объявление участка в Домклик / Сбере.</small>
+        <small>
+          Отдельная ссылка на объявление этого участка в Домклик / Сбере.
+        </small>
       </label>
     </fieldset>
   );

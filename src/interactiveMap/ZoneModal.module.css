@@ -266,16 +266,52 @@
   display: flex;
   flex: 1;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  min-width: 0;
+  min-height: 4.125rem;
+  padding: 0.625rem 0.875rem;
   border: 0.0625rem solid color-mix(in srgb, var(--paper) 35%, transparent);
   background: color-mix(in srgb, var(--paper) 5%, transparent);
   color: var(--paper);
-  text-align: center;
+  text-align: left;
+}
+
+.mortgageIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 2.5rem;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: var(--plot-details-done-ink);
+  color: var(--pine);
+}
+
+.mortgageCopy {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.25rem;
+  line-height: 1.25;
+}
+
+.mortgageCaption {
+  color: var(--plot-details-muted);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+}
+
+.mortgageArrow {
+  flex-shrink: 0;
+  transition: transform 160ms ease;
 }
 
 .mortgageButton:hover {
   background: color-mix(in srgb, var(--paper) 12%, transparent);
+}
+
+.mortgageButton:is(:hover, :focus-visible) .mortgageArrow {
+  transform: translate(0.125rem, -0.125rem);
 }
 
 .primaryButton:hover {
@@ -347,7 +383,8 @@
   .modalClose,
   .primaryButton,
   .secondaryButton,
-  .mortgageButton {
+  .mortgageButton,
+  .mortgageArrow {
     transition: none;
   }
 
@@ -356,7 +393,8 @@
   }
 
   .modalClose:hover,
-  .primaryButton:hover {
+  .primaryButton:hover,
+  .mortgageButton:is(:hover, :focus-visible) .mortgageArrow {
     transform: none;
   }
 }

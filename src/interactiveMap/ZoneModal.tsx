@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, House } from "lucide-react";
 
 import {
   FullPaymentBadge,
@@ -143,9 +143,22 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
               href={zone.mortgageUrl}
               target="_blank"
               rel="noopener noreferrer"
+              aria-label={`Купить в ипотеку: участок ${zone.number} на Домклик (откроется в новой вкладке)`}
             >
-              Купить в ипотеку
-              <ArrowUpRight size="1rem" aria-hidden="true" />
+              <span className={styles.mortgageIcon} aria-hidden="true">
+                <House size={22} strokeWidth={1.75} />
+              </span>
+              <span className={styles.mortgageCopy}>
+                <span>Купить в ипотеку</span>
+                <span className={styles.mortgageCaption}>
+                  Объявление на Домклик
+                </span>
+              </span>
+              <ArrowUpRight
+                className={styles.mortgageArrow}
+                size={18}
+                aria-hidden="true"
+              />
             </a>
           )}
 
