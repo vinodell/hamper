@@ -16,6 +16,13 @@
   white-space: nowrap;
 }
 
+.plot-price__amounts {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
 .plot-price__original s {
   text-decoration-thickness: 0.0625rem;
   text-decoration-color: currentColor;

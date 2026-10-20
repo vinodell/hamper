@@ -883,7 +883,7 @@ try {
         `(()=>{const zone=document.querySelector('[data-plot-id="1-05"]');return{fill:getComputedStyle(zone).fill,legend:getComputedStyle(document.querySelector('.oinelovo-status--sold')).backgroundColor,selectable:zone.dataset.selectable,role:zone.getAttribute('role'),tabIndex:zone.getAttribute('tabindex')};})()`,
       );
       assert.deepEqual(sold, {
-        fill: "rgb(201, 48, 62)",
+        fill: "rgba(201, 48, 62, 0.55)",
         legend: "rgb(201, 48, 62)",
         selectable: "false",
         role: "img",

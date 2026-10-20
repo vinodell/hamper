@@ -117,7 +117,7 @@
 }
 
 .zone[data-status="sold"] {
-  fill: var(--zone-sold-fill, #c9303e);
+  fill: var(--zone-sold-fill, rgb(201 48 62 / 0.5));
 }
 
 .zone[data-status="unknown"] {

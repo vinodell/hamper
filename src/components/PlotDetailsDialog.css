@@ -98,6 +98,12 @@
   }
 }
 
+@media (max-width: 30rem) {
+  .plot-details-dialog__numbers {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .plot-details-dialog[open] {
     animation: none;

@@ -79,7 +79,10 @@ export function MapTooltip({ id, zone, position }: MapTooltipProps) {
       )}
 
       {zone.price !== undefined && (
-        <div className={styles.tooltipRow} aria-hidden="true">
+        <div
+          className={`${styles.tooltipRow} ${styles.tooltipPriceRow}`}
+          aria-hidden="true"
+        >
           <span>Стоимость</span>
 
           <PlotPrice
