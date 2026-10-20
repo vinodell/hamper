@@ -69,6 +69,10 @@ listing URL is saved; no listing URLs or document completion are invented.
 The table's **Подробнее** opens the plot details. **Забронировать участок**
 selects that plot in the application form. Applications are requests for contact;
 the administrator confirms a reservation by changing the plot status.
+For a reserved map parcel, **Уведомить, если участок освободится** appears next
+to the close control. It opens an inquiry with the project and plot fixed, adds
+the notification request to the submitted comment, and still requires personal
+data consent. This uses the existing application channel.
 The optional **При 100% оплате** price is edited next to the base price in the
 admin table and when adding a plot. It must be positive, have up to two decimal
 places, and be lower than the base price. When set, public tables, lists and map

@@ -99,11 +99,23 @@
   color: var(--paper);
 }
 
-.modalClose {
+.modalToolbar {
   position: absolute;
-
   top: 1rem;
   right: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.625rem;
+}
+
+.modalToolbar[data-notification="true"] {
+  position: static;
+  width: 100%;
+}
+
+.modalClose {
+  flex-shrink: 0;
 
   display: grid;
   place-items: center;
@@ -327,6 +339,28 @@
 
 .secondaryButton:hover {
   background: color-mix(in srgb, var(--paper) 10%, transparent);
+}
+
+.notificationButton {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+  padding: 0.625rem 0.75rem;
+  border-color: color-mix(in srgb, var(--gold) 50%, transparent);
+  background: color-mix(in srgb, var(--gold) 10%, transparent);
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.notificationButton svg {
+  flex-shrink: 0;
+  color: var(--gold);
+}
+
+.notificationButton:hover {
+  background: color-mix(in srgb, var(--gold) 18%, transparent);
 }
 
 .primaryButton:focus-visible,

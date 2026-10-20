@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef } from "react";
-import { ArrowUpRight, House } from "lucide-react";
+import { ArrowUpRight, BellRing, House } from "lucide-react";
 
 import { PlotDocuments } from "../components/PlotDetailsContent";
 import { PlotPrice } from "../components/PlotPrice";
@@ -8,7 +8,7 @@ import { zoneStatusLabels } from "./zonePresentation";
 
 import styles from "./ZoneModal.module.css";
 
-export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
+export function ZoneModal({ zone, onClose, onBook, onNotify }: ZoneModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   const titleId = useId();
@@ -64,14 +64,35 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
       }}
     >
       <div className={styles.modalContent}>
-        <button
-          type="button"
-          className={styles.modalClose}
-          onClick={onClose}
-          aria-label="Закрыть информацию об участке"
+        <div
+          className={styles.modalToolbar}
+          data-notification={zone.status === "reserved"}
         >
-          <span aria-hidden="true">×</span>
-        </button>
+          {zone.status === "reserved" && (
+            <a
+              className={`${styles.secondaryButton} ${styles.notificationButton}`}
+              href="#form"
+              aria-label={`Уведомить об освобождении участка ${zone.plotId}`}
+              aria-haspopup={onNotify ? "dialog" : undefined}
+              onClick={(event) => {
+                if (onNotify) event.preventDefault();
+                onClose();
+                onNotify?.();
+              }}
+            >
+              <BellRing size={18} aria-hidden="true" />
+              <span>Уведомить, если участок освободится</span>
+            </a>
+          )}
+          <button
+            type="button"
+            className={styles.modalClose}
+            onClick={onClose}
+            aria-label="Закрыть информацию об участке"
+          >
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
 
         <div className={styles.modalHeader}>
           <span className={styles.modalEyebrow}>Участок {zone.number}</span>
@@ -121,54 +142,48 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
           </p>
         )}
 
-        <div className={styles.modalActions}>
-          {zone.status === "available" && (
-            <a
-              className={styles.primaryButton}
-              href="#form"
-              onClick={(event) => {
-                if (onBook) event.preventDefault();
-                onClose();
-                onBook?.();
-              }}
-            >
-              Забронировать участок
-            </a>
-          )}
+        {zone.status === "available" && (
+          <div className={styles.modalActions}>
+            {zone.status === "available" && (
+              <a
+                className={styles.primaryButton}
+                href="#form"
+                onClick={(event) => {
+                  if (onBook) event.preventDefault();
+                  onClose();
+                  onBook?.();
+                }}
+              >
+                Забронировать участок
+              </a>
+            )}
 
-          {zone.status === "available" && zone.mortgageUrl && (
-            <a
-              className={`${styles.mortgageButton} tw:motion-safe:transition tw:motion-safe:duration-200`}
-              href={zone.mortgageUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label={`Купить в ипотеку: участок ${zone.number} на Домклик (откроется в новой вкладке)`}
-            >
-              <span className={styles.mortgageIcon} aria-hidden="true">
-                <House size={22} strokeWidth={1.75} />
-              </span>
-              <span className={styles.mortgageCopy}>
-                <span>Купить в ипотеку</span>
-                <span className={styles.mortgageCaption}>
-                  Объявление на Домклик
+            {zone.status === "available" && zone.mortgageUrl && (
+              <a
+                className={`${styles.mortgageButton} tw:motion-safe:transition tw:motion-safe:duration-200`}
+                href={zone.mortgageUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={`Купить в ипотеку: участок ${zone.number} на Домклик (откроется в новой вкладке)`}
+              >
+                <span className={styles.mortgageIcon} aria-hidden="true">
+                  <House size={22} strokeWidth={1.75} />
                 </span>
-              </span>
-              <ArrowUpRight
-                className={styles.mortgageArrow}
-                size={18}
-                aria-hidden="true"
-              />
-            </a>
-          )}
-
-          <button
-            type="button"
-            className={styles.secondaryButton}
-            onClick={onClose}
-          >
-            Закрыть
-          </button>
-        </div>
+                <span className={styles.mortgageCopy}>
+                  <span>Купить в ипотеку</span>
+                  <span className={styles.mortgageCaption}>
+                    Объявление на Домклик
+                  </span>
+                </span>
+                <ArrowUpRight
+                  className={styles.mortgageArrow}
+                  size={18}
+                  aria-hidden="true"
+                />
+              </a>
+            )}
+          </div>
+        )}
       </div>
     </dialog>
   );

@@ -28,7 +28,7 @@ import { PlotCarousel } from "../components/PlotCarousel";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 import { PlotPrice } from "../components/PlotPrice";
 import { PromotionBanner } from "../components/PromotionBanner";
-import { Contacts } from "../sections/Contacts";
+import { Contacts, type ContactRequestKind } from "../sections/Contacts";
 import { usePlots } from "../hooks/usePlots";
 import { InteractiveMap } from "../interactiveMap";
 import { mapZones } from "../interactiveMap/MapZones";
@@ -254,6 +254,7 @@ export function Oinelovo() {
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [inquirySubmitting, setInquirySubmitting] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
+  const [requestKind, setRequestKind] = useState<ContactRequestKind>("viewing");
   const [photoIndex, setPhotoIndex] = useState(0);
   const projectPlots = useMemo(
     () => plots.filter((plot) => plot.settlement === project.plotFilter),
@@ -295,10 +296,12 @@ export function Oinelovo() {
   );
   const closeDialog = useCallback(() => setDialog(null), []);
   const openInquiry = useCallback(() => {
+    setRequestKind("viewing");
     setSelectedPlot(null);
     setDialog("inquiry");
   }, []);
   const bookPlot = useCallback((plot: Plot) => {
+    setRequestKind("viewing");
     setSelectedPlot({ ...plot });
     setDialog("inquiry");
   }, []);
@@ -308,6 +311,16 @@ export function Oinelovo() {
       if (plot?.status === "Свободен") bookPlot(plot);
     },
     [bookPlot, plotsById],
+  );
+  const handleMapNotification = useCallback(
+    (zone: MapZone) => {
+      const plot = plotsById.get(zone.plotId);
+      if (plot?.status !== "Забронирован") return;
+      setSelectedPlot({ ...plot });
+      setRequestKind("availability");
+      setDialog("inquiry");
+    },
+    [plotsById],
   );
   const movePhoto = useCallback((step: number) => {
     setPhotoIndex(
@@ -470,6 +483,7 @@ export function Oinelovo() {
                   imageSizes="(max-width: 47.5rem) 65vw, (max-width: 64rem) 38vw, (max-width: 93.333rem) 26vw, 24rem"
                   imageAlt="План Ойнеловских далей. Выберите участок, чтобы узнать площадь, цену и статус."
                   onBookPlot={handleMapBooking}
+                  onNotifyPlot={handleMapNotification}
                 />
                 <figcaption>
                   Нажмите на номер участка · Иллюстративный рендер
@@ -867,13 +881,18 @@ export function Oinelovo() {
 
       {dialog === "inquiry" && (
         <ProjectDialog
-          title="Записаться на просмотр"
+          title={
+            requestKind === "availability"
+              ? "Уведомить об освобождении участка"
+              : "Записаться на просмотр"
+          }
           onClose={closeDialog}
           className="oinelovo-inquiry"
           closeDisabled={inquirySubmitting}
         >
           <Contacts
             selectedPlot={selectedPlot}
+            requestKind={requestKind}
             initialProject={project.plotFilter}
             id="inquiry-form"
             onSubmittingChange={setInquirySubmitting}

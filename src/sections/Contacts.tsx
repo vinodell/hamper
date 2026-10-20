@@ -24,8 +24,11 @@ const mobileContacts = [
   },
 ].filter(({ phone, telegram, whatsapp }) => phone || telegram || whatsapp);
 
+export type ContactRequestKind = "viewing" | "availability";
+
 type ContactsProps = {
   selectedPlot?: Plot | null;
+  requestKind?: ContactRequestKind;
   initialProject?: string;
   id?: string;
   onSubmittingChange?: (submitting: boolean) => void;
@@ -33,6 +36,7 @@ type ContactsProps = {
 
 export const Contacts = ({
   selectedPlot,
+  requestKind = "viewing",
   initialProject = "",
   id = "form",
   onSubmittingChange,
@@ -47,6 +51,16 @@ export const Contacts = ({
   >("idle");
   const [submitError, setSubmitError] = useState("");
   const pendingSubmission = useRef(false);
+  const availabilityPlot =
+    requestKind === "availability" && selectedPlot?.status === "Забронирован"
+      ? selectedPlot
+      : null;
+  const commentPrefix = availabilityPlot
+    ? `Прошу уведомить, если участок ${availabilityPlot.id} освободится от брони.`
+    : "";
+  const commentMaxLength = commentPrefix
+    ? 2000 - commentPrefix.length - 1
+    : 2000;
 
   const availablePlots = useMemo(
     () =>
@@ -63,16 +77,18 @@ export const Contacts = ({
     : "";
 
   useEffect(() => {
+    if (pendingSubmission.current) return;
+    setConsent(false);
+    setFormState("idle");
     if (
-      pendingSubmission.current ||
+      requestKind !== "viewing" ||
       !selectedPlot ||
       selectedPlot.status !== "Свободен"
     )
       return;
     setChosenProject(selectedPlot.settlement);
     setChosenPlot(selectedPlot.id);
-    setFormState("idle");
-  }, [selectedPlot]);
+  }, [selectedPlot, requestKind]);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,6 +102,12 @@ export const Contacts = ({
     }
     const formElement = event.currentTarget;
     const form = new FormData(formElement);
+    const userComment = String(form.get("comment") ?? "");
+    if (userComment.length > commentMaxLength) {
+      setFormState("error");
+      setSubmitError(`Сократите комментарий до ${commentMaxLength} символов.`);
+      return;
+    }
     pendingSubmission.current = true;
     setFormState("sending");
     onSubmittingChange?.(true);
@@ -94,9 +116,11 @@ export const Contacts = ({
       await api.sendContact({
         name: String(form.get("name") ?? ""),
         phone: formatPhone(phone),
-        project: chosenProject,
-        plot: availableChosenPlot,
-        comment: String(form.get("comment") ?? ""),
+        project: availabilityPlot?.settlement ?? chosenProject,
+        plot: availabilityPlot?.id ?? availableChosenPlot,
+        comment: commentPrefix
+          ? `${commentPrefix}${userComment ? `\n${userComment}` : ""}`
+          : userComment,
         consent,
       });
       setFormState("success");
@@ -125,14 +149,17 @@ export const Contacts = ({
           <p className="eyebrow light my-text-bold">КОНТАКТЫ</p>
 
           <h2 className="my-text-bold">
-            Записаться
+            {availabilityPlot ? "Получить" : "Записаться"}
             <br />
-            <em className="my-text-bold">на просмотр</em>
+            <em className="my-text-bold">
+              {availabilityPlot ? "уведомление" : "на просмотр"}
+            </em>
           </h2>
 
           <p className="my-text-regular">
-            Оставьте заявку, и мы свяжемся с Вами, чтобы рассказать о поселках и
-            подобрать подходящий участок.
+            {availabilityPlot
+              ? `Участок ${availabilityPlot.id} забронирован. Оставьте контакты — мы свяжемся с Вами, если он освободится.`
+              : "Оставьте заявку, и мы свяжемся с Вами, чтобы рассказать о поселках и подобрать подходящий участок."}
           </p>
 
           <div className="contact-details">
@@ -221,65 +248,88 @@ export const Contacts = ({
           </label>
           <label>
             Интересующий объект
-            <select
-              name="project"
-              value={chosenProject}
-              onChange={(event) => {
-                setChosenProject(event.target.value);
-                setChosenPlot("");
-              }}
-              disabled={formState === "sending"}
-            >
-              <option value="" disabled>
-                Выберите объект
-              </option>
-              <option>Ойнеловские дали</option>
-              <option>Другие участки</option>
-            </select>
+            {availabilityPlot ? (
+              <input
+                name="project"
+                value={availabilityPlot.settlement}
+                readOnly
+                disabled={formState === "sending"}
+              />
+            ) : (
+              <select
+                name="project"
+                value={chosenProject}
+                onChange={(event) => {
+                  setChosenProject(event.target.value);
+                  setChosenPlot("");
+                }}
+                disabled={formState === "sending"}
+              >
+                <option value="" disabled>
+                  Выберите объект
+                </option>
+                <option>Ойнеловские дали</option>
+                <option>Другие участки</option>
+              </select>
+            )}
           </label>
           <label>
             Номер участка
-            <select
-              name="plot"
-              value={availableChosenPlot}
-              onChange={(event) => setChosenPlot(event.target.value)}
-              disabled={
-                formState === "sending" || plotsLoading || !chosenProject
-              }
-            >
-              <option value="">
-                {!chosenProject
-                  ? "Сначала выберите объект"
-                  : plotsLoading
-                    ? "Загружаем участки…"
-                    : "Выберите участок"}
-              </option>
-              {availablePlots.length > 0 ? (
-                availablePlots.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.id}
-                  </option>
-                ))
-              ) : chosenProject && !plotsLoading && !plotsError ? (
-                <option value="" disabled key="no-lands">
-                  Нет доступных участков
+            {availabilityPlot ? (
+              <input
+                name="plot"
+                value={availabilityPlot.id}
+                readOnly
+                disabled={formState === "sending"}
+              />
+            ) : (
+              <select
+                name="plot"
+                value={availableChosenPlot}
+                onChange={(event) => setChosenPlot(event.target.value)}
+                disabled={
+                  formState === "sending" || plotsLoading || !chosenProject
+                }
+              >
+                <option value="">
+                  {!chosenProject
+                    ? "Сначала выберите объект"
+                    : plotsLoading
+                      ? "Загружаем участки…"
+                      : "Выберите участок"}
                 </option>
-              ) : null}
-            </select>
+                {availablePlots.length > 0 ? (
+                  availablePlots.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.id}
+                    </option>
+                  ))
+                ) : chosenProject && !plotsLoading && !plotsError ? (
+                  <option value="" disabled key="no-lands">
+                    Нет доступных участков
+                  </option>
+                ) : null}
+              </select>
+            )}
           </label>
-          {plotsError && <small role="alert">{plotsError}</small>}
-          {chosenPlot && !availableChosenPlot && !plotsLoading && (
-            <small role="status">
-              Выбранный участок больше не доступен. Выберите другой или оставьте
-              заявку без номера участка.
-            </small>
+          {!availabilityPlot && plotsError && (
+            <small role="alert">{plotsError}</small>
           )}
+          {!availabilityPlot &&
+            chosenPlot &&
+            !availableChosenPlot &&
+            !plotsLoading && (
+              <small role="status">
+                Выбранный участок больше не доступен. Выберите другой или
+                оставьте заявку без номера участка.
+              </small>
+            )}
           <label>
             Комментарий
             <textarea
               name="comment"
               rows={3}
-              maxLength={2000}
+              maxLength={commentMaxLength}
               placeholder="Ваш вопрос"
               disabled={formState === "sending"}
             />
@@ -303,12 +353,18 @@ export const Contacts = ({
             type="submit"
             disabled={formState === "sending" || !consent}
           >
-            {formState === "sending" ? "Отправляем…" : "Отправить заявку"}
+            {formState === "sending"
+              ? "Отправляем…"
+              : availabilityPlot
+                ? "Оставить заявку на уведомление"
+                : "Отправить заявку"}
             <ArrowUpRight size="1.0625rem" />
           </button>
           {formState === "success" && (
             <small className="form-success" role="status">
-              Заявка отправлена. Мы скоро свяжемся с Вами.
+              {availabilityPlot
+                ? "Заявка на уведомление отправлена. Мы свяжемся с Вами, если участок освободится."
+                : "Заявка отправлена. Мы скоро свяжемся с Вами."}
             </small>
           )}
           {formState === "error" && (

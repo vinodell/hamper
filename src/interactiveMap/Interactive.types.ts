@@ -59,6 +59,8 @@ export type InteractiveMapProps = {
   onZoneClick?: (zone: MapZone) => void;
   /** Override the free parcel dialog's booking link with a page action. */
   onBookPlot?: (zone: MapZone) => void;
+  /** Open an inquiry about a reserved parcel becoming available. */
+  onNotifyPlot?: (zone: MapZone) => void;
 
   className?: string;
 };
@@ -73,4 +75,5 @@ export type ZoneModalProps = {
   zone: MapZone;
   onClose: () => void;
   onBook?: () => void;
+  onNotify?: () => void;
 };

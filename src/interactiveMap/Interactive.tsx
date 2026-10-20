@@ -27,6 +27,7 @@ export const InteractiveMap = ({
   imageAlt = "Карта участков",
   onZoneClick,
   onBookPlot,
+  onNotifyPlot,
   className,
 }: InteractiveMapProps) => {
   const tooltipId = useId();
@@ -226,6 +227,7 @@ export const InteractiveMap = ({
           zone={selectedZone}
           onClose={() => setSelectedZoneId(null)}
           onBook={onBookPlot ? () => onBookPlot(selectedZone) : undefined}
+          onNotify={onNotifyPlot ? () => onNotifyPlot(selectedZone) : undefined}
         />
       )}
     </>

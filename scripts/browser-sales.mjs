@@ -993,6 +993,134 @@ try {
       await escape(main);
     },
   );
+  const availabilityButton =
+    '[aria-label="Уведомить об освобождении участка 1-02"]';
+  await check(
+    "Only reserved map parcels offer an availability request",
+    async () => {
+      for (const id of ["1-01", "1-04"]) {
+        await openMap(id);
+        assert.equal(
+          await main.evaluate(
+            "Boolean(document.querySelector('dialog[open] [aria-label^=\"Уведомить об освобождении участка\"]'))",
+          ),
+          false,
+        );
+        await escape(main);
+      }
+      await openMap("1-02");
+      assert.equal(
+        await main.evaluate(
+          `Boolean(document.querySelector(${JSON.stringify(availabilityButton)}))`,
+        ),
+        true,
+      );
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('[data-plot-id=\"1-05\"]').getAttribute('aria-haspopup')",
+        ),
+        null,
+      );
+    },
+  );
+  await check(
+    "A reserved availability inquiry keeps its plot and purpose and requires consent",
+    async () => {
+      await activate(main, availabilityButton);
+      await until(main, "document.querySelector('#inquiry-form')");
+      assert.equal(
+        await main.evaluate("document.querySelectorAll('dialog[open]').length"),
+        1,
+      );
+      const form = await main.evaluate(
+        `(()=>{const form=document.querySelector('#inquiry-form');return{project:form.querySelector('[name=project]').value,plot:form.querySelector('[name=plot]').value,projectLocked:form.querySelector('[name=project]').readOnly,plotLocked:form.querySelector('[name=plot]').readOnly,consent:form.querySelector('[name=consent]').checked,submitDisabled:form.querySelector('[type=submit]').disabled,text:form.innerText};})()`,
+      );
+      assert.equal(form.project, "Ойнеловские дали");
+      assert.equal(form.plot, "1-02");
+      assert.equal(form.projectLocked, true);
+      assert.equal(form.plotLocked, true);
+      assert.equal(form.consent, false);
+      assert.equal(form.submitDisabled, true);
+      assert.match(form.text, /Участок 1-02 забронирован/);
+      assert.match(form.text, /если он освободится/iu);
+      const comment = "Предпочитаю звонок после 18:00";
+      const telegramBefore = telegram.length;
+      await fill(main, "#inquiry-form [name=name]", "Ожидающий посетитель");
+      await fill(main, "#inquiry-form [name=phone]", "+7 999 123 45 67");
+      await fill(main, "#inquiry-form [name=comment]", comment);
+      await activate(main, "#inquiry-form [name=consent]");
+      await activate(main, "#inquiry-form [type=submit]");
+      await until(
+        main,
+        "document.querySelector('#inquiry-form .form-success')",
+      );
+      assert.equal(telegram.length, telegramBefore + 1);
+      const sent = requests.findLast(
+        (request) =>
+          request.path === "/api/contact" && request.method === "POST",
+      );
+      assert.equal(sent.body.project, "Ойнеловские дали");
+      assert.equal(sent.body.plot, "1-02");
+      assert.equal(sent.body.consent, true);
+      assert.match(sent.body.comment, /уведомить.*освобод/iu);
+      assert.ok(sent.body.comment.endsWith(comment));
+      assert.match(telegram.at(-1).text, /Ойнеловские дали/);
+      assert.match(telegram.at(-1).text, /1-02/);
+      assert.match(telegram.at(-1).text, /уведомить.*освобод/iu);
+      assert.ok(telegram.at(-1).text.includes(comment));
+      await activate(main, ".project-dialog__close");
+    },
+  );
+  await check(
+    "A later free-plot inquiry starts without the availability purpose",
+    async () => {
+      await openMap("1-01");
+      await activate(main, "dialog[open] a[href='#form']");
+      await until(main, "document.querySelector('#inquiry-form')");
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#inquiry-form [name=plot]').value",
+        ),
+        "1-01",
+      );
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#inquiry-form [name=consent]').checked",
+        ),
+        false,
+      );
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#inquiry-form [name=comment]').value",
+        ),
+        "",
+      );
+      assert.doesNotMatch(
+        await main.evaluate(
+          "document.querySelector('#inquiry-form').innerText",
+        ),
+        /уведомить.*освобод/iu,
+      );
+      const comment = "Хочу посмотреть свободный участок";
+      await fill(main, "#inquiry-form [name=name]", "Следующий посетитель");
+      await fill(main, "#inquiry-form [name=phone]", "+7 999 123 45 67");
+      await fill(main, "#inquiry-form [name=comment]", comment);
+      await activate(main, "#inquiry-form [name=consent]");
+      await activate(main, "#inquiry-form [type=submit]");
+      await until(
+        main,
+        "document.querySelector('#inquiry-form .form-success')",
+      );
+      const sent = requests.findLast(
+        (request) =>
+          request.path === "/api/contact" && request.method === "POST",
+      );
+      assert.equal(sent.body.plot, "1-01");
+      assert.equal(sent.body.comment, comment);
+      assert.doesNotMatch(telegram.at(-1).text, /уведомить.*освобод/iu);
+      await activate(main, ".project-dialog__close");
+    },
+  );
   await check(
     "A pending inquiry keeps its consent and result visible until completion",
     async () => {
@@ -1290,6 +1418,12 @@ try {
       } else if (route.includes("oynelovskie")) {
         await openMap("1-01");
         await screenshot(main, `map-popup-${width}`);
+        await escape(main);
+        await openMap("1-02");
+        await screenshot(main, `reserved-map-${width}`);
+        await activate(main, availabilityButton);
+        await until(main, "document.querySelector('#inquiry-form')");
+        await screenshot(main, `availability-form-${width}`);
         await escape(main);
         await activate(main, ".oinelovo-faq .oinelovo-question-trigger");
         await main.evaluate(
