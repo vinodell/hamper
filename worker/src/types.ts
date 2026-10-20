@@ -16,6 +16,7 @@ export interface PlotRow {
   area: string;
   status: PlotStatus;
   price: string;
+  full_payment_price: string | null;
   street: string | null;
   description: string | null;
   cadastral_number: string | null;

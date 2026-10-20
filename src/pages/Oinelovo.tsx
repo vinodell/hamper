@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -26,7 +26,7 @@ import { OinelovoFooter, OinelovoHeader } from "../components/OinelovoChrome";
 import { ProjectDialog } from "../components/ProjectDialog";
 import { PlotCarousel } from "../components/PlotCarousel";
 import { LoadingIndicator } from "../components/LoadingIndicator";
-import { FullPaymentBadge } from "../components/PlotDetailsContent";
+import { PlotPrice } from "../components/PlotPrice";
 import { PromotionBanner } from "../components/PromotionBanner";
 import { Contacts } from "../sections/Contacts";
 import { usePlots } from "../hooks/usePlots";
@@ -121,10 +121,10 @@ function AvailablePlots({
             № {plotNumbers.get(plot.id) ?? plot.id}
           </strong>
           <span>{formatPlotNumber(plot.area)} сот.</span>
-          <b className="tw:flex tw:flex-col tw:items-start tw:gap-1">
-            {formatPlotNumber(plot.price)} ₽
-            <FullPaymentBadge />
-          </b>
+          <PlotPrice
+            price={plot.price}
+            fullPaymentPrice={plot.fullPaymentPrice}
+          />
           <button
             className="oinelovo-button oinelovo-button--small"
             type="button"
@@ -139,15 +139,42 @@ function AvailablePlots({
   );
 }
 
+function Question({ title, answer }: { title: string; answer: string }) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="oinelovo-question" data-open={open}>
+      <button
+        className="oinelovo-question-trigger"
+        type="button"
+        id={`${id}-question`}
+        aria-expanded={open}
+        aria-controls={`${id}-answer`}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>{title}</span>
+        <Plus size="1rem" aria-hidden="true" />
+      </button>
+      <div
+        className="oinelovo-question-panel"
+        id={`${id}-answer`}
+        role="region"
+        aria-labelledby={`${id}-question`}
+        aria-hidden={!open}
+        inert={!open}
+      >
+        <div className="oinelovo-question-answer">
+          <p>{answer}</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Questions() {
-  return questions.map(({ title, answer }) => (
-    <details className="oinelovo-question" key={title}>
-      <summary>
-        {title}
-        <Plus size="0.875rem" aria-hidden="true" />
-      </summary>
-      <p>{answer}</p>
-    </details>
+  return questions.map((question) => (
+    <Question key={question.title} {...question} />
   ));
 }
 
@@ -241,14 +268,21 @@ export function Oinelovo() {
       Number(plot.area.replace(",", ".")),
     );
     const prices = availablePlots.map((plot) =>
-      Number(plot.price.replace(",", ".")),
+      Number((plot.fullPaymentPrice ?? plot.price).replace(",", ".")),
     );
+    const minimumPrice = prices.length ? Math.min(...prices) : null;
+    const minimumPricePlot =
+      minimumPrice === null
+        ? undefined
+        : availablePlots[prices.indexOf(minimumPrice)];
     return {
       count: projectPlots.length || mapZones.length,
       area: areas.length
         ? `${formatPlotNumber(String(Math.min(...areas)))}–${formatPlotNumber(String(Math.max(...areas)))}`
         : "",
-      price: prices.length ? formatPlotNumber(String(Math.min(...prices))) : "",
+      price:
+        minimumPrice === null ? "" : formatPlotNumber(String(minimumPrice)),
+      priceRequiresFullPayment: Boolean(minimumPricePlot?.fullPaymentPrice),
     };
   }, [availablePlots, projectPlots]);
   const galleryPhotos = useMemo(
@@ -353,7 +387,11 @@ export function Oinelovo() {
                           : "Стоимость участков"}
                       </strong>
                       <br />
-                      {stats.price ? "за участок" : "уточните у нас"}
+                      {stats.price
+                        ? stats.priceRequiresFullPayment
+                          ? "при 100% оплате"
+                          : "за участок"
+                        : "уточните у нас"}
                     </span>
                   </div>
                 </div>

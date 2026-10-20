@@ -5,6 +5,7 @@ export const toPlotUpdate = (plot: AdminPlot): PlotUpdate => ({
   area: normalizePlotNumber(plot.area),
   status: plot.status,
   price: normalizePlotNumber(plot.price),
+  fullPaymentPrice: normalizePlotNumber(plot.fullPaymentPrice ?? ""),
   street: plot.street ?? "",
   description: plot.description ?? "",
   cadastralNumber: plot.cadastralNumber?.trim() ?? "",
@@ -30,6 +31,10 @@ export function mergeAdminDrafts(
       area: edited.area !== before.area ? draft.area : plot.area,
       status: edited.status !== before.status ? draft.status : plot.status,
       price: edited.price !== before.price ? draft.price : plot.price,
+      fullPaymentPrice:
+        edited.fullPaymentPrice !== before.fullPaymentPrice
+          ? draft.fullPaymentPrice
+          : plot.fullPaymentPrice,
       street: edited.street !== before.street ? draft.street : plot.street,
       description:
         edited.description !== before.description

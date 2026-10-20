@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { MapTooltipProps } from "./Interactive.types";
-import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
+import { zoneStatusLabels } from "./zonePresentation";
+import { PlotPrice } from "../components/PlotPrice";
 
 import styles from "./MapTooltip.module.css";
 
@@ -81,7 +82,10 @@ export function MapTooltip({ id, zone, position }: MapTooltipProps) {
         <div className={styles.tooltipRow} aria-hidden="true">
           <span>Стоимость</span>
 
-          <strong>{formatZonePrice(zone.price)}</strong>
+          <PlotPrice
+            price={zone.price}
+            fullPaymentPrice={zone.fullPaymentPrice}
+          />
         </div>
       )}
 

@@ -3,7 +3,7 @@ import { ArrowUpRight, CircleDollarSign } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 import { PlotDetailsDialog } from "../components/PlotDetailsDialog";
-import { FullPaymentBadge } from "../components/PlotDetailsContent";
+import { PlotPrice } from "../components/PlotPrice";
 import { PromotionBanner } from "../components/PromotionBanner";
 import { plotFilters, type TableSectionProps, type PlotFilter } from "../lib";
 import { formatPlotNumber } from "../lib/plotNumbers";
@@ -213,10 +213,10 @@ export const Table = ({
                     </span>
                   </td>
                   <td className="price">
-                    <span className="plot-price-value">
-                      {formatPlotNumber(plot.price)}
-                    </span>
-                    <FullPaymentBadge />
+                    <PlotPrice
+                      price={plot.price}
+                      fullPaymentPrice={plot.fullPaymentPrice}
+                    />
                   </td>
                   <td>
                     <button

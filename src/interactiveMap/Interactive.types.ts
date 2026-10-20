@@ -20,6 +20,7 @@ export type MapZone = MapZoneLayout & {
   status: ZoneStatus;
   area?: number;
   price?: number;
+  fullPaymentPrice?: number;
   description?: string;
   cadastralNumber?: string | null;
   gpzuDone?: boolean;

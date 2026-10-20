@@ -1,4 +1,8 @@
-import { isValidPlotNumber, normalizePlotNumber } from "../lib/plotNumbers";
+import {
+  isValidFullPaymentPrice,
+  isValidPlotNumber,
+  normalizePlotNumber,
+} from "../lib/plotNumbers";
 import { LogOut, Plus, Save, ShieldCheck, X } from "lucide-react";
 import {
   useCallback,
@@ -34,6 +38,7 @@ const emptyPlot: PlotCreate = {
   area: "",
   status: "Свободен",
   price: "",
+  fullPaymentPrice: "",
   street: "",
   description: "",
   cadastralNumber: "",
@@ -46,6 +51,8 @@ const samePlot = (left: AdminPlot, right: AdminPlot) =>
   normalizePlotNumber(left.area) === normalizePlotNumber(right.area) &&
   left.status === right.status &&
   normalizePlotNumber(left.price) === normalizePlotNumber(right.price) &&
+  normalizePlotNumber(left.fullPaymentPrice ?? "") ===
+    normalizePlotNumber(right.fullPaymentPrice ?? "") &&
   (left.street ?? "") === (right.street ?? "") &&
   (left.description ?? "") === (right.description ?? "") &&
   (left.cadastralNumber ?? "") === (right.cadastralNumber ?? "") &&
@@ -156,7 +163,7 @@ export function Admin() {
   const updatePlot = (id: string, key: keyof PlotUpdate, value: string) => {
     if (busy) return;
     if (
-      (key === "area" || key === "price") &&
+      (key === "area" || key === "price" || key === "fullPaymentPrice") &&
       !/^\d*(?:[.,]\d{0,2})?$/.test(value)
     )
       return;
@@ -191,7 +198,7 @@ export function Admin() {
   const updateNewPlot = (key: keyof PlotCreate, value: string) => {
     if (busy) return;
     if (
-      (key === "area" || key === "price") &&
+      (key === "area" || key === "price" || key === "fullPaymentPrice") &&
       !/^\d*(?:[.,]\d{0,2})?$/.test(value)
     )
       return;
@@ -221,6 +228,12 @@ export function Admin() {
       );
       return;
     }
+    if (!isValidFullPaymentPrice(newPlot.price, newPlot.fullPaymentPrice)) {
+      setCreateError(
+        "Цена при 100% оплате должна быть больше нуля и ниже базовой цены, не более двух знаков после запятой. Оставьте поле пустым, чтобы отключить предложение.",
+      );
+      return;
+    }
     if (
       !isValidCadastralNumber(newPlot.cadastralNumber) ||
       !isValidMortgageUrl(newPlot.mortgageUrl)
@@ -240,6 +253,7 @@ export function Admin() {
         id,
         area: normalizePlotNumber(newPlot.area),
         price: normalizePlotNumber(newPlot.price),
+        fullPaymentPrice: normalizePlotNumber(newPlot.fullPaymentPrice),
         street: newPlot.street.trim(),
         description: newPlot.description.trim(),
         cadastralNumber: newPlot.cadastralNumber.trim(),
@@ -266,6 +280,16 @@ export function Admin() {
     if (invalid.length) {
       setError(
         `Проверьте участки ${invalid.map((plot) => plot.id).join(", ")}: площадь и цена должны быть больше нуля, не более двух знаков после запятой.`,
+      );
+      return;
+    }
+    const invalidFullPayment = changedPlots.filter(
+      (plot) =>
+        !isValidFullPaymentPrice(plot.price, plot.fullPaymentPrice ?? ""),
+    );
+    if (invalidFullPayment.length) {
+      setError(
+        `Проверьте участки ${invalidFullPayment.map((plot) => plot.id).join(", ")}: цена при 100% оплате должна быть больше нуля и ниже базовой цены, не более двух знаков после запятой. Пустое поле отключает предложение.`,
       );
       return;
     }
@@ -558,6 +582,24 @@ export function Admin() {
                         />
                       </label>
                       <label>
+                        При 100% оплате, ₽
+                        <input
+                          inputMode="decimal"
+                          value={newPlot.fullPaymentPrice}
+                          onChange={(event) =>
+                            updateNewPlot(
+                              "fullPaymentPrice",
+                              event.target.value,
+                            )
+                          }
+                          aria-label="Цена при 100% оплате нового участка"
+                          placeholder="Необязательно"
+                        />
+                        <small className="admin-price-hint">
+                          Ниже базовой. Пустое поле — без специальной цены.
+                        </small>
+                      </label>
+                      <label>
                         Статус
                         <select
                           value={newPlot.status}
@@ -646,7 +688,7 @@ export function Admin() {
                         <th>Участок</th>
                         <th>Площадь, сот.</th>
                         <th>Статус</th>
-                        <th>Цена, ₽</th>
+                        <th>Стоимость, ₽</th>
                         <th>Улица</th>
                         <th>Описание</th>
                         <th>Документы и ипотека</th>
@@ -690,16 +732,43 @@ export function Admin() {
                               ))}
                             </select>
                           </td>
-                          <td>
-                            <input
-                              disabled={busy}
-                              inputMode="decimal"
-                              value={plot.price}
-                              onChange={(event) =>
-                                updatePlot(plot.id, "price", event.target.value)
-                              }
-                              aria-label={`Цена ${plot.id}`}
-                            />
+                          <td className="admin-price-cell">
+                            <label>
+                              <span>Базовая цена</span>
+                              <input
+                                disabled={busy}
+                                inputMode="decimal"
+                                value={plot.price}
+                                onChange={(event) =>
+                                  updatePlot(
+                                    plot.id,
+                                    "price",
+                                    event.target.value,
+                                  )
+                                }
+                                aria-label={`Цена ${plot.id}`}
+                              />
+                            </label>
+                            <label className="admin-full-payment-input">
+                              <span>При 100% оплате</span>
+                              <input
+                                disabled={busy}
+                                inputMode="decimal"
+                                value={plot.fullPaymentPrice ?? ""}
+                                onChange={(event) =>
+                                  updatePlot(
+                                    plot.id,
+                                    "fullPaymentPrice",
+                                    event.target.value,
+                                  )
+                                }
+                                aria-label={`Цена при 100% оплате ${plot.id}`}
+                                placeholder="Не задана"
+                              />
+                            </label>
+                            <small className="admin-price-hint">
+                              Пусто — обычная цена
+                            </small>
                           </td>
                           <td>
                             <input

@@ -16,6 +16,21 @@ export function isValidPlotNumber(value: string): boolean {
   return Number.isFinite(number) && number > 0;
 }
 
+/** Empty clears the offer; a full-payment offer must improve the base price. */
+export function isValidFullPaymentPrice(
+  price: string,
+  fullPaymentPrice: string,
+): boolean {
+  if (!fullPaymentPrice.trim()) return true;
+  const base = normalizePlotNumber(price);
+  const offer = normalizePlotNumber(fullPaymentPrice);
+  return (
+    isValidPlotNumber(base) &&
+    isValidPlotNumber(offer) &&
+    Number(offer) < Number(base)
+  );
+}
+
 export function formatPlotNumber(value: string): string {
   // Public values have already been normalized and validated by the API.
   return plotNumberFormatter.format(Number(value.replace(",", ".")));

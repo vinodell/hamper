@@ -1,12 +1,10 @@
 import { useEffect, useId, useRef } from "react";
 import { ArrowUpRight, House } from "lucide-react";
 
-import {
-  FullPaymentBadge,
-  PlotDocuments,
-} from "../components/PlotDetailsContent";
+import { PlotDocuments } from "../components/PlotDetailsContent";
+import { PlotPrice } from "../components/PlotPrice";
 import type { ZoneModalProps } from "./Interactive.types";
-import { formatZonePrice, zoneStatusLabels } from "./zonePresentation";
+import { zoneStatusLabels } from "./zonePresentation";
 
 import styles from "./ZoneModal.module.css";
 
@@ -102,10 +100,11 @@ export function ZoneModal({ zone, onClose, onBook }: ZoneModalProps) {
             <div className={styles.modalDetail}>
               <span className={styles.modalDetailLabel}>Стоимость</span>
 
-              <strong className={styles.modalDetailValue}>
-                {formatZonePrice(zone.price)}
-              </strong>
-              <FullPaymentBadge />
+              <PlotPrice
+                className={styles.modalDetailValue}
+                price={zone.price}
+                fullPaymentPrice={zone.fullPaymentPrice}
+              />
             </div>
           )}
         </div>

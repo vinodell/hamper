@@ -132,6 +132,20 @@ test("identical polls keep the snapshot and rows stable while refreshing freshne
   unsubscribe();
 });
 
+test("confirmed full payment price changes and clearing refresh every public view", async () => {
+  const cache = await freshCache();
+  cache.replaceCachedPlots([plot()]);
+  const original = cache.getPlotsSnapshot().plots[0];
+  cache.mergeSavedPlots([plot({ fullPaymentPrice: "1300000" })]);
+  const offered = cache.getPlotsSnapshot().plots[0];
+  assert.notEqual(offered, original);
+  assert.equal(offered.fullPaymentPrice, "1300000");
+  cache.mergeSavedPlots([plot({ fullPaymentPrice: null })]);
+  const cleared = cache.getPlotsSnapshot().plots[0];
+  assert.notEqual(cleared, offered);
+  assert.equal(cleared.fullPaymentPrice, null);
+});
+
 test("a refresh failure preserves visible rows and a successful retry clears the error", async () => {
   const cache = await freshCache();
   cache.replaceCachedPlots([plot()]);
@@ -220,6 +234,21 @@ test("map uses exact API IDs, ignores other settlements and disables sold or mis
   assert.equal(byId.get("1-04").status, "unknown");
 });
 
+test("map receives a numeric full payment price only for plots with a configured offer", () => {
+  const resolved = zones.resolveMapZones([
+    plot({ fullPaymentPrice: "1300000,50" }),
+    plot({ id: "1-02", fullPaymentPrice: null }),
+    plot({ id: "1-03", fullPaymentPrice: "" }),
+    plot({ id: "1-04" }),
+  ]);
+  const byId = new Map(resolved.map((zone) => [zone.plotId, zone]));
+  assert.equal(byId.get("1-01").fullPaymentPrice, 1300000.5);
+  assert.equal(byId.get("1-01").price, 1500000);
+  for (const id of ["1-02", "1-03", "1-04"]) {
+    assert.equal(Object.hasOwn(byId.get(id), "fullPaymentPrice"), false);
+  }
+});
+
 test("table sorting preserves natural IDs and compares numeric prices and areas", () => {
   const items = [
     plot({ id: "2-10" }),
@@ -244,6 +273,31 @@ test("table sorting preserves natural IDs and compares numeric prices and areas"
       plot({ area: "7,56" }),
       plot({ area: "8,1" }),
       "area",
+    ) < 0,
+  );
+});
+
+test("price sorting follows the full payment amount shown to buyers with base-price fallback", () => {
+  const items = [
+    plot({
+      id: "expensive-base",
+      price: "2000000",
+      fullPaymentPrice: "900000,50",
+    }),
+    plot({ id: "legacy", price: "1000000" }),
+    plot({ id: "cleared", price: "950000", fullPaymentPrice: null }),
+  ];
+  assert.deepEqual(
+    items
+      .sort((left, right) => sorting.comparePlots(left, right, "price"))
+      .map(({ id }) => id),
+    ["expensive-base", "cleared", "legacy"],
+  );
+  assert.ok(
+    sorting.comparePlots(
+      plot({ id: "2-2", fullPaymentPrice: "1000000" }),
+      plot({ id: "2-10", price: "1000000" }),
+      "price",
     ) < 0,
   );
 });

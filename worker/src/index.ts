@@ -14,6 +14,7 @@ import {
   PLOT_DESCRIPTION_MAX_LENGTH,
   PLOT_CADASTRAL_NUMBER_MAX_LENGTH,
   PLOT_MORTGAGE_URL_MAX_LENGTH,
+  FULL_PAYMENT_PRICE_ERROR,
   BULK_PLOTS_MAX_LENGTH,
   REQUEST_BODY_MAX_BYTES,
   BULK_REQUEST_BODY_MAX_BYTES,
@@ -36,6 +37,7 @@ interface PlotUpdate {
   area: string;
   status: PlotStatus;
   price: string;
+  fullPaymentPrice?: string | null;
   street?: string | null;
   description?: string | null;
   cadastralNumber?: string | null;
@@ -263,6 +265,25 @@ function positiveDecimal(value: unknown) {
   return decimal;
 }
 
+function optionalFullPaymentPrice(value: unknown) {
+  if (value === undefined) return undefined;
+  if (value === null || (typeof value === "string" && !value.trim()))
+    return null;
+  return positiveDecimal(value);
+}
+
+function validateFullPaymentPrice(
+  price: string,
+  fullPaymentPrice: string | null | undefined,
+) {
+  if (
+    fullPaymentPrice !== undefined &&
+    fullPaymentPrice !== null &&
+    !(Number(fullPaymentPrice) < Number(price))
+  )
+    throw new RequestError(400, FULL_PAYMENT_PRICE_ERROR);
+}
+
 function optionalText(value: unknown, maxLength: number) {
   if (value === undefined || value === null) return null;
   if (typeof value !== "string" || value.length > maxLength)
@@ -314,10 +335,11 @@ function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
     !allowedStatuses.has(body.status as PlotStatus)
   )
     throw new RequestError(400, "Некорректный статус участка");
-  return {
+  const plot: PlotUpdate = {
     area: positiveDecimal(body.area),
     status: body.status as PlotStatus,
     price: positiveDecimal(body.price),
+    fullPaymentPrice: optionalFullPaymentPrice(body.fullPaymentPrice),
     street:
       body.street === undefined
         ? undefined
@@ -331,6 +353,8 @@ function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
     buildingPermitDone: optionalBoolean(body.buildingPermitDone),
     mortgageUrl: mortgageUrl(body.mortgageUrl),
   };
+  validateFullPaymentPrice(plot.price, plot.fullPaymentPrice);
+  return plot;
 }
 
 function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
@@ -341,6 +365,7 @@ function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
     plot.price,
   ];
   const optionalColumns = [
+    ["full_payment_price", plot.fullPaymentPrice],
     ["street", plot.street],
     ["description", plot.description],
     ["cadastral_number", plot.cadastralNumber],
@@ -373,6 +398,7 @@ function mapPublicPlot(row: Omit<PlotRow, "street" | "updated_at">) {
     area: row.area,
     status: row.status,
     price: row.price,
+    fullPaymentPrice: row.full_payment_price,
     description: row.description,
     cadastralNumber: row.cadastral_number,
     gpzuDone: row.gpzu_done === 1,
@@ -484,7 +510,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === "/api/plots" && request.method === "GET") {
     const result = await env.DB.prepare(
-      "SELECT id, settlement, area, status, price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
+      "SELECT id, settlement, area, status, price, full_payment_price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
     ).all<Omit<PlotRow, "street" | "updated_at">>();
     return json(result.results.map(mapPublicPlot), 200, request, env);
   }
@@ -578,7 +604,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       const id = validatePlotId(body.id);
       const plot = validatePlotUpdate(body);
       const row = await env.DB.prepare(
-        "INSERT INTO plots (id, settlement, area, status, price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING RETURNING *",
+        "INSERT INTO plots (id, settlement, area, status, price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url, full_payment_price) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO NOTHING RETURNING *",
       )
         .bind(
           id,
@@ -592,6 +618,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
           plot.gpzuDone ? 1 : 0,
           plot.buildingPermitDone ? 1 : 0,
           plot.mortgageUrl ?? null,
+          plot.fullPaymentPrice ?? null,
         )
         .first<PlotRow>();
       if (!row)
@@ -622,12 +649,19 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const uniqueIds = new Set(updates.map(({ id }) => id));
     if (uniqueIds.size !== updates.length)
       throw new RequestError(400, "Номера участков не должны повторяться");
-    const existing = await env.DB.prepare("SELECT id FROM plots").all<{
-      id: string;
-    }>();
-    const existingIds = new Set(existing.results.map(({ id }) => id));
-    if (updates.some(({ id }) => !existingIds.has(id)))
+    const existing = await env.DB.prepare(
+      "SELECT id, full_payment_price FROM plots",
+    ).all<Pick<PlotRow, "id" | "full_payment_price">>();
+    const existingById = new Map(existing.results.map((row) => [row.id, row]));
+    if (updates.some(({ id }) => !existingById.has(id)))
       return json({ error: "Участок не найден" }, 404, request, env);
+    for (const { id, plot } of updates)
+      validateFullPaymentPrice(
+        plot.price,
+        plot.fullPaymentPrice === undefined
+          ? existingById.get(id)?.full_payment_price
+          : plot.fullPaymentPrice,
+      );
     const results = await env.DB.batch<PlotRow>(
       updates.map(({ id, plot }) => updatePlotStatement(env, id, plot)),
     );
@@ -648,6 +682,16 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       throw new RequestError(400, "Некорректный номер участка");
     }
     const plot = validatePlotUpdate(await readBody(request));
+    if (plot.fullPaymentPrice === undefined) {
+      const existing = await env.DB.prepare(
+        "SELECT full_payment_price FROM plots WHERE id = ?",
+      )
+        .bind(id)
+        .first<Pick<PlotRow, "full_payment_price">>();
+      if (!existing)
+        return json({ error: "Участок не найден" }, 404, request, env);
+      validateFullPaymentPrice(plot.price, existing.full_payment_price);
+    }
     const result = await updatePlotStatement(env, id, plot).first<PlotRow>();
     if (!result) return json({ error: "Участок не найден" }, 404, request, env);
     return json(mapPlot(result), 200, request, env);
@@ -663,6 +707,13 @@ export default {
     } catch (error) {
       if (error instanceof RequestError)
         return json({ error: error.message }, error.status, request, env);
+      if (
+        error instanceof Error &&
+        error.message.includes(
+          "CHECK constraint failed: valid_full_payment_price",
+        )
+      )
+        return json({ error: FULL_PAYMENT_PRICE_ERROR }, 400, request, env);
       console.error(
         "API request failed",
         request.method,

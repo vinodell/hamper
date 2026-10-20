@@ -28,7 +28,7 @@ const worker = (
 ).default;
 const schema = await readFile(new URL("worker/schema.sql", root), "utf8");
 
-function d1Adapter(database) {
+function d1Adapter(database, { afterQuery } = {}) {
   return {
     prepare(sql) {
       const statement = database.prepare(sql);
@@ -39,10 +39,14 @@ function d1Adapter(database) {
           return this;
         },
         async all() {
-          return { success: true, results: statement.all(...values) };
+          const results = statement.all(...values);
+          if (afterQuery) await afterQuery();
+          return { success: true, results };
         },
         async first() {
-          return statement.get(...values) ?? null;
+          const result = statement.get(...values) ?? null;
+          if (afterQuery) await afterQuery();
+          return result;
         },
       };
     },
@@ -60,12 +64,12 @@ function d1Adapter(database) {
   };
 }
 
-function fixture(context, initialSchema = schema) {
+function fixture(context, initialSchema = schema, databaseOptions) {
   const database = new DatabaseSync(":memory:");
   database.exec(initialSchema);
   context.after(() => database.close());
   const env = {
-    DB: d1Adapter(database),
+    DB: d1Adapter(database, databaseOptions),
     ADMIN_LOGIN: "sales-admin",
     ADMIN_PASSWORD_HASH: "local-test-hash",
     PUBLIC_ORIGIN: "https://site.test",
@@ -116,6 +120,224 @@ const salesFields = {
   buildingPermitDone: false,
   mortgageUrl: "https://spb.domclick.ru/card/sale__lot__123456",
 };
+
+test("admin can set, publish and clear the optional full-payment price", async (context) => {
+  const { request } = fixture(context);
+  const created = await request("/api/admin/plots", {
+    method: "POST",
+    admin: true,
+    body: { ...plot, fullPaymentPrice: "1200000,50" },
+  });
+  assert.equal(created.status, 201);
+  assert.equal((await created.json()).fullPaymentPrice, "1200000.50");
+  const [visible] = await (await request("/api/plots")).json();
+  assert.equal(visible.price, plot.price);
+  assert.equal(visible.fullPaymentPrice, "1200000.50");
+  const updated = await request(`/api/admin/plots/${plot.id}`, {
+    method: "PUT",
+    admin: true,
+    body: { ...plot, fullPaymentPrice: "1100000" },
+  });
+  assert.equal(updated.status, 200);
+  assert.equal((await updated.json()).fullPaymentPrice, "1100000");
+  const cleared = await request(`/api/admin/plots/${plot.id}`, {
+    method: "PUT",
+    admin: true,
+    body: { ...plot, fullPaymentPrice: "   " },
+  });
+  assert.equal(cleared.status, 200);
+  assert.equal((await cleared.json()).fullPaymentPrice, null);
+  const [withoutOffer] = await (
+    await request("/api/admin/plots", { admin: true })
+  ).json();
+  assert.equal(withoutOffer.fullPaymentPrice, null);
+});
+
+test("full-payment prices must be positive decimals below the base price", async (context) => {
+  const { request } = fixture(context);
+  for (const fullPaymentPrice of [
+    "1500000",
+    "1500000.01",
+    "0",
+    "-1",
+    "1.001",
+    "NaN",
+    "Infinity",
+    1200000,
+    true,
+    {},
+    [],
+  ]) {
+    const rejected = await request("/api/admin/plots", {
+      method: "POST",
+      admin: true,
+      body: { ...plot, fullPaymentPrice },
+    });
+    assert.equal(rejected.status, 400, JSON.stringify(fullPaymentPrice));
+  }
+  assert.deepEqual(await (await request("/api/plots")).json(), []);
+});
+
+test("legacy plot saves preserve full-payment prices and validate a changed base price", async (context) => {
+  const { request } = fixture(context);
+  const created = await request("/api/admin/plots", {
+    method: "POST",
+    admin: true,
+    body: { ...plot, fullPaymentPrice: "1200000" },
+  });
+  assert.equal(created.status, 201);
+  const legacy = await request(`/api/admin/plots/${plot.id}`, {
+    method: "PUT",
+    admin: true,
+    body: { ...plot, price: "1600000" },
+  });
+  assert.equal(legacy.status, 200);
+  assert.equal((await legacy.json()).fullPaymentPrice, "1200000");
+  const invalidBase = await request(`/api/admin/plots/${plot.id}`, {
+    method: "PUT",
+    admin: true,
+    body: { ...plot, price: "1200000" },
+  });
+  assert.equal(invalidBase.status, 400);
+  const [unchanged] = await (await request("/api/plots")).json();
+  assert.equal(unchanged.price, "1600000");
+  assert.equal(unchanged.fullPaymentPrice, "1200000");
+  const cleared = await request(`/api/admin/plots/${plot.id}`, {
+    method: "PUT",
+    admin: true,
+    body: { ...plot, price: "1100000", fullPaymentPrice: null },
+  });
+  assert.equal(cleared.status, 200);
+  assert.equal((await cleared.json()).fullPaymentPrice, null);
+  const withoutOffer = await request("/api/admin/plots", {
+    method: "POST",
+    admin: true,
+    body: { ...plot, id: "without-offer" },
+  });
+  assert.equal(withoutOffer.status, 201);
+  assert.equal((await withoutOffer.json()).fullPaymentPrice, null);
+});
+
+test("bulk full-payment saves preserve omitted offers and reject invalid base changes atomically", async (context) => {
+  const { request } = fixture(context);
+  for (const id of [plot.id, "sales-2"])
+    assert.equal(
+      (
+        await request("/api/admin/plots", {
+          method: "POST",
+          admin: true,
+          body: { ...plot, id },
+        })
+      ).status,
+      201,
+    );
+  const offered = await request("/api/admin/plots", {
+    method: "PUT",
+    admin: true,
+    body: {
+      plots: [
+        { ...plot, fullPaymentPrice: "1100000" },
+        { ...plot, id: "sales-2", fullPaymentPrice: "1150000" },
+      ],
+    },
+  });
+  assert.equal(offered.status, 200);
+  const invalid = await request("/api/admin/plots", {
+    method: "PUT",
+    admin: true,
+    body: {
+      plots: [
+        { ...plot, price: "1300000" },
+        { ...plot, id: "sales-2", price: "1150000" },
+      ],
+    },
+  });
+  assert.equal(invalid.status, 400);
+  const unchanged = await (await request("/api/plots")).json();
+  assert.equal(unchanged[0].price, plot.price);
+  assert.equal(unchanged[1].price, plot.price);
+  assert.equal(unchanged[0].fullPaymentPrice, "1100000");
+  assert.equal(unchanged[1].fullPaymentPrice, "1150000");
+  const valid = await request("/api/admin/plots", {
+    method: "PUT",
+    admin: true,
+    body: {
+      plots: [
+        { ...plot, price: "1300000" },
+        { ...plot, id: "sales-2", price: "1100000", fullPaymentPrice: null },
+      ],
+    },
+  });
+  assert.equal(valid.status, 200);
+  const saved = await valid.json();
+  assert.equal(saved[0].fullPaymentPrice, "1100000");
+  assert.equal(saved[1].fullPaymentPrice, null);
+});
+
+test("concurrent legacy price changes and offer saves retain valid prices and atomic bulk results", async (context) => {
+  for (const bulk of [false, true]) {
+    let pauseNextDatabaseResponse = false;
+    let readStarted;
+    let releaseRead;
+    const pendingRead = new Promise((resolve) => {
+      readStarted = resolve;
+    });
+    const delayedResponse = new Promise((resolve) => {
+      releaseRead = resolve;
+    });
+    context.after(() => releaseRead());
+    const { request } = fixture(context, schema, {
+      afterQuery() {
+        if (!pauseNextDatabaseResponse) return;
+        pauseNextDatabaseResponse = false;
+        readStarted();
+        return delayedResponse;
+      },
+    });
+    await request("/api/admin/plots", {
+      method: "POST",
+      admin: true,
+      body: { ...plot, fullPaymentPrice: "1000000" },
+    });
+    await request("/api/admin/plots", {
+      method: "POST",
+      admin: true,
+      body: { ...plot, id: "sales-2" },
+    });
+    // Delay the database response, as a network round trip would, while another
+    // admin saves a new offer. Assertions stay at the public HTTP boundary.
+    pauseNextDatabaseResponse = true;
+    const legacyPending = request(
+      bulk ? "/api/admin/plots" : `/api/admin/plots/${plot.id}`,
+      {
+        method: "PUT",
+        admin: true,
+        body: bulk
+          ? {
+              plots: [
+                { ...plot, price: "1100000" },
+                { ...plot, id: "sales-2", price: "1300000" },
+              ],
+            }
+          : { ...plot, price: "1100000" },
+      },
+    );
+    await pendingRead;
+    const offer = await request(`/api/admin/plots/${plot.id}`, {
+      method: "PUT",
+      admin: true,
+      body: { ...plot, fullPaymentPrice: "1200000" },
+    });
+    releaseRead();
+    const legacy = await legacyPending;
+    assert.equal(legacy.status, 400);
+    assert.equal(offer.status, 200);
+    const visible = await (await request("/api/plots")).json();
+    assert.equal(visible[0].fullPaymentPrice, "1200000");
+    assert.equal(visible[0].price, plot.price);
+    if (bulk) assert.equal(visible[1].price, plot.price);
+  }
+});
 
 test("admin can create plot documents and a mortgage listing visible in the public catalogue", async (context) => {
   const { request } = fixture(context);
@@ -215,6 +437,10 @@ test("existing databases migrate without losing plots and receive safe sales def
     new URL("worker/migrations/0001_sales_features.sql", root),
     "utf8",
   );
+  const fullPayment = await readFile(
+    new URL("worker/migrations/0002_full_payment_price.sql", root),
+    "utf8",
+  );
   const legacySchema = `
     CREATE TABLE plots (
       id TEXT PRIMARY KEY, settlement TEXT NOT NULL, area TEXT NOT NULL,
@@ -225,7 +451,10 @@ test("existing databases migrate without losing plots and receive safe sales def
     INSERT INTO plots (id, settlement, area, status, price, street, description)
       VALUES ('sales-1', 'Посёлок', '10', 'Свободен', '1500000', 'Улица', 'Существующий участок');
   `;
-  const { request } = fixture(context, legacySchema + initial + migration);
+  const { request } = fixture(
+    context,
+    legacySchema + initial + migration + fullPayment,
+  );
   const catalogue = await request("/api/plots");
   assert.equal(catalogue.status, 200);
   const [existing] = await catalogue.json();
@@ -234,6 +463,7 @@ test("existing databases migrate without losing plots and receive safe sales def
   assert.equal(existing.gpzuDone, false);
   assert.equal(existing.buildingPermitDone, false);
   assert.equal(existing.mortgageUrl, null);
+  assert.equal(existing.fullPaymentPrice, null);
   const settings = await request("/api/settings");
   assert.equal(settings.status, 200);
   assert.deepEqual(await settings.json(), {
@@ -242,13 +472,12 @@ test("existing databases migrate without losing plots and receive safe sales def
   const updated = await request(`/api/admin/plots/${plot.id}`, {
     method: "PUT",
     admin: true,
-    body: { ...plot, ...salesFields },
+    body: { ...plot, ...salesFields, fullPaymentPrice: "1200000" },
   });
   assert.equal(updated.status, 200);
-  assert.equal(
-    (await updated.json()).cadastralNumber,
-    salesFields.cadastralNumber,
-  );
+  const saved = await updated.json();
+  assert.equal(saved.cadastralNumber, salesFields.cadastralNumber);
+  assert.equal(saved.fullPaymentPrice, "1200000");
 });
 
 test("the complete migration chain initializes an empty database for sales requests", async (context) => {
@@ -260,7 +489,11 @@ test("the complete migration chain initializes an empty database for sales reque
     new URL("worker/migrations/0001_sales_features.sql", root),
     "utf8",
   );
-  const { request } = fixture(context, initial + sales);
+  const fullPayment = await readFile(
+    new URL("worker/migrations/0002_full_payment_price.sql", root),
+    "utf8",
+  );
+  const { request } = fixture(context, initial + sales + fullPayment);
   const settings = await request("/api/settings");
   assert.equal(settings.status, 200);
   assert.deepEqual(await settings.json(), {
@@ -269,13 +502,14 @@ test("the complete migration chain initializes an empty database for sales reque
   const created = await request("/api/admin/plots", {
     method: "POST",
     admin: true,
-    body: { ...plot, ...salesFields },
+    body: { ...plot, ...salesFields, fullPaymentPrice: "1250000" },
   });
   assert.equal(created.status, 201);
   const catalogue = await request("/api/plots");
   assert.equal(catalogue.status, 200);
   const [visible] = await catalogue.json();
   assert.equal(visible.id, plot.id);
+  assert.equal(visible.fullPaymentPrice, "1250000");
   for (const [key, value] of Object.entries(salesFields))
     assert.equal(visible[key], value, key);
 });

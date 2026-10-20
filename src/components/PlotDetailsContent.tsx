@@ -9,14 +9,6 @@ type PlotDocumentsProps = Pick<
   "cadastralNumber" | "gpzuDone" | "buildingPermitDone"
 >;
 
-export function FullPaymentBadge() {
-  return (
-    <span className="full-payment-badge tw:inline-flex tw:items-center tw:gap-1">
-      При 100% оплате
-    </span>
-  );
-}
-
 export function PlotDocuments({
   cadastralNumber,
   gpzuDone,

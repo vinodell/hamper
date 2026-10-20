@@ -69,7 +69,13 @@ listing URL is saved; no listing URLs or document completion are invented.
 The table's **Подробнее** opens the plot details. **Забронировать участок**
 selects that plot in the application form. Applications are requests for contact;
 the administrator confirms a reservation by changing the plot status.
-The price badge **При 100% оплате** clarifies the payment condition.
+The optional **При 100% оплате** price is edited next to the base price in the
+admin table and when adding a plot. It must be positive, have up to two decimal
+places, and be lower than the base price. When set, public tables, lists and map
+details show the crossed-out base price, the full-payment price and its badge.
+Leaving the field empty removes both the badge and the special price. Sorting
+and the project's minimum price use the displayed amount; promotion percentages
+do not calculate plot prices. See [implementation details](docs/full-payment-and-motion.md).
 
 The personal-data checkbox starts unchecked, resets after a successful send,
 and is required to enable submission. Both the client and the Worker reject a

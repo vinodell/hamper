@@ -2,7 +2,8 @@ import { ArrowUpRight } from "lucide-react";
 
 import { formatPlotNumber, type Plot } from "../lib";
 import { ProjectDialog } from "./ProjectDialog";
-import { FullPaymentBadge, PlotDocuments } from "./PlotDetailsContent";
+import { PlotDocuments } from "./PlotDetailsContent";
+import { PlotPrice } from "./PlotPrice";
 
 import "./PlotDetailsDialog.css";
 
@@ -39,8 +40,10 @@ export function PlotDetailsDialog({
         <div>
           <dt>Стоимость</dt>
           <dd>
-            <span>{formatPlotNumber(plot.price)} ₽</span>
-            <FullPaymentBadge />
+            <PlotPrice
+              price={plot.price}
+              fullPaymentPrice={plot.fullPaymentPrice}
+            />
           </dd>
         </div>
       </dl>

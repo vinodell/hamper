@@ -15,6 +15,7 @@ const compile = async (name) =>
   ).code;
 const authUrl = asModule(await compile("adminAuth"));
 const numbersUrl = asModule(await compile("plotNumbers"));
+const numbers = await import(numbersUrl);
 const metadataUrl = asModule(await compile("plotMetadata"));
 const { mergeAdminDrafts, toPlotUpdate } = await import(
   asModule(
@@ -282,6 +283,27 @@ test("draft restoration ignores formatting changes and preserves explicit local 
   );
 });
 
+test("re-entry keeps local full payment price edits and clears while adopting untouched remote changes", () => {
+  const saved = { ...fixture, fullPaymentPrice: "1000000.50" };
+  const remote = { ...saved, price: "1500000", fullPaymentPrice: "1100000" };
+  for (const fullPaymentPrice of ["900000", "", "0", "1,"]) {
+    const [restored] = mergeAdminDrafts(
+      [remote],
+      [{ ...saved, fullPaymentPrice }],
+      new Map([[saved.id, saved]]),
+    );
+    assert.equal(restored.fullPaymentPrice, fullPaymentPrice);
+    assert.equal(restored.price, "1500000");
+  }
+  const [formatted] = mergeAdminDrafts(
+    [remote],
+    [{ ...saved, fullPaymentPrice: "1 000 000,50 ₽", street: "Новая улица" }],
+    new Map([[saved.id, saved]]),
+  );
+  assert.equal(formatted.fullPaymentPrice, "1100000");
+  assert.equal(formatted.street, "Новая улица");
+});
+
 test("draft restoration merges edited cadastral and permit fields without reverting remote metadata", () => {
   const saved = {
     ...fixture,
@@ -314,6 +336,7 @@ test("draft restoration merges edited cadastral and permit fields without revert
     area: "8.12",
     status: "Свободен",
     price: "1200000",
+    fullPaymentPrice: "",
     street: "",
     description: "",
     cadastralNumber: "",
@@ -405,10 +428,11 @@ test("protected mutations use cookie authentication and return validated data", 
       options.method === "POST" ? 201 : 200,
     );
   });
-  const { api } = await loadApi();
+  const { api, cache } = await loadApi();
   const update = {
     area: "12",
     price: "1500000",
+    fullPaymentPrice: "1400000,50",
     status: "Забронирован",
     street: "Улица",
     description: "Описание",
@@ -425,6 +449,23 @@ test("protected mutations use cookie authentication and return validated data", 
   assert.equal(
     (await api.updatePlots([{ id: fixture.id, ...update }]))[0].status,
     "Забронирован",
+  );
+  assert.equal(
+    cache.cached.find(({ id }) => id === fixture.id).fullPaymentPrice,
+    "1400000,50",
+  );
+  assert.equal(
+    JSON.parse(calls[2][1].body).plots[0].fullPaymentPrice,
+    "1400000,50",
+  );
+  const cleared = await api.updatePlot(fixture.id, {
+    ...update,
+    fullPaymentPrice: "",
+  });
+  assert.equal(cleared.fullPaymentPrice, null);
+  assert.equal(
+    cache.cached.find(({ id }) => id === fixture.id).fullPaymentPrice,
+    null,
   );
 });
 
@@ -518,6 +559,53 @@ test("legacy plots normalize missing sales metadata and validated metadata survi
   assert.equal(result.mortgageUrl, "https://spb.domclick.ru/card/123");
   assert.equal(cache.cached[0].gpzuDone, true);
   assert.equal(cache.cached[0].buildingPermitDone, false);
+});
+
+test("plot reads normalize optional full payment prices without changing legacy base prices", async (context) => {
+  let body = [fixture];
+  mockBrowser(context, async () => response(body));
+  const { api, cache } = await loadApi();
+  assert.equal((await api.getPlots())[0].fullPaymentPrice, null);
+  for (const value of [null, "", "  "]) {
+    body = [{ ...fixture, fullPaymentPrice: value }];
+    assert.equal((await api.getPlots())[0].fullPaymentPrice, null);
+  }
+  body = [{ ...fixture, fullPaymentPrice: "1 000 000,50 ₽" }];
+  const [publicPlot] = await api.getPlots();
+  assert.equal(publicPlot.fullPaymentPrice, "1000000,50");
+  assert.equal(publicPlot.price, "1200000");
+  assert.equal((await api.getAdminPlots())[0].fullPaymentPrice, "1000000,50");
+  assert.equal(cache.cached[0].fullPaymentPrice, "1000000,50");
+});
+
+test("malformed full payment prices are rejected while legacy price relationships remain readable", async (context) => {
+  let fullPaymentPrice;
+  mockBrowser(context, async () =>
+    response([{ ...fixture, fullPaymentPrice }]),
+  );
+  const { api, cache } = await loadApi();
+  for (const invalid of [0, false, {}, "0", "-1", "1.001", "NaN", "₽"]) {
+    fullPaymentPrice = invalid;
+    await assert.rejects(api.getPlots(), /некорректные данные/);
+    assert.deepEqual(cache.cached, []);
+  }
+  for (const legacy of ["1200000", "1300000"]) {
+    fullPaymentPrice = legacy;
+    assert.equal((await api.getPlots())[0].fullPaymentPrice, legacy);
+  }
+});
+
+test("full payment prices can be cleared and otherwise must be positive and below the base price", () => {
+  for (const cleared of ["", "  "]) {
+    assert.equal(numbers.isValidFullPaymentPrice("1200000", cleared), true);
+  }
+  for (const price of ["1000000", "1 000 000,50 ₽", "0.01"]) {
+    assert.equal(numbers.isValidFullPaymentPrice("1 200 000 ₽", price), true);
+  }
+  for (const price of ["0", "-1", "1.001", "₽", "1200000", "1300000"]) {
+    assert.equal(numbers.isValidFullPaymentPrice("1200000", price), false);
+  }
+  assert.equal(numbers.isValidFullPaymentPrice("NaN", "1000000"), false);
 });
 
 test("public plot reads enforce the mortgage URL limit after percent encoding", async (context) => {

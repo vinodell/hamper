@@ -107,11 +107,8 @@
   font-weight: 700;
 }
 
-.plot-price-value {
-  display: block;
-  margin-bottom: 0.375rem;
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
+.plots-table-wrap .price .plot-price {
+  font-size: 1.0625rem;
 }
 
 .price-note {

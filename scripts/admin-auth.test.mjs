@@ -68,6 +68,7 @@ function fixture() {
         gpzu_done: 0,
         building_permit_done: 0,
         mortgage_url: null,
+        full_payment_price: null,
         updated_at: "2026-01-01 00:00:00",
       },
     ],
@@ -82,17 +83,28 @@ function fixture() {
           return this;
         },
         async all() {
-          if (sql === "SELECT id FROM plots")
-            return { results: [...rows.keys()].map((id) => ({ id })) };
+          if (sql === "SELECT id, full_payment_price FROM plots")
+            return {
+              results: [...rows.values()].map((row) => ({
+                id: row.id,
+                full_payment_price: row.full_payment_price ?? null,
+              })),
+            };
           assert.ok(
             [
               "SELECT * FROM plots ORDER BY settlement, id",
-              "SELECT id, settlement, area, status, price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
+              "SELECT id, settlement, area, status, price, full_payment_price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
             ].includes(sql),
           );
           return { results: [...rows.values()] };
         },
         async first() {
+          if (sql === "SELECT full_payment_price FROM plots WHERE id = ?") {
+            const row = rows.get(values[0]);
+            return row
+              ? { full_payment_price: row.full_payment_price ?? null }
+              : null;
+          }
           if (sql.startsWith("INSERT INTO plots")) {
             const columns = sql
               .match(/^INSERT INTO plots \(([^)]+)\)/)[1]

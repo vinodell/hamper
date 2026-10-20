@@ -4,6 +4,12 @@ CREATE TABLE IF NOT EXISTS plots (
   area TEXT NOT NULL,
   status TEXT NOT NULL CHECK (status IN ('Свободен', 'Забронирован', 'Продан')),
   price TEXT NOT NULL,
+  full_payment_price TEXT CONSTRAINT valid_full_payment_price CHECK (
+    full_payment_price IS NULL OR (
+      CAST(full_payment_price AS REAL) > 0 AND
+      CAST(full_payment_price AS REAL) < CAST(price AS REAL)
+    )
+  ),
   street TEXT,
   description TEXT,
   cadastral_number TEXT,

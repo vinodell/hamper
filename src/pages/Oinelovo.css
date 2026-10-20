@@ -2,7 +2,8 @@
   --oinelovo-line: color-mix(in srgb, var(--line) 16%, transparent);
   --zone-available-fill: color-mix(in srgb, var(--pine) 16%, transparent);
   --zone-reserved-fill: color-mix(in srgb, var(--gold) 55%, transparent);
-  --zone-sold-fill: color-mix(in srgb, var(--ink) 50%, transparent);
+  --zone-sold-fill: #c9303e;
+  --oinelovo-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -67,15 +68,14 @@
   text-align: center;
   transition:
     background-color 160ms ease,
-    border-color 160ms ease;
-}
-
-.oinelovo-button:hover {
-  background: color-mix(in srgb, var(--gold) 85%, white);
+    border-color 160ms ease,
+    box-shadow 180ms ease,
+    transform 180ms var(--oinelovo-ease);
 }
 
 .oinelovo-button:active {
   background: var(--gold-dark);
+  transform: scale(0.98);
 }
 
 .oinelovo-button--outline {
@@ -84,18 +84,10 @@
   background: transparent;
 }
 
-.oinelovo-button--outline:hover {
-  background: var(--bg);
-}
-
 .oinelovo-button--light {
   border-color: rgb(255 255 255 / 0.7);
   background: color-mix(in srgb, var(--ink) 12%, transparent);
   color: white;
-}
-
-.oinelovo-button--light:hover {
-  background: rgb(255 255 255 / 0.12);
 }
 
 .oinelovo-button--small {
@@ -113,11 +105,16 @@
   color: var(--pine);
   font-size: 0.75rem;
   text-align: left;
+  transition: color 160ms ease;
 }
 
-.oinelovo-text-button:hover {
+.oinelovo-text-button:focus-visible {
   text-decoration: underline;
   text-underline-offset: 0.25em;
+}
+
+.oinelovo-text-button svg {
+  transition: transform 180ms var(--oinelovo-ease);
 }
 
 .oinelovo-hero {
@@ -244,10 +241,6 @@
   background: var(--gold);
 }
 
-.oinelovo-hero-actions .oinelovo-button:first-child:hover {
-  background: color-mix(in srgb, var(--gold) 85%, white);
-}
-
 .oinelovo-hero-gallery {
   position: absolute;
   right: 0;
@@ -270,11 +263,9 @@
   height: 2.75rem;
   border: 0.0625rem solid rgb(255 255 255 / 0.8);
   border-radius: 50%;
-  transition: background-color 160ms ease;
-}
-
-.oinelovo-hero-gallery:hover > span {
-  background: rgb(255 255 255 / 0.15);
+  transition:
+    background-color 160ms ease,
+    transform 180ms var(--oinelovo-ease);
 }
 
 .oinelovo-plan {
@@ -334,7 +325,7 @@
   background: var(--gold);
 }
 .oinelovo-status--sold {
-  background: var(--ink);
+  background: #c9303e;
 }
 
 .oinelovo-plan-copy .oinelovo-button {
@@ -394,16 +385,22 @@
   align-items: center;
   gap: 0.5rem;
   min-height: 2.875rem;
+  border-radius: 0.375rem;
   font-size: 0.75rem;
+  transition: background-color 180ms ease;
 }
 
-.oinelovo-plot-list li > span {
+.oinelovo-plot-list li:focus-within {
+  background: color-mix(in srgb, var(--pine) 5%, transparent);
+}
+
+.oinelovo-plot-list li > span:not(.plot-price) {
   color: var(--muted);
 }
 
-.oinelovo-plot-list b {
-  font-weight: 600;
-  white-space: nowrap;
+.oinelovo-plot-list .plot-price {
+  min-width: 0;
+  color: var(--ink);
 }
 
 .oinelovo-available-total {
@@ -534,12 +531,16 @@
   background: var(--paper);
   color: var(--pine);
   box-shadow: 0 0.25rem 0.75rem color-mix(in srgb, var(--ink) 12%, transparent);
+  transition:
+    background-color 160ms ease,
+    box-shadow 180ms ease;
 }
 
-.oinelovo-photo-arrows button:hover,
-.oinelovo-thumbnails > .oinelovo-thumbnail-prev:hover,
-.oinelovo-thumbnails > .oinelovo-thumbnail-next:hover {
+.oinelovo-photo-arrows button:active,
+.oinelovo-thumbnails > .oinelovo-thumbnail-prev:active,
+.oinelovo-thumbnails > .oinelovo-thumbnail-next:active {
   background: var(--bg);
+  box-shadow: 0 0.125rem 0.375rem color-mix(in srgb, var(--ink) 12%, transparent);
 }
 
 .oinelovo-amenities-grid {
@@ -570,11 +571,9 @@
   height: auto;
   aspect-ratio: 1.1;
   object-fit: cover;
-  transition: opacity 160ms ease;
-}
-
-.oinelovo-thumbnails > button:hover img {
-  opacity: 0.84;
+  transition:
+    opacity 180ms ease,
+    transform 240ms var(--oinelovo-ease);
 }
 
 .oinelovo-thumbnails > .oinelovo-thumbnail-prev,
@@ -762,7 +761,7 @@
   font-weight: 600;
 }
 
-.oinelovo-region-map:hover .oinelovo-map-route {
+.oinelovo-region-map:focus-visible .oinelovo-map-route {
   background: var(--bg);
 }
 
@@ -810,38 +809,71 @@
 }
 
 .oinelovo-question {
-  margin-bottom: 0.1875rem;
-  border-radius: 0.25rem;
+  margin-bottom: 0.375rem;
+  border: 0.0625rem solid transparent;
+  border-radius: 0.375rem;
   background: rgb(255 255 255 / 0.65);
+  transition:
+    background-color 180ms ease,
+    border-color 180ms ease;
 }
 
-.oinelovo-question summary {
+.oinelovo-question[data-open="true"],
+.oinelovo-question:focus-within {
+  border-color: color-mix(in srgb, var(--pine) 15%, transparent);
+  background: color-mix(in srgb, white 82%, var(--paper));
+}
+
+.oinelovo-question-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.5rem 0.625rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--ink);
   cursor: pointer;
-  font-size: 0.6875rem;
-  line-height: 1.3;
-  list-style: none;
+  font: inherit;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  text-align: left;
 }
 
-.oinelovo-question summary::-webkit-details-marker {
-  display: none;
-}
-
-.oinelovo-question summary svg {
+.oinelovo-question-trigger svg {
+  flex: none;
   color: var(--pine);
-  transition: transform 160ms ease;
+  transition: transform 240ms var(--oinelovo-ease);
 }
 
-.oinelovo-question[open] summary svg {
+.oinelovo-question[data-open="true"] .oinelovo-question-trigger svg {
   transform: rotate(45deg);
 }
 
+.oinelovo-question-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 240ms var(--oinelovo-ease),
+    opacity 180ms ease;
+}
+
+.oinelovo-question[data-open="true"] .oinelovo-question-panel {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+
+.oinelovo-question-answer {
+  min-height: 0;
+  overflow: hidden;
+}
+
 .oinelovo-question p {
-  padding: 0 0.75rem 0.75rem;
+  margin: 0;
+  padding: 0.125rem 0.75rem 0.875rem;
   color: var(--muted);
   font-size: 0.8125rem;
   line-height: 1.6;
@@ -1004,7 +1036,7 @@
   margin-bottom: 0.5rem;
 }
 
-.oinelovo-page .project-dialog .oinelovo-question summary {
+.oinelovo-page .project-dialog .oinelovo-question-trigger {
   padding: 1rem;
   font-size: 0.9375rem;
 }
@@ -1455,7 +1487,7 @@
   .oinelovo-faq h3 {
     font-size: 1.375rem;
   }
-  .oinelovo-question summary {
+  .oinelovo-question-trigger {
     min-height: 2.75rem;
     padding: 0.75rem;
     font-size: 0.8125rem;
@@ -1499,10 +1531,79 @@
   }
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .oinelovo-button:hover {
+    background: color-mix(in srgb, var(--gold) 85%, white);
+    box-shadow: 0 0.25rem 0.75rem color-mix(in srgb, var(--ink) 9%, transparent);
+    transform: translateY(-0.125rem);
+  }
+
+  .oinelovo-button--outline:hover {
+    background: var(--bg);
+  }
+
+  .oinelovo-button--light:hover {
+    background: rgb(255 255 255 / 0.12);
+  }
+
+  .oinelovo-button:hover:active {
+    transform: scale(0.98);
+  }
+
+  .oinelovo-text-button:hover {
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .oinelovo-text-button:hover svg {
+    transform: translateX(0.1875rem);
+  }
+
+  .oinelovo-hero-gallery:hover > span {
+    background: rgb(255 255 255 / 0.15);
+    transform: scale(1.06);
+  }
+
+  .oinelovo-plot-list li:hover {
+    background: color-mix(in srgb, var(--pine) 5%, transparent);
+  }
+
+  .oinelovo-photo-arrows button:hover,
+  .oinelovo-thumbnails > .oinelovo-thumbnail-prev:hover,
+  .oinelovo-thumbnails > .oinelovo-thumbnail-next:hover {
+    background: var(--bg);
+    box-shadow: 0 0.375rem 1rem color-mix(in srgb, var(--ink) 16%, transparent);
+  }
+
+  .oinelovo-thumbnails > button:hover img {
+    opacity: 0.88;
+    transform: scale(1.045);
+  }
+
+  .oinelovo-region-map:hover .oinelovo-map-route {
+    background: var(--bg);
+  }
+
+  .oinelovo-question:hover {
+    border-color: color-mix(in srgb, var(--pine) 12%, transparent);
+    background: color-mix(in srgb, white 82%, var(--paper));
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  /* The user's motion preference takes priority over hover/focus specificity. */
   .oinelovo-page *,
   .oinelovo-page *::before,
   .oinelovo-page *::after {
-    transition: none;
+    transition: none !important;
+  }
+
+  .oinelovo-page .oinelovo-button,
+  .oinelovo-page .oinelovo-button:hover:active,
+  .oinelovo-page .oinelovo-hero-gallery > span,
+  .oinelovo-page .oinelovo-text-button svg,
+  .oinelovo-page .oinelovo-thumbnails img,
+  .oinelovo-page .oinelovo-thumbnails > button:hover img {
+    transform: none;
   }
 }

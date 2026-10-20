@@ -91,7 +91,6 @@
 .zone[data-status="available"] {
   fill: var(--zone-available-fill, rgb(146 183 117 / 0.12));
 }
-.zone[data-selectable="true"]:hover,
 .zone[data-selectable="true"][data-hovered="true"],
 .zone[data-selectable="true"][data-selected="true"] {
   fill: var(
@@ -118,7 +117,7 @@
 }
 
 .zone[data-status="sold"] {
-  fill: var(--zone-sold-fill, rgb(220 38 38 / 0.6));
+  fill: var(--zone-sold-fill, #c9303e);
 }
 
 .zone[data-status="unknown"] {
@@ -150,7 +149,6 @@
   transition: fill 180ms ease;
 }
 
-.zone:hover + .marker circle,
 .zone[data-hovered="true"] + .marker circle,
 .zone[data-selected="true"] + .marker circle,
 .zone:focus-visible + .marker circle {
@@ -158,11 +156,30 @@
   stroke: #faf5e9;
 }
 
-.zone:hover + .marker text,
 .zone[data-hovered="true"] + .marker text,
 .zone[data-selected="true"] + .marker text,
 .zone:focus-visible + .marker text {
   fill: #faf5e9;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .zone[data-selectable="true"]:hover {
+    fill: var(
+      --zone-hover-fill,
+      var(--zone-available-fill, rgb(249 231 177 / 0.22))
+    );
+    stroke: #fff4cf;
+    stroke-width: 2;
+  }
+
+  .zone[data-selectable="true"]:hover + .marker circle {
+    fill: #0f261f;
+    stroke: #faf5e9;
+  }
+
+  .zone[data-selectable="true"]:hover + .marker text {
+    fill: #faf5e9;
+  }
 }
 
 @media (max-width: 40rem) {

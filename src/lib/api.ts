@@ -143,6 +143,7 @@ export interface PlotUpdate {
   area: string;
   status: PlotStatus;
   price: string;
+  fullPaymentPrice: string;
   street: string;
   description: string;
   cadastralNumber: string;
@@ -179,6 +180,11 @@ function parsePublicPlot(value: unknown): Plot {
     typeof value.settlement !== "string" ||
     typeof value.area !== "string" ||
     typeof value.price !== "string" ||
+    !(
+      value.fullPaymentPrice === undefined ||
+      value.fullPaymentPrice === null ||
+      typeof value.fullPaymentPrice === "string"
+    ) ||
     !isPlotStatus(value.status) ||
     !(
       value.cadastralNumber === undefined ||
@@ -206,7 +212,17 @@ function parsePublicPlot(value: unknown): Plot {
     throw invalidResponse();
   const area = normalizePlotNumber(value.area);
   const price = normalizePlotNumber(value.price);
-  if (!isValidPlotNumber(area) || !isValidPlotNumber(price))
+  const fullPaymentPrice =
+    typeof value.fullPaymentPrice === "string"
+      ? normalizePlotNumber(value.fullPaymentPrice)
+      : "";
+  if (
+    !isValidPlotNumber(area) ||
+    !isValidPlotNumber(price) ||
+    (typeof value.fullPaymentPrice === "string" &&
+      value.fullPaymentPrice.trim() !== "" &&
+      !isValidPlotNumber(fullPaymentPrice))
+  )
     throw invalidResponse();
   return {
     id: value.id,
@@ -214,6 +230,7 @@ function parsePublicPlot(value: unknown): Plot {
     area: area.replace(".", ","),
     status: value.status,
     price: price.replace(".", ","),
+    fullPaymentPrice: fullPaymentPrice.replace(".", ",") || null,
     description: value.description,
     cadastralNumber: value.cadastralNumber?.trim() || null,
     gpzuDone: value.gpzuDone ?? false,

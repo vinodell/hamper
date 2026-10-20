@@ -1,4 +1,6 @@
 .tooltip {
+  --plot-details-muted: color-mix(in srgb, var(--paper) 70%, transparent);
+  --plot-details-badge-ink: #f4d3a4;
   position: fixed;
 
   z-index: 1000;
@@ -63,6 +65,11 @@
   font-weight: 400;
 
   text-align: right;
+}
+
+.tooltipRow :global(.plot-price) {
+  align-items: flex-end;
+  color: var(--paper);
 }
 
 .tooltipHint {

@@ -58,6 +58,7 @@ export interface Plot {
   area: string;
   status: PlotStatus;
   price: string;
+  fullPaymentPrice?: string | null;
   description?: string | null;
   cadastralNumber?: string | null;
   gpzuDone?: boolean;

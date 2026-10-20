@@ -61,6 +61,7 @@ for (const [id, settlement, status, mortgage] of [
     "https://domclick.ru/card/other-test",
   ],
   ["1-04", "Ойнеловские дали", "Свободен", null],
+  ["1-05", "Ойнеловские дали", "Продан", null],
   ["2-01", "Другие участки", "Свободен", null],
   ["2-02", "Другие участки", "Забронирован", null],
 ])
@@ -416,6 +417,30 @@ try {
       windowsVirtualKeyCode: 27,
     });
   }
+  async function pressKey(client, key, code, virtualKeyCode) {
+    for (const type of ["keyDown", "keyUp"])
+      await client.command("Input.dispatchKeyEvent", {
+        type,
+        key,
+        code,
+        windowsVirtualKeyCode: virtualKeyCode,
+        ...(type === "keyDown" && (key === "Enter" || key === " ")
+          ? { text: key === "Enter" ? "\r" : " " }
+          : {}),
+      });
+  }
+  async function assertPrice(client, selector, base, fullPayment = null) {
+    const price = await client.evaluate(
+      `(()=>{const price=document.querySelector(${JSON.stringify(selector)});if(!price)throw Error('Missing price '+${JSON.stringify(selector)});const number=selector=>price.querySelector(selector)?.textContent.replace(/[^0-9]/g,'')??null;return{value:number('.plot-price__value'),original:number('s'),badge:Boolean(price.querySelector('.full-payment-badge'))};})()`,
+    );
+    assert.deepEqual(price, {
+      value: fullPayment ?? base,
+      original: fullPayment ? base : null,
+      badge: Boolean(fullPayment),
+    });
+  }
+  const tablePrice = (id) =>
+    `tr:has([aria-label="Подробнее об участке ${id}"]) .plot-price`;
   async function screenshot(client, name) {
     const result = await client.command("Page.captureScreenshot", {
       format: "png",
@@ -468,6 +493,31 @@ try {
         ),
         false,
       );
+    },
+  );
+  await check(
+    "Plots without a full-payment price show one unlabelled price in lists and dialogs",
+    async () => {
+      await navigate(
+        main,
+        "/projects/drugie-uchastki/",
+        "document.querySelector('.plot-details-button')",
+      );
+      await assertPrice(main, tablePrice("2-02"), "1500000");
+      await activate(main, '[aria-label="Подробнее об участке 2-02"]');
+      await until(main, "document.querySelector('dialog[open]')");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000");
+      await escape(main);
+      await navigate(
+        main,
+        "/projects/oynelovskie-dali/",
+        "document.querySelector('[data-plot-id=\"1-04\"]')",
+      );
+      await assertPrice(main, ".oinelovo-plot-list .plot-price", "1500000");
+      await openMap("1-04");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000");
+      await escape(main);
+      await navigate(main, "/", "document.querySelector('.promotion-ribbon')");
     },
   );
   const created = await main.command("Target.createTarget", {
@@ -556,6 +606,7 @@ try {
     async () => {
       await fill(admin, "[name=discountPercent]", "28");
       await fill(admin, '[aria-label="Цена 2-01"]', "1700000");
+      await fill(admin, '[aria-label="Цена при 100% оплате 2-01"]', "1100000");
       signingVersion += 1;
       await activate(admin, ".admin-save-all");
       await reenterAdmin();
@@ -571,14 +622,26 @@ try {
         ),
         "1700000",
       );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelector('[aria-label=\"Цена при 100% оплате 2-01\"]').value",
+        ),
+        "1100000",
+      );
       await fill(admin, "[name=discountPercent]", "25");
       await fill(admin, '[aria-label="Цена 2-01"]', "1500000");
+      await fill(admin, '[aria-label="Цена при 100% оплате 2-01"]', "");
     },
   );
   await check(
     "Admin saves cadastral data, document checkboxes and a per-plot mortgage URL",
     async () => {
       for (const id of ["1-01", "2-01"]) {
+        await fill(
+          admin,
+          `[aria-label="Цена при 100% оплате ${id}"]`,
+          id === "1-01" ? "1250000" : "1200000",
+        );
         await admin.evaluate(
           `document.querySelector('[aria-label="Цена ${id}"]').closest('tr').querySelector('details').open=true`,
         );
@@ -602,6 +665,14 @@ try {
       assert.equal(saved.body.plots.length, 2);
       assert.equal(saved.body.plots[0].gpzuDone, true);
       assert.equal(saved.body.plots[0].buildingPermitDone, false);
+      assert.equal(
+        saved.body.plots.find((plot) => plot.id === "1-01").fullPaymentPrice,
+        "1250000",
+      );
+      assert.equal(
+        saved.body.plots.find((plot) => plot.id === "2-01").fullPaymentPrice,
+        "1200000",
+      );
     },
   );
   await check(
@@ -618,6 +689,11 @@ try {
         admin,
         '#admin-create-plot input[placeholder="1800000"]',
         "1900000",
+      );
+      await fill(
+        admin,
+        '[aria-label="Цена при 100% оплате нового участка"]',
+        "1650000",
       );
       await activate(
         admin,
@@ -640,6 +716,13 @@ try {
       assert.equal(createdPlot.body.gpzuDone, false);
       assert.equal(createdPlot.body.buildingPermitDone, true);
       assert.equal(createdPlot.body.cadastralNumber, "");
+      assert.equal(createdPlot.body.fullPaymentPrice, "1650000");
+      assert.equal(
+        database
+          .prepare("SELECT full_payment_price FROM plots WHERE id=?")
+          .get("2-03").full_payment_price,
+        "1650000",
+      );
     },
   );
   await navigate(
@@ -652,6 +735,8 @@ try {
     async () => {
       await activate(main, '[aria-label="Подробнее об участке 2-03"]');
       await until(main, "document.querySelector('dialog[open]')");
+      await assertPrice(main, tablePrice("2-03"), "1900000", "1650000");
+      await assertPrice(main, "dialog[open] .plot-price", "1900000", "1650000");
       assert.match(
         await main.evaluate(
           "document.querySelector('dialog[open] .plot-documents__cadastral dd').textContent",
@@ -678,6 +763,8 @@ try {
     async () => {
       await activate(main, '[aria-label="Подробнее об участке 2-01"]');
       await until(main, "document.querySelector('dialog[open]')");
+      await assertPrice(main, tablePrice("2-01"), "1500000", "1200000");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000", "1200000");
       assert.match(
         await main.evaluate(
           "document.querySelector('dialog[open]').textContent",
@@ -695,6 +782,33 @@ try {
           "Boolean(document.querySelector('dialog[open] .full-payment-badge'))",
         ),
       );
+    },
+  );
+  await check(
+    "Clearing a full-payment price updates the table and open dialog across tabs",
+    async () => {
+      await fill(admin, '[aria-label="Цена при 100% оплате 2-01"]', "");
+      await activate(admin, ".admin-save-all");
+      await until(
+        main,
+        "!document.querySelector('dialog[open] .full-payment-badge')&&!document.querySelector('dialog[open] s')",
+      );
+      await assertPrice(main, tablePrice("2-01"), "1500000");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000");
+      assert.equal(
+        database
+          .prepare("SELECT full_payment_price FROM plots WHERE id=?")
+          .get("2-01").full_payment_price,
+        null,
+      );
+      await fill(admin, '[aria-label="Цена при 100% оплате 2-01"]', "1200000");
+      await activate(admin, ".admin-save-all");
+      await until(
+        main,
+        "document.querySelector('dialog[open] .full-payment-badge')",
+      );
+      await assertPrice(main, tablePrice("2-01"), "1500000", "1200000");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000", "1200000");
     },
   );
   await check(
@@ -763,9 +877,53 @@ try {
     await until(main, "document.querySelector('dialog[open]')");
   }
   await check(
+    "Sold map parcels use the requested red and remain unavailable to select",
+    async () => {
+      const sold = await main.evaluate(
+        `(()=>{const zone=document.querySelector('[data-plot-id="1-05"]');return{fill:getComputedStyle(zone).fill,legend:getComputedStyle(document.querySelector('.oinelovo-status--sold')).backgroundColor,selectable:zone.dataset.selectable,role:zone.getAttribute('role'),tabIndex:zone.getAttribute('tabindex')};})()`,
+      );
+      assert.deepEqual(sold, {
+        fill: "rgb(201, 48, 62)",
+        legend: "rgb(201, 48, 62)",
+        selectable: "false",
+        role: "img",
+        tabIndex: null,
+      });
+    },
+  );
+  await check(
+    "Map list, tooltip and accessible label use the saved full-payment price",
+    async () => {
+      await assertPrice(
+        main,
+        ".oinelovo-plot-list .plot-price",
+        "1500000",
+        "1250000",
+      );
+      await pressKey(main, "Tab", "Tab", 9);
+      await main.evaluate(
+        "document.querySelector('[data-plot-id=\"1-01\"]').focus()",
+      );
+      await until(main, "document.querySelector('[role=tooltip]')");
+      await assertPrice(
+        main,
+        "[role=tooltip] .plot-price",
+        "1500000",
+        "1250000",
+      );
+      const accessible = await main.evaluate(
+        `(()=>{const zone=document.querySelector('[data-plot-id="1-01"]');return{label:zone.getAttribute('aria-label'),description:zone.getAttribute('aria-describedby'),tooltip:document.querySelector('[role=tooltip]').id};})()`,
+      );
+      assert.match(accessible.label, /Стоимость при 100% оплате 1\s250\s000/);
+      assert.match(accessible.label, /Базовая цена 1\s500\s000/);
+      assert.equal(accessible.description, accessible.tooltip);
+    },
+  );
+  await check(
     "A map selection links to that plot's mortgage listing",
     async () => {
       await openMap("1-01");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000", "1250000");
       assert.equal(
         await main.evaluate(
           "document.querySelector('dialog[open] a[href^=\"https://\"]').href",
@@ -817,6 +975,7 @@ try {
       );
       await escape(main);
       await openMap("1-04");
+      await assertPrice(main, "dialog[open] .plot-price", "1500000");
       assert.equal(
         await main.evaluate(
           "Boolean(document.querySelector('dialog[open] a[href^=\"https://\"]'))",
@@ -879,6 +1038,150 @@ try {
       await activate(main, ".project-dialog__close");
     },
   );
+  await check(
+    "FAQ opens and closes smoothly with pointer and keyboard, including rapid toggles",
+    async () => {
+      await main.command("Page.bringToFront");
+      await main.command("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+      });
+      const trigger = ".oinelovo-faq .oinelovo-question-trigger";
+      const panel = ".oinelovo-faq .oinelovo-question-panel";
+      const panelHeight = () =>
+        main.evaluate(
+          `document.querySelector(${JSON.stringify(panel)}).getBoundingClientRect().height`,
+        );
+      assert.equal(await panelHeight(), 0);
+      await activate(main, trigger);
+      await delay(60);
+      const openingHeight = await panelHeight();
+      await delay(260);
+      const expandedHeight = await panelHeight();
+      assert.ok(
+        openingHeight > 0 && openingHeight < expandedHeight,
+        JSON.stringify({ openingHeight, expandedHeight }),
+      );
+      const expanded = await main.evaluate(
+        `(()=>{const trigger=document.querySelector(${JSON.stringify(trigger)}),panel=document.querySelector(${JSON.stringify(panel)});return{expanded:trigger.getAttribute('aria-expanded'),controls:trigger.getAttribute('aria-controls'),id:panel.id,hidden:panel.getAttribute('aria-hidden'),inert:panel.inert};})()`,
+      );
+      assert.equal(expanded.expanded, "true");
+      assert.equal(expanded.controls, expanded.id);
+      assert.equal(expanded.hidden, "false");
+      assert.equal(expanded.inert, false);
+      await pressKey(main, "Enter", "Enter", 13);
+      assert.equal(
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(trigger)}).getAttribute('aria-expanded')`,
+        ),
+        "false",
+      );
+      await delay(60);
+      const closingHeight = await panelHeight();
+      await delay(260);
+      assert.ok(
+        closingHeight > 0 && closingHeight < expandedHeight,
+        JSON.stringify({ closingHeight, expandedHeight }),
+      );
+      assert.equal(await panelHeight(), 0);
+      assert.equal(
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(panel)}).inert`,
+        ),
+        true,
+      );
+      for (let toggle = 0; toggle < 3; toggle++) {
+        await activate(main, trigger);
+        await delay(40);
+      }
+      await delay(280);
+      assert.equal(
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(trigger)}).getAttribute('aria-expanded')`,
+        ),
+        "true",
+      );
+      assert.ok((await panelHeight()) > 0);
+      await pressKey(main, " ", "Space", 32);
+      await delay(280);
+      assert.equal(await panelHeight(), 0);
+    },
+  );
+  await check(
+    "FAQ respects reduced motion and exposes its answer immediately",
+    async () => {
+      await main.command("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+      });
+      await activate(main, ".oinelovo-faq .oinelovo-question-trigger");
+      await until(
+        main,
+        "document.querySelector('.oinelovo-faq .oinelovo-question-trigger').getAttribute('aria-expanded')==='true'",
+      );
+      const immediate = await main.evaluate(
+        "document.querySelector('.oinelovo-faq .oinelovo-question-panel').getBoundingClientRect().height",
+      );
+      await delay(80);
+      assert.ok(immediate > 0);
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('.oinelovo-faq .oinelovo-question-panel').getBoundingClientRect().height",
+        ),
+        immediate,
+      );
+      assert.equal(
+        await main.evaluate(
+          "getComputedStyle(document.querySelector('.oinelovo-faq .oinelovo-question-trigger svg')).transitionDuration",
+        ),
+        "0s",
+      );
+      await pressKey(main, "Enter", "Enter", 13);
+      await until(
+        main,
+        "document.querySelector('.oinelovo-faq .oinelovo-question-panel').getBoundingClientRect().height===0",
+      );
+      for (const [selector, target, pressed] of [
+        [
+          ".oinelovo-thumbnails > button",
+          ".oinelovo-thumbnails > button img",
+          false,
+        ],
+        [
+          ".oinelovo-purchase .oinelovo-button",
+          ".oinelovo-purchase .oinelovo-button",
+          true,
+        ],
+      ]) {
+        const point = await main.evaluate(
+          `(()=>{const button=document.querySelector(${JSON.stringify(selector)});button.scrollIntoView({block:'center',behavior:'instant'});const bounds=button.getBoundingClientRect();return{x:bounds.x+bounds.width/2,y:bounds.y+bounds.height/2}})()`,
+        );
+        await main.command("Input.dispatchMouseEvent", {
+          type: "mouseMoved",
+          ...point,
+        });
+        if (pressed)
+          await main.command("Input.dispatchMouseEvent", {
+            type: "mousePressed",
+            ...point,
+            button: "left",
+            clickCount: 1,
+          });
+        assert.equal(
+          await main.evaluate(
+            `getComputedStyle(document.querySelector(${JSON.stringify(target)})).transform`,
+          ),
+          "none",
+        );
+        if (pressed)
+          await main.command("Input.dispatchMouseEvent", {
+            type: "mouseReleased",
+            x: 0,
+            y: 0,
+            button: "left",
+            clickCount: 1,
+          });
+      }
+    },
+  );
   await check("Reduced motion disables the ticker animation", async () => {
     assert.equal(
       await main.evaluate(
@@ -928,6 +1231,22 @@ try {
       );
     },
   );
+  await check(
+    "The featured individual plot uses the same saved full-payment price",
+    async () => {
+      await navigate(
+        main,
+        "/projects/drugie-uchastki/",
+        "document.querySelector('article.individual-plot')",
+      );
+      await assertPrice(
+        main,
+        'article.individual-plot[aria-label="Участок 2-01"] .plot-price',
+        "1500000",
+        "1200000",
+      );
+    },
+  );
   for (const width of [375, 768, 1440, 1920]) {
     await main.command("Emulation.setDeviceMetricsOverride", {
       width,
@@ -972,6 +1291,11 @@ try {
         await openMap("1-01");
         await screenshot(main, `map-popup-${width}`);
         await escape(main);
+        await activate(main, ".oinelovo-faq .oinelovo-question-trigger");
+        await main.evaluate(
+          "document.querySelector('.oinelovo-faq').scrollIntoView({block:'center',behavior:'instant'})",
+        );
+        await screenshot(main, `faq-${width}`);
       }
     }
     await admin.command("Emulation.setDeviceMetricsOverride", {

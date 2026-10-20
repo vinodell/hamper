@@ -33,6 +33,7 @@ function samePlot(left: Plot, right: Plot): boolean {
     left.area === right.area &&
     left.status === right.status &&
     left.price === right.price &&
+    left.fullPaymentPrice === right.fullPaymentPrice &&
     left.description === right.description &&
     left.cadastralNumber === right.cadastralNumber &&
     left.gpzuDone === right.gpzuDone &&

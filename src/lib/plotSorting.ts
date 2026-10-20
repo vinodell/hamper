@@ -27,10 +27,14 @@ export function comparePlots(
       );
       break;
     case "area":
-    case "price":
       result =
         Number(left[key].replace(",", ".")) -
         Number(right[key].replace(",", "."));
+      break;
+    case "price":
+      result =
+        Number((left.fullPaymentPrice ?? left.price).replace(",", ".")) -
+        Number((right.fullPaymentPrice ?? right.price).replace(",", "."));
       break;
     case "status":
       result = statusOrder[left.status] - statusOrder[right.status];

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { usePlots } from "../hooks";
 import { PlotCarousel } from "../components/PlotCarousel";
 import { LoadingIndicator } from "../components/LoadingIndicator";
+import { PlotPrice } from "../components/PlotPrice";
 import { formatPlotNumber } from "../lib";
 import type { Plot } from "../lib";
 
@@ -93,7 +94,12 @@ export function IndividualPlots({
                 </div>
                 <div>
                   <dt>Стоимость</dt>
-                  <dd>{formatPlotNumber(selected.price)} ₽</dd>
+                  <dd>
+                    <PlotPrice
+                      price={selected.price}
+                      fullPaymentPrice={selected.fullPaymentPrice}
+                    />
+                  </dd>
                 </div>
                 <div>
                   <dt>Статус</dt>

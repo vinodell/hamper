@@ -137,7 +137,9 @@ export const InteractiveMap = ({
                         zone.area !== undefined &&
                           `Площадь ${zone.area.toLocaleString("ru-RU")} соток`,
                         zone.price !== undefined &&
-                          `Стоимость ${formatZonePrice(zone.price)}`,
+                          (zone.fullPaymentPrice !== undefined
+                            ? `Стоимость при 100% оплате ${formatZonePrice(zone.fullPaymentPrice)}. Базовая цена ${formatZonePrice(zone.price)}`
+                            : `Стоимость ${formatZonePrice(zone.price)}`),
                       ]
                         .filter(Boolean)
                         .join(". ")}
