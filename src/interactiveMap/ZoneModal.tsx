@@ -80,7 +80,11 @@ export function ZoneModal({ zone, onClose, onBook, onNotify }: ZoneModalProps) {
                 onNotify?.();
               }}
             >
-              <BellRing size={18} aria-hidden="true" />
+              <BellRing
+                className={styles.notificationBell}
+                size={18}
+                aria-hidden="true"
+              />
               <span>Уведомить, если участок освободится</span>
             </a>
           )}

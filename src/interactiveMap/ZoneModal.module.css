@@ -354,9 +354,10 @@
   line-height: 1.4;
 }
 
-.notificationButton svg {
+.notificationBell {
   flex-shrink: 0;
   color: var(--gold);
+  transform-origin: 50% 15%;
 }
 
 .notificationButton:hover {
@@ -369,6 +370,45 @@
   outline: 0.125rem solid var(--gold);
 
   outline-offset: 0.1875rem;
+}
+
+@keyframes notification-ring {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+
+  18% {
+    transform: rotate(16deg);
+  }
+
+  36% {
+    transform: rotate(-13deg);
+  }
+
+  54% {
+    transform: rotate(10deg);
+  }
+
+  72% {
+    transform: rotate(-6deg);
+  }
+
+  90% {
+    transform: rotate(3deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .notificationButton:focus-visible .notificationBell {
+    animation: notification-ring 480ms ease-in-out;
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .notificationButton:hover .notificationBell {
+    animation: notification-ring 480ms ease-in-out;
+  }
 }
 
 @keyframes modal-enter {

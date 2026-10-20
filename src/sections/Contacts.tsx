@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, Mail, Phone } from "lucide-react";
+import { ArrowUpRight, Check, Mail, Phone, ShieldCheck } from "lucide-react";
 import { formatPhone, usePlots } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
 import { siteConfig, PHONE_PATTERN, type Plot } from "../lib";
@@ -31,6 +31,7 @@ type ContactsProps = {
   requestKind?: ContactRequestKind;
   initialProject?: string;
   id?: string;
+  variant?: "section" | "dialog";
   onSubmittingChange?: (submitting: boolean) => void;
 };
 
@@ -39,8 +40,10 @@ export const Contacts = ({
   requestKind = "viewing",
   initialProject = "",
   id = "form",
+  variant = "section",
   onSubmittingChange,
 }: ContactsProps) => {
+  const isDialog = variant === "dialog";
   const [phone, setPhone] = useState("");
   const [consent, setConsent] = useState(false);
   const { plots, loading: plotsLoading, error: plotsError } = usePlots();
@@ -145,71 +148,81 @@ export const Contacts = ({
   return (
     <section className="contact-section" id={id}>
       <div className="container contact-grid">
-        <div className="contact-copy">
-          <p className="eyebrow light my-text-bold">КОНТАКТЫ</p>
-
-          <h2 className="my-text-bold">
-            {availabilityPlot ? "Получить" : "Записаться"}
-            <br />
-            <em className="my-text-bold">
-              {availabilityPlot ? "уведомление" : "на просмотр"}
-            </em>
-          </h2>
-
-          <p className="my-text-regular">
-            {availabilityPlot
-              ? `Участок ${availabilityPlot.id} забронирован. Оставьте контакты — мы свяжемся с Вами, если он освободится.`
-              : "Оставьте заявку, и мы свяжемся с Вами, чтобы рассказать о поселках и подобрать подходящий участок."}
-          </p>
-
-          <div className="contact-details">
-            {mobileContacts.map(
-              ({ id, phone, phoneHref, telegram, whatsapp }) => (
-                <div className="mobile-contacts" key={id}>
-                  {phone && (
-                    <a
-                      className="contact-phone"
-                      href={phoneHref}
-                      aria-label={`Позвонить: ${phone}`}
-                    >
-                      <Phone size="1.125rem" />
-                      {phone}
-                    </a>
-                  )}
-                  {telegram && (
-                    <a
-                      className="social-logo"
-                      href={`https://t.me/${telegram}`}
-                      aria-label="Написать в Telegram"
-                    >
-                      <TgLogo />
-                    </a>
-                  )}
-                  {whatsapp && (
-                    <a
-                      className="social-logo"
-                      href={`https://wa.me/${whatsapp}`}
-                      aria-label="Написать в WhatsApp"
-                    >
-                      <WhatsupLogo />
-                    </a>
-                  )}
-                </div>
-              ),
-            )}
-            {siteConfig.email && (
-              <div className="mobile-contacts email-container">
-                <a href={`mailto:${siteConfig.email}`}>
-                  <Mail size="1.125rem" />
-                  {siteConfig.email}
-                </a>
-              </div>
-            )}
+        {isDialog ? (
+          <div className="contact-dialog-intro">
+            <p>
+              {availabilityPlot
+                ? `Участок ${availabilityPlot.id} сейчас забронирован. Оставьте контакты — мы сообщим, если он освободится.`
+                : "Познакомьтесь с посёлком и выберите свой участок. Оставьте контакты — мы согласуем удобное время просмотра."}
+            </p>
           </div>
-        </div>
+        ) : (
+          <div className="contact-copy">
+            <p className="eyebrow light my-text-bold">КОНТАКТЫ</p>
+
+            <h2 className="my-text-bold">
+              {availabilityPlot ? "Получить" : "Записаться"}
+              <br />
+              <em className="my-text-bold">
+                {availabilityPlot ? "уведомление" : "на просмотр"}
+              </em>
+            </h2>
+
+            <p className="my-text-regular">
+              {availabilityPlot
+                ? `Участок ${availabilityPlot.id} забронирован. Оставьте контакты — мы свяжемся с Вами, если он освободится.`
+                : "Оставьте заявку, и мы свяжемся с Вами, чтобы рассказать о поселках и подобрать подходящий участок."}
+            </p>
+
+            <div className="contact-details">
+              {mobileContacts.map(
+                ({ id, phone, phoneHref, telegram, whatsapp }) => (
+                  <div className="mobile-contacts" key={id}>
+                    {phone && (
+                      <a
+                        className="contact-phone"
+                        href={phoneHref}
+                        aria-label={`Позвонить: ${phone}`}
+                      >
+                        <Phone size="1.125rem" />
+                        {phone}
+                      </a>
+                    )}
+                    {telegram && (
+                      <a
+                        className="social-logo"
+                        href={`https://t.me/${telegram}`}
+                        aria-label="Написать в Telegram"
+                      >
+                        <TgLogo />
+                      </a>
+                    )}
+                    {whatsapp && (
+                      <a
+                        className="social-logo"
+                        href={`https://wa.me/${whatsapp}`}
+                        aria-label="Написать в WhatsApp"
+                      >
+                        <WhatsupLogo />
+                      </a>
+                    )}
+                  </div>
+                ),
+              )}
+              {siteConfig.email && (
+                <div className="mobile-contacts email-container">
+                  <a href={`mailto:${siteConfig.email}`}>
+                    <Mail size="1.125rem" />
+                    {siteConfig.email}
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <form
-          className="contact-form"
+          className={`contact-form${isDialog ? " contact-form--dialog tw:sm:grid-cols-2" : ""}`}
           onSubmit={handleSubmit}
           onChange={() => {
             if (formState === "success" || formState === "error")
@@ -313,28 +326,45 @@ export const Contacts = ({
             )}
           </label>
           {!availabilityPlot && plotsError && (
-            <small role="alert">{plotsError}</small>
+            <small
+              className={isDialog ? "tw:sm:col-span-2" : undefined}
+              role="alert"
+            >
+              {plotsError}
+            </small>
           )}
           {!availabilityPlot &&
             chosenPlot &&
             !availableChosenPlot &&
             !plotsLoading && (
-              <small role="status">
+              <small
+                className={isDialog ? "tw:sm:col-span-2" : undefined}
+                role="status"
+              >
                 Выбранный участок больше не доступен. Выберите другой или
                 оставьте заявку без номера участка.
               </small>
             )}
-          <label>
+          <label className={isDialog ? "tw:sm:col-span-2" : undefined}>
             Комментарий
+            {isDialog && (
+              <span className="contact-field-optional"> · необязательно</span>
+            )}
             <textarea
               name="comment"
-              rows={3}
+              rows={isDialog ? 2 : 3}
               maxLength={commentMaxLength}
-              placeholder="Ваш вопрос"
+              placeholder={
+                isDialog
+                  ? "Пожелания или удобное время для звонка"
+                  : "Ваш вопрос"
+              }
               disabled={formState === "sending"}
             />
           </label>
-          <label className="contact-consent tw:motion-safe:transition-colors tw:duration-200">
+          <label
+            className={`contact-consent tw:motion-safe:transition-colors tw:duration-200${isDialog ? " tw:sm:col-span-2" : ""}`}
+          >
             <input
               type="checkbox"
               name="consent"
@@ -349,7 +379,7 @@ export const Contacts = ({
             </span>
           </label>
           <button
-            className="button button-gold"
+            className={`button button-gold${isDialog ? " tw:group tw:sm:col-span-2 tw:motion-safe:transition-colors tw:duration-200" : ""}`}
             type="submit"
             disabled={formState === "sending" || !consent}
           >
@@ -358,17 +388,46 @@ export const Contacts = ({
               : availabilityPlot
                 ? "Оставить заявку на уведомление"
                 : "Отправить заявку"}
-            <ArrowUpRight size="1.0625rem" />
+            <ArrowUpRight
+              size="1.0625rem"
+              aria-hidden="true"
+              className={
+                isDialog
+                  ? "tw:shrink-0 tw:motion-safe:transition-transform tw:duration-200 tw:motion-safe:group-hover:translate-x-0.5 tw:motion-safe:group-hover:-translate-y-0.5"
+                  : undefined
+              }
+            />
           </button>
+          {isDialog && (
+            <p className="contact-dialog-privacy tw:sm:col-span-2 tw:flex tw:items-center tw:justify-center tw:gap-2">
+              <ShieldCheck
+                size={15}
+                className="tw:shrink-0"
+                aria-hidden="true"
+              />
+              Используем контакты только для связи по заявке
+            </p>
+          )}
           {formState === "success" && (
-            <small className="form-success" role="status">
-              {availabilityPlot
-                ? "Заявка на уведомление отправлена. Мы свяжемся с Вами, если участок освободится."
-                : "Заявка отправлена. Мы скоро свяжемся с Вами."}
+            <small
+              className={`form-success${isDialog ? " tw:sm:col-span-2 tw:flex tw:items-start tw:gap-2" : ""}`}
+              role="status"
+            >
+              {isDialog && (
+                <Check size={18} className="tw:shrink-0" aria-hidden="true" />
+              )}
+              <span>
+                {availabilityPlot
+                  ? "Заявка на уведомление отправлена. Мы свяжемся с Вами, если участок освободится."
+                  : "Заявка отправлена. Мы скоро свяжемся с Вами."}
+              </span>
             </small>
           )}
           {formState === "error" && (
-            <small className="form-error" role="alert">
+            <small
+              className={`form-error${isDialog ? " tw:sm:col-span-2" : ""}`}
+              role="alert"
+            >
               {submitError}
             </small>
           )}

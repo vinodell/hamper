@@ -9,6 +9,7 @@ type ProjectDialogProps = {
   onClose: () => void;
   className?: string;
   closeDisabled?: boolean;
+  icon?: ReactNode;
 };
 
 export const ProjectDialog = ({
@@ -17,6 +18,7 @@ export const ProjectDialog = ({
   onClose,
   className,
   closeDisabled = false,
+  icon,
 }: ProjectDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -66,14 +68,22 @@ export const ProjectDialog = ({
       }}
     >
       <div className="project-dialog__header">
-        <h2 className="project-dialog__title" id={titleId}>
-          {title}
-        </h2>
+        <div className="tw:flex tw:min-w-0 tw:items-center tw:gap-3">
+          {icon && (
+            <span className="project-dialog__icon" aria-hidden="true">
+              {icon}
+            </span>
+          )}
+          <h2 className="project-dialog__title" id={titleId}>
+            {title}
+          </h2>
+        </div>
         <button
           className="project-dialog__close"
           type="button"
           onClick={onClose}
           disabled={closeDisabled}
+          aria-label="Закрыть"
         >
           <X size="1.125rem" aria-hidden="true" />
           <span>Закрыть</span>

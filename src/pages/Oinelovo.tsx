@@ -2,6 +2,8 @@ import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
+  BellRing,
+  CalendarDays,
   CarFront,
   Check,
   ChevronLeft,
@@ -883,18 +885,26 @@ export function Oinelovo() {
         <ProjectDialog
           title={
             requestKind === "availability"
-              ? "Уведомить об освобождении участка"
+              ? "Уведомить об освобождении"
               : "Записаться на просмотр"
           }
           onClose={closeDialog}
           className="oinelovo-inquiry"
           closeDisabled={inquirySubmitting}
+          icon={
+            requestKind === "availability" ? (
+              <BellRing size={22} strokeWidth={1.75} />
+            ) : (
+              <CalendarDays size={22} strokeWidth={1.75} />
+            )
+          }
         >
           <Contacts
             selectedPlot={selectedPlot}
             requestKind={requestKind}
             initialProject={project.plotFilter}
             id="inquiry-form"
+            variant="dialog"
             onSubmittingChange={setInquirySubmitting}
           />
         </ProjectDialog>

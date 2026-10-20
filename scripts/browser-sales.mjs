@@ -450,6 +450,37 @@ try {
     await writeFile(file, Buffer.from(result.data, "base64"));
     screenshots.push(file);
   }
+  async function checkShortInquiry(client, name) {
+    await client.command("Emulation.setDeviceMetricsOverride", {
+      width: 375,
+      height: 667,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+    assert.equal(
+      await client.evaluate(
+        "(()=>{const bounds=document.querySelector('dialog[open]').getBoundingClientRect();return bounds.top>=0&&bounds.bottom<=innerHeight;})()",
+      ),
+      true,
+    );
+    await screenshot(client, `${name}-short-top-375`);
+    await client.evaluate(
+      "document.querySelector('#inquiry-form [type=submit]').scrollIntoView({block:'center',behavior:'instant'})",
+    );
+    assert.equal(
+      await client.evaluate(
+        "(()=>{const bounds=document.querySelector('#inquiry-form [type=submit]').getBoundingClientRect();return bounds.top>=0&&bounds.bottom<=innerHeight;})()",
+      ),
+      true,
+    );
+    await screenshot(client, `${name}-short-submit-375`);
+    await client.command("Emulation.setDeviceMetricsOverride", {
+      width: 375,
+      height: 1000,
+      deviceScaleFactor: 1,
+      mobile: true,
+    });
+  }
   async function check(name, work) {
     await work();
     checks.push(name);
@@ -1024,6 +1055,59 @@ try {
     },
   );
   await check(
+    "Availability notification supports focus, hover motion, and reduced motion",
+    async () => {
+      await pressKey(main, "Tab", "Tab", 9);
+      await main.evaluate(
+        `document.querySelector(${JSON.stringify(availabilityButton)}).focus()`,
+      );
+      assert.equal(
+        await main.evaluate(
+          `document.activeElement===document.querySelector(${JSON.stringify(availabilityButton)})`,
+        ),
+        true,
+      );
+      assert.notEqual(
+        await main.evaluate(
+          `getComputedStyle(document.querySelector(${JSON.stringify(availabilityButton)})).outlineStyle`,
+        ),
+        "none",
+      );
+      await screenshot(main, "notification-focus");
+      const point = await main.evaluate(
+        `(()=>{const element=document.querySelector(${JSON.stringify(availabilityButton)});const bounds=element.getBoundingClientRect();return{x:bounds.x+bounds.width/2,y:bounds.y+bounds.height/2};})()`,
+      );
+      await main.evaluate("document.activeElement.blur()");
+      await main.command("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        x: 0,
+        y: 0,
+      });
+      await main.command("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+      });
+      await main.command("Input.dispatchMouseEvent", {
+        type: "mouseMoved",
+        ...point,
+      });
+      await until(
+        main,
+        `document.querySelector(${JSON.stringify(availabilityButton)}).getAnimations({subtree:true}).some(animation=>animation.playState==='running')`,
+      );
+      await screenshot(main, "notification-hover");
+      await main.command("Emulation.setEmulatedMedia", {
+        features: [{ name: "prefers-reduced-motion", value: "reduce" }],
+      });
+      await delay(100);
+      assert.equal(
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(availabilityButton)}).getAnimations({subtree:true}).some(animation=>animation.playState==='running')`,
+        ),
+        false,
+      );
+    },
+  );
+  await check(
     "A reserved availability inquiry keeps its plot and purpose and requires consent",
     async () => {
       await activate(main, availabilityButton);
@@ -1033,7 +1117,7 @@ try {
         1,
       );
       const form = await main.evaluate(
-        `(()=>{const form=document.querySelector('#inquiry-form');return{project:form.querySelector('[name=project]').value,plot:form.querySelector('[name=plot]').value,projectLocked:form.querySelector('[name=project]').readOnly,plotLocked:form.querySelector('[name=plot]').readOnly,consent:form.querySelector('[name=consent]').checked,submitDisabled:form.querySelector('[type=submit]').disabled,text:form.innerText};})()`,
+        `(()=>{const form=document.querySelector('#inquiry-form');return{project:form.querySelector('[name=project]').value,plot:form.querySelector('[name=plot]').value,projectLocked:form.querySelector('[name=project]').readOnly,plotLocked:form.querySelector('[name=plot]').readOnly,consent:form.querySelector('[name=consent]').checked,submitDisabled:form.querySelector('[type=submit]').disabled,text:form.closest('dialog').innerText};})()`,
       );
       assert.equal(form.project, "Ойнеловские дали");
       assert.equal(form.plot, "1-02");
@@ -1041,7 +1125,7 @@ try {
       assert.equal(form.plotLocked, true);
       assert.equal(form.consent, false);
       assert.equal(form.submitDisabled, true);
-      assert.match(form.text, /Участок 1-02 забронирован/);
+      assert.match(form.text, /Участок 1-02 (?:сейчас )?забронирован/);
       assert.match(form.text, /если он освободится/iu);
       const comment = "Предпочитаю звонок после 18:00";
       const telegramBefore = telegram.length;
@@ -1424,6 +1508,31 @@ try {
         await activate(main, availabilityButton);
         await until(main, "document.querySelector('#inquiry-form')");
         await screenshot(main, `availability-form-${width}`);
+        await check(`Availability inquiry layout ${width}px`, async () => {
+          const layout = await main.evaluate(
+            "(()=>{const dialog=document.querySelector('dialog[open]');const bounds=dialog.getBoundingClientRect();return{withinViewport:bounds.left>=0&&bounds.right<=innerWidth,withinDialog:dialog.scrollWidth<=dialog.clientWidth};})()",
+          );
+          assert.deepEqual(layout, {
+            withinViewport: true,
+            withinDialog: true,
+          });
+          if (width === 375) await checkShortInquiry(main, "availability-form");
+        });
+        await escape(main);
+        await openMap("1-01");
+        await activate(main, "dialog[open] a[href='#form']");
+        await until(main, "document.querySelector('#inquiry-form')");
+        await screenshot(main, `viewing-form-${width}`);
+        await check(`Viewing inquiry layout ${width}px`, async () => {
+          const layout = await main.evaluate(
+            "(()=>{const dialog=document.querySelector('dialog[open]');const bounds=dialog.getBoundingClientRect();return{withinViewport:bounds.left>=0&&bounds.right<=innerWidth,withinDialog:dialog.scrollWidth<=dialog.clientWidth};})()",
+          );
+          assert.deepEqual(layout, {
+            withinViewport: true,
+            withinDialog: true,
+          });
+          if (width === 375) await checkShortInquiry(main, "viewing-form");
+        });
         await escape(main);
         await activate(main, ".oinelovo-faq .oinelovo-question-trigger");
         await main.evaluate(
