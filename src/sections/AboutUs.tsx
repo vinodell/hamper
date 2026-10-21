@@ -17,7 +17,7 @@ export const AboutUs = () => {
         <h1 className="my-text-bold">
           Мини-посёлки
           <br />
-          <em>Hamper village</em>
+          <em>Хампер village</em>
         </h1>
         <p className="hero-copy my-text-bold">
           Надёжный девелопер с 5-летней историей. Новый камерный посёлок

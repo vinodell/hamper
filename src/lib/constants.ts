@@ -25,7 +25,7 @@ export const apiUrl =
   import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") ?? "";
 
 export const siteConfig = {
-  brand: "Hamper",
+  brand: "Хампер",
   brandSubtitle: "мини-поселки",
   phone: env.VITE_PHONE_MAKS,
   phone2: env.VITE_PHONE_VLAD,
@@ -37,7 +37,7 @@ export const siteConfig = {
   maksTelegram: env.VITE_TELEGRAM_MAKS,
   hours: "ежедневно с 10 до 20",
   email: env.VITE_CONTACT_EMAIL,
-  copyright: "© 2026 Hamper",
+  copyright: "© 2026 Хампер",
 } as const;
 
 export const navigation = [
@@ -181,3 +181,17 @@ export const PHONE_PATTERN =
   /\s*(?:\+\s*7|7|8)?(?:[\s.\-\(\)]*\d){10}[\s.\-\(\)]*/.source;
 
 export const PLOTS_REFRESH_MS = 30_000;
+
+export interface MapDestination {
+  /** Latitude, longitude of the actual entrance, e.g. "60.123456, 30.123456". */
+  coordinates: string;
+  /** Yandex Navigator route/deep link supplied by the project owner. */
+  navigatorUrl: string;
+}
+
+// Fill in the entrance location before enabling coordinate copying/navigation.
+// Empty values keep the respective action visibly unavailable.
+export const oinelovoLocation: MapDestination = {
+  coordinates: "60.264162, 30.416167",
+  navigatorUrl: "",
+};

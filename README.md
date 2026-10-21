@@ -73,6 +73,22 @@ For a reserved map parcel, **Уведомить, если участок осв�
 to the close control. It opens an inquiry with the project and plot fixed, adds
 the notification request to the submitted comment, and still requires personal
 data consent. This uses the existing application channel.
+
+Plot tables and the project's available-plot list show a Domclick icon next to
+the price only when that plot has a listing URL. **Выбрать** in the project's
+list opens the same parcel details as the interactive map; booking from those
+details opens the prefilled inquiry. Map hover cards are rendered above page
+sections, including near the bottom edge of the plan.
+
+The location button in **Расположение** copies the entrance coordinates on desktop
+and opens a Yandex Navigator link on mobile. Configure `coordinates` and
+`navigatorUrl` in `oinelovoLocation` in `src/lib/constants.ts`. Empty values keep
+the corresponding action disabled with an explanation until the owner supplies
+the actual location. Copy success is shown only after the
+clipboard confirms the write; a denied write offers the coordinates for manual
+copying. `npm run test:browser:location` checks this interaction with a fictional
+location in an isolated browser fixture, without changing the site constants.
+
 The optional **При 100% оплате** price is edited next to the base price in the
 admin table and when adding a plot. It must be positive, have up to two decimal
 places, and be lower than the base price. When set, public tables, lists and map
@@ -123,7 +139,33 @@ for the integration used here.
 
 Public pages share an in-memory plot cache and refresh visible data. Failed requests retain previous data and show a retry message; saves publish confirmed data immediately. Malformed responses, duplicate plot IDs, invalid numeric values, and incomplete save responses are rejected.
 
-Local demo plots are used only with `VITE_USE_MOCK_DATA=true` on localhost in development. Without this flag the app requests the configured API, so an incorrect API URL or HTML fallback is visible as an error.
+To view the public site locally without an API, database or admin setup, run:
+
+```bash
+npm run dev:mock
+```
+
+Open the localhost URL printed by Vite. The `mock/` directory contains fictional
+plots and an enabled 12% promotion. Plot **1-01** has a full-payment price,
+completed documents and its own demo Domclick URL; **1-02** is reserved and opens
+the notification inquiry; **1-03** has no special price and partially completed
+documents; **1-04** is sold. All 21 map parcels have data. The four **Другие
+участки** fixtures include categories and photographs for checking their cards.
+Domclick URLs are illustrative, not real listings; photographs still load from
+their configured image host.
+
+Applications require the normal personal-data consent and simulate a successful
+send locally. They are not stored, logged or sent to the API or Telegram. Admin
+requests are disabled in this mode, so real admin data cannot replace the demo
+cache. Edit `mock/plots.ts` and `mock/settings.ts` to change demo values.
+
+Mock data works only when all three conditions hold: Vite development mode,
+`VITE_USE_MOCK_DATA=true`, and a loopback hostname (`localhost`, `127.0.0.1` or
+`[::1]`). Production builds always use the API, including when a mock flag is
+accidentally present. Use `npm run dev` with the flag absent or `false` to test
+real requests; an incorrect API URL or HTML fallback remains visible as an error.
+`node --test scripts/mock-api.test.mjs` checks the local API behavior, consent,
+cancellation, admin isolation and these activation boundaries.
 
 To test real requests locally, create an ignored `worker/.dev.vars` with `ADMIN_LOGIN`, `ADMIN_PASSWORD_HASH`, `PUBLIC_ORIGIN=http://localhost:5173`, and the Telegram secrets, then run `npm run worker:dev`. Use `VITE_API_URL=http://localhost:8787` for the frontend. Local HTTP on localhost uses an HttpOnly `SameSite=Lax` cookie. Keep real contact sends disabled or use a test Telegram destination during development.
 

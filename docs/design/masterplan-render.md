@@ -19,7 +19,7 @@ Sold polygons are red, have no number badge and cannot be selected. Reserved pol
 
 Available parcel details link to the contact form and select that parcel. Reserved parcel details remain viewable without an application link, matching the table and gallery.
 
-Successful admin saves notify other tabs on the same origin via `BroadcastChannel`. Public views also refresh on focus and every 30 seconds while visible. Development on localhost continues to use `localTest/plots.ts`, independently of the admin API.
+Successful admin saves notify other tabs on the same origin via `BroadcastChannel`. Public views also refresh on focus and every 30 seconds while visible. `npm run dev:mock` uses `mock/plots.ts` on localhost, independently of the admin API.
 
 ## Generation prompt
 

@@ -61,6 +61,9 @@ export type InteractiveMapProps = {
   onBookPlot?: (zone: MapZone) => void;
   /** Open an inquiry about a reserved parcel becoming available. */
   onNotifyPlot?: (zone: MapZone) => void;
+  /** Share the active parcel with controls outside the map. */
+  selectedPlotId?: string | null;
+  onSelectedPlotChange?: (plotId: string | null) => void;
 
   className?: string;
 };

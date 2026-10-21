@@ -537,7 +537,7 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const plot = optionalText(body.plot, PLOT_ID_MAX_LENGTH);
     const comment = optionalText(body.comment, 2000);
     const message = [
-      `📩 Новая заявка Hamper`,
+      `📩 Новая заявка Хампер`,
       "",
       `👤 Имя: ${body.name.trim()}`,
       `📞 Телефон: ${body.phone.trim()}`,

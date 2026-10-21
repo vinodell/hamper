@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:mock": "VITE_USE_MOCK_DATA=true vite --config mock/vite.config.ts --host localhost",
     "build": "tsc -b && vite build",
     "build:pages": "tsc -b && vite build --mode github-pages",
     "format": "prettier --write \"src/**/*.{ts,tsx}\"",
@@ -16,6 +17,7 @@
     "test:data": "node --test scripts/data.test.mjs",
     "test": "node --test scripts/*.test.mjs",
     "test:browser": "node scripts/browser-sales.mjs",
+    "test:browser:location": "node scripts/browser-location.mjs",
     "worker:deploy": "wrangler deploy --config worker/wrangler.jsonc",
     "deploy": "npm run build && wrangler deploy"
   },

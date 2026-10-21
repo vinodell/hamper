@@ -405,6 +405,17 @@
   color: var(--ink);
 }
 
+.oinelovo-plot-actions {
+  display: grid;
+  grid-template-columns: 2.75rem auto;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.oinelovo-plot-actions > .oinelovo-button {
+  grid-column: 2;
+}
+
 .oinelovo-available-total {
   margin-top: 1rem;
   color: var(--pine);
@@ -678,6 +689,10 @@
   color: var(--muted);
   font-size: 0.875rem;
   line-height: 1.6;
+}
+
+.oinelovo-location-copy .map-location-action {
+  margin-top: 1.25rem;
 }
 
 .oinelovo-location-facts {
@@ -1697,7 +1712,7 @@
     grid-area: price;
   }
 
-  .oinelovo-plot-list li > .oinelovo-button {
+  .oinelovo-plot-list li > .oinelovo-plot-actions {
     grid-area: action;
   }
 }

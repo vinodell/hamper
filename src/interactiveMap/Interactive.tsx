@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useState } from "react";
 import { MapTooltip } from "./MapTooltip";
 import { ZoneModal } from "./ZoneModal";
 import { MAP_GROUP_TRANSFORM, MAP_VIEW_BOX } from "./MapZones";
@@ -28,11 +28,22 @@ export const InteractiveMap = ({
   onZoneClick,
   onBookPlot,
   onNotifyPlot,
+  selectedPlotId: controlledPlotId,
+  onSelectedPlotChange,
   className,
 }: InteractiveMapProps) => {
   const tooltipId = useId();
   const [hoveredZoneId, setHoveredZoneId] = useState<string | null>(null);
-  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
+  const [internalPlotId, setInternalPlotId] = useState<string | null>(null);
+  const selectedPlotId =
+    controlledPlotId === undefined ? internalPlotId : controlledPlotId;
+  const selectPlot = useCallback(
+    (plotId: string | null) => {
+      if (controlledPlotId === undefined) setInternalPlotId(plotId);
+      onSelectedPlotChange?.(plotId);
+    },
+    [controlledPlotId, onSelectedPlotChange],
+  );
   const [imageFailed, setImageFailed] = useState(false);
   const [pointerPosition, setPointerPosition] = useState<PointerPosition>(
     INITIAL_POINTER_POSITION,
@@ -44,11 +55,14 @@ export const InteractiveMap = ({
       new Map(zones.filter(isSelectableZone).map((zone) => [zone.id, zone])),
     [zones],
   );
-  const hoveredZone = hoveredZoneId
-    ? selectableZones.get(hoveredZoneId)
-    : undefined;
-  const selectedZone = selectedZoneId
-    ? selectableZones.get(selectedZoneId)
+  const hoveredZone =
+    hoveredZoneId && !selectedPlotId
+      ? selectableZones.get(hoveredZoneId)
+      : undefined;
+  const selectedZone = selectedPlotId
+    ? zones.find(
+        (zone) => zone.plotId === selectedPlotId && isSelectableZone(zone),
+      )
     : undefined;
 
   useEffect(() => setImageFailed(false), [imageSrc]);
@@ -64,12 +78,12 @@ export const InteractiveMap = ({
 
   useEffect(() => {
     // Close a sold/deleted parcel immediately; don't reopen it on a later update.
-    if (selectedZoneId && !selectedZone) setSelectedZoneId(null);
+    if (selectedPlotId && !selectedZone) selectPlot(null);
     if (hoveredZoneId && !hoveredZone) setHoveredZoneId(null);
-  }, [selectedZoneId, selectedZone, hoveredZoneId, hoveredZone]);
+  }, [selectedPlotId, selectedZone, hoveredZoneId, hoveredZone, selectPlot]);
 
   const handleZoneClick = (zone: MapZone) => {
-    setSelectedZoneId(zone.id);
+    selectPlot(zone.plotId);
     setHoveredZoneId(null);
     onZoneClick?.(zone);
   };
@@ -225,7 +239,7 @@ export const InteractiveMap = ({
       {selectedZone && (
         <ZoneModal
           zone={selectedZone}
-          onClose={() => setSelectedZoneId(null)}
+          onClose={() => selectPlot(null)}
           onBook={onBookPlot ? () => onBookPlot(selectedZone) : undefined}
           onNotify={onNotifyPlot ? () => onNotifyPlot(selectedZone) : undefined}
         />

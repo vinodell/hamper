@@ -1,0 +1,126 @@
+.map-location-action {
+  display: grid;
+  justify-items: start;
+  gap: 0.5rem;
+  min-width: 0;
+  grid-auto-flow: column;
+  align-items: center;
+}
+
+.map-location-action__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.625rem;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid color-mix(in srgb, var(--pine) 24%, transparent);
+  border-radius: 0.75rem;
+  color: var(--pine);
+  background: color-mix(in srgb, var(--pine) 6%, var(--paper));
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.map-location-action__button:is(:hover, :focus-visible):not(:disabled) {
+  background: var(--pine);
+  color: var(--paper);
+}
+
+.map-location-action__button:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 3px;
+}
+
+.map-location-action__button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.map-location-action__button[data-status="copied"] {
+  background: var(--pine);
+  color: var(--paper);
+}
+
+.map-location-action__icon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.map-location-action__message {
+  max-width: 17rem;
+  color: var(--pine);
+  font-family: var(--font-body);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.map-location-action__message:empty {
+  display: none;
+}
+
+.map-location-action__message[data-error="true"] {
+  color: #a0342b;
+}
+
+@keyframes location-copy-confirm {
+  0% {
+    transform: scale(0.8) rotate(-12deg);
+  }
+  65% {
+    transform: scale(1.15) rotate(4deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes location-locate {
+  0%,
+  100% {
+    transform: rotate(0) scale(1);
+  }
+  35% {
+    transform: rotate(-18deg) scale(0.88);
+  }
+  70% {
+    transform: rotate(8deg) scale(1.08);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .map-location-action__icon {
+    transition: transform 180ms ease;
+  }
+
+  .map-location-action__button[data-status="copying"]
+    .map-location-action__icon {
+    animation: location-locate 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .map-location-action__button[data-status="copied"]
+    .map-location-action__icon {
+    animation: location-copy-confirm 280ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .map-location-action__button:active:not(:disabled)
+    .map-location-action__icon {
+    transform: rotate(-12deg) scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-location-action__button {
+    transition: none;
+  }
+}

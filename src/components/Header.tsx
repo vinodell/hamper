@@ -97,7 +97,7 @@ export const Header = () => {
     <header className="site-header" ref={headerRef}>
       <Link
         className="brand"
-        aria-label="Hamper — главная"
+        aria-label="Хампер — главная"
         to="/"
         onClick={handleNavigation}
       >

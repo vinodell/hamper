@@ -11,7 +11,7 @@ export const Footer = () => {
         <Link
           className="brand brand-footer"
           to="/"
-          aria-label="Hamper — главная"
+          aria-label="Хампер — главная"
         >
           <Logo />
           <span className="brand-name">

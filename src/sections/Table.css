@@ -111,6 +111,12 @@
   font-size: 1.0625rem;
 }
 
+.plot-table-price {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
 .price-note {
   display: flex;
   align-items: center;

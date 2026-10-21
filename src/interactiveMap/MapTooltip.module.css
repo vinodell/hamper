@@ -25,6 +25,8 @@
 
   color: var(--paper);
   font-family: var(--font-body);
+  font-size: 0.9375rem;
+  line-height: 1.5;
 
   pointer-events: none;
 

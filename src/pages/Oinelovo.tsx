@@ -9,7 +9,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Clock3,
-  Download,
   Fence,
   House,
   Images,
@@ -29,6 +28,8 @@ import { ProjectDialog } from "../components/ProjectDialog";
 import { PlotCarousel } from "../components/PlotCarousel";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 import { PlotPrice } from "../components/PlotPrice";
+import { DomclickLink } from "../components/DomclickLink";
+import { MapLocationAction } from "../components/MapLocationAction";
 import { PromotionBanner } from "../components/PromotionBanner";
 import { Contacts, type ContactRequestKind } from "../sections/Contacts";
 import { usePlots } from "../hooks/usePlots";
@@ -38,6 +39,7 @@ import type { MapZone } from "../interactiveMap/Interactive.types";
 import {
   formatPlotNumber,
   infrastructure,
+  oinelovoLocation,
   projectPageConfig,
   siteConfig,
   utilities,
@@ -127,14 +129,17 @@ function AvailablePlots({
             price={plot.price}
             fullPaymentPrice={plot.fullPaymentPrice}
           />
-          <button
-            className="oinelovo-button oinelovo-button--small"
-            type="button"
-            onClick={() => onSelect(plot)}
-            aria-label={`Выбрать участок ${plot.id}`}
-          >
-            Выбрать
-          </button>
+          <div className="oinelovo-plot-actions">
+            <DomclickLink url={plot.mortgageUrl} plotId={plot.id} />
+            <button
+              className="oinelovo-button oinelovo-button--small"
+              type="button"
+              onClick={() => onSelect(plot)}
+              aria-label={`Выбрать участок ${plot.id}`}
+            >
+              Выбрать
+            </button>
+          </div>
         </li>
       ))}
     </ul>
@@ -256,6 +261,7 @@ export function Oinelovo() {
   const [dialog, setDialog] = useState<OpenDialog>(null);
   const [inquirySubmitting, setInquirySubmitting] = useState(false);
   const [selectedPlot, setSelectedPlot] = useState<Plot | null>(null);
+  const [detailsPlotId, setDetailsPlotId] = useState<string | null>(null);
   const [requestKind, setRequestKind] = useState<ContactRequestKind>("viewing");
   const [photoIndex, setPhotoIndex] = useState(0);
   const projectPlots = useMemo(
@@ -297,6 +303,10 @@ export function Oinelovo() {
     [projectPlots],
   );
   const closeDialog = useCallback(() => setDialog(null), []);
+  const showPlotDetails = useCallback((plot: Plot) => {
+    setDialog(null);
+    setDetailsPlotId(plot.id);
+  }, []);
   const openInquiry = useCallback(() => {
     setRequestKind("viewing");
     setSelectedPlot(null);
@@ -463,14 +473,14 @@ export function Oinelovo() {
                     Продан
                   </li>
                 </ul>
-                <a
+                {/* <a
                   className="oinelovo-button oinelovo-button--outline"
                   href={asset("images/masterplan-oinelovo-1024.webp")}
                   download="Ойнеловские-дали-план.webp"
                 >
                   <Download size="1rem" />
                   Скачать план
-                </a>
+                </a> */}
               </div>
               <figure className="oinelovo-plan-map">
                 <span className="oinelovo-plan-compass" aria-hidden="true">
@@ -486,6 +496,8 @@ export function Oinelovo() {
                   imageAlt="План Ойнеловских далей. Выберите участок, чтобы узнать площадь, цену и статус."
                   onBookPlot={handleMapBooking}
                   onNotifyPlot={handleMapNotification}
+                  selectedPlotId={detailsPlotId}
+                  onSelectedPlotChange={setDetailsPlotId}
                 />
                 <figcaption>
                   Нажмите на номер участка · Иллюстративный рендер
@@ -506,7 +518,7 @@ export function Oinelovo() {
                 )}
                 <AvailablePlots
                   plots={availablePlots.slice(0, 5)}
-                  onSelect={bookPlot}
+                  onSelect={showPlotDetails}
                 />
                 {!loading && !error && !availablePlots.length && (
                   <p>
@@ -741,6 +753,7 @@ export function Oinelovo() {
                   <span>для жизни</span>
                 </div>
               </div>
+              <MapLocationAction location={oinelovoLocation} />
             </div>
             <RegionalMap />
             <div className="oinelovo-purchase">
@@ -920,7 +933,7 @@ export function Oinelovo() {
       )}
       {dialog === "plots" && (
         <ProjectDialog title="Все свободные участки" onClose={closeDialog}>
-          <AvailablePlots plots={availablePlots} onSelect={bookPlot} />
+          <AvailablePlots plots={availablePlots} onSelect={showPlotDetails} />
           {!availablePlots.length && <p>Свободных участков пока нет.</p>}
         </ProjectDialog>
       )}

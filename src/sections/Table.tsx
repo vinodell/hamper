@@ -4,6 +4,7 @@ import { usePlots } from "../hooks/usePlots";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 import { PlotDetailsDialog } from "../components/PlotDetailsDialog";
 import { PlotPrice } from "../components/PlotPrice";
+import { DomclickLink } from "../components/DomclickLink";
 import { PromotionBanner } from "../components/PromotionBanner";
 import { plotFilters, type TableSectionProps, type PlotFilter } from "../lib";
 import { formatPlotNumber } from "../lib/plotNumbers";
@@ -213,10 +214,13 @@ export const Table = ({
                     </span>
                   </td>
                   <td className="price">
-                    <PlotPrice
-                      price={plot.price}
-                      fullPaymentPrice={plot.fullPaymentPrice}
-                    />
+                    <div className="plot-table-price">
+                      <PlotPrice
+                        price={plot.price}
+                        fullPaymentPrice={plot.fullPaymentPrice}
+                      />
+                      <DomclickLink url={plot.mortgageUrl} plotId={plot.id} />
+                    </div>
                   </td>
                   <td>
                     <button

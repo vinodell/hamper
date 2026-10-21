@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import type { MapTooltipProps } from "./Interactive.types";
 import { zoneStatusLabels } from "./zonePresentation";
 import { PlotPrice } from "../components/PlotPrice";
@@ -59,7 +60,8 @@ export function MapTooltip({ id, zone, position }: MapTooltipProps) {
     };
   }, [position]);
 
-  return (
+  // Keep viewport coordinates outside the map's isolated stacking context.
+  return createPortal(
     <div id={id} ref={tooltipRef} className={styles.tooltip} role="tooltip">
       {/* The parcel's accessible name already includes these details. */}
       <div className={styles.tooltipHeader} aria-hidden="true">
@@ -95,6 +97,7 @@ export function MapTooltip({ id, zone, position }: MapTooltipProps) {
       <span className={styles.tooltipHint}>
         Нажмите, чтобы посмотреть подробнее
       </span>
-    </div>
+    </div>,
+    document.body,
   );
 }

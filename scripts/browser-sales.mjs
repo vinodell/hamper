@@ -62,6 +62,14 @@ for (const [id, settlement, status, mortgage] of [
   ],
   ["1-04", "Ойнеловские дали", "Свободен", null],
   ["1-05", "Ойнеловские дали", "Продан", null],
+  ["1-06", "Ойнеловские дали", "Свободен", null],
+  ["1-07", "Ойнеловские дали", "Свободен", null],
+  [
+    "1-08",
+    "Ойнеловские дали",
+    "Свободен",
+    "https://domclick.ru/card/all-plots-test",
+  ],
   ["2-01", "Другие участки", "Свободен", null],
   ["2-02", "Другие участки", "Забронирован", null],
 ])
@@ -481,6 +489,18 @@ try {
       mobile: true,
     });
   }
+  async function assertTooltipVisible(client) {
+    const visible = await client.evaluate(
+      "(()=>{const tooltip=document.querySelector('[role=tooltip]');const bounds=tooltip.getBoundingClientRect();const previous=tooltip.style.pointerEvents;tooltip.style.pointerEvents='auto';try{return{withinViewport:bounds.left>=0&&bounds.top>=0&&bounds.right<=innerWidth&&bounds.bottom<=innerHeight,aboveContent:[[bounds.left+12,bounds.top+12],[bounds.right-12,bounds.top+12],[bounds.left+12,bounds.bottom-12],[bounds.right-12,bounds.bottom-12]].every(([x,y])=>tooltip.contains(document.elementFromPoint(x,y)))};}finally{tooltip.style.pointerEvents=previous;}})()",
+    );
+    assert.deepEqual(visible, { withinViewport: true, aboveContent: true });
+  }
+  async function assertAvailableControlsFit(client, selector) {
+    const failures = await client.evaluate(
+      `(()=>{const failures=[];for(const row of document.querySelectorAll(${JSON.stringify(selector)}+' li')){const bounds=row.getBoundingClientRect();const controls=[row.querySelector('.plot-price'),row.querySelector('a[href*="domclick.ru"]'),row.querySelector('button')].filter(Boolean).map(element=>element.getBoundingClientRect());if(controls.some(control=>control.left<bounds.left-1||control.right>bounds.right+1))failures.push(row.innerText+' overflows');for(let index=0;index<controls.length;index++)for(let other=index+1;other<controls.length;other++){const a=controls[index],b=controls[other];if(a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1)failures.push(row.innerText+' overlaps');}}return failures;})()`,
+    );
+    assert.deepEqual(failures, []);
+  }
   async function check(name, work) {
     await work();
     checks.push(name);
@@ -792,6 +812,13 @@ try {
   await check(
     "Table popup shows saved documents and the full-payment price label",
     async () => {
+      const listing = await main.evaluate(
+        "(()=>{const row=document.querySelector('tr:has([aria-label=\"Подробнее об участке 2-01\"])');const link=row.querySelector('a[href*=\"domclick.ru\"]');return link?{href:link.href,label:link.getAttribute('aria-label'),icon:Boolean(link.querySelector('svg'))}:null;})()",
+      );
+      assert.equal(listing.href, mortgage);
+      assert.ok(listing.label.includes("2-01"));
+      assert.match(listing.label, /Домклик/iu);
+      assert.equal(listing.icon, true);
       await activate(main, '[aria-label="Подробнее об участке 2-01"]');
       await until(main, "document.querySelector('dialog[open]')");
       await assertPrice(main, tablePrice("2-01"), "1500000", "1200000");
@@ -907,6 +934,103 @@ try {
     });
     await until(main, "document.querySelector('dialog[open]')");
   }
+  await check(
+    "Selecting an available plot opens the same details and booking flow as the map",
+    async () => {
+      await activate(
+        main,
+        '.oinelovo-available [aria-label="Выбрать участок 1-01"]',
+      );
+      await until(main, "document.querySelector('dialog[open]')");
+      assert.equal(
+        await main.evaluate("Boolean(document.querySelector('#inquiry-form'))"),
+        false,
+        "Selecting a plot must first show its details before opening the inquiry",
+      );
+      assert.match(
+        await main.evaluate("document.querySelector('dialog[open]').innerText"),
+        /Забронировать участок/,
+      );
+      await assertPrice(main, "dialog[open] .plot-price", "1500000", "1250000");
+      await activate(main, "dialog[open] a[href='#form']");
+      await until(main, "document.querySelector('#inquiry-form')");
+      await until(
+        main,
+        "document.querySelector('#inquiry-form [name=plot]')?.value==='1-01'",
+      );
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#inquiry-form [name=plot]').value",
+        ),
+        "1-01",
+      );
+      await escape(main);
+    },
+  );
+  await check(
+    "The full available-plot list opens the chosen parcel and preserves its booking context",
+    async () => {
+      await activate(main, ".oinelovo-available .oinelovo-text-button");
+      await until(
+        main,
+        "document.querySelector('dialog[open] [aria-label=\"Выбрать участок 1-08\"]')",
+      );
+      const link = await main.evaluate(
+        "document.querySelector('dialog[open] [aria-label=\"Выбрать участок 1-08\"]').closest('li').querySelector('a[href*=\"domclick.ru\"]').href",
+      );
+      assert.equal(link, "https://domclick.ru/card/all-plots-test");
+      await activate(main, 'dialog[open] [aria-label="Выбрать участок 1-08"]');
+      await until(
+        main,
+        "document.querySelector('dialog[open] a[href=\"https://domclick.ru/card/all-plots-test\"]')",
+      );
+      assert.equal(
+        await main.evaluate("document.querySelectorAll('dialog[open]').length"),
+        1,
+      );
+      assert.match(
+        await main.evaluate("document.querySelector('dialog[open]').innerText"),
+        /Забронировать участок/,
+      );
+      await activate(main, "dialog[open] a[href='#form']");
+      await until(
+        main,
+        "document.querySelector('#inquiry-form [name=plot]')?.value==='1-08'",
+      );
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#inquiry-form [name=consent]').checked",
+        ),
+        false,
+      );
+      await escape(main);
+    },
+  );
+  await check(
+    "Each configured available plot exposes its own accessible Domclick icon link",
+    async () => {
+      for (const [id, expected] of [
+        ["1-01", mortgage],
+        ["1-03", "https://domclick.ru/card/other-test"],
+        ["1-04", null],
+      ]) {
+        const link = await main.evaluate(
+          `(()=>{const row=document.querySelector('.oinelovo-available [aria-label="Выбрать участок ${id}"]').closest('li');const link=row.querySelector('a[href*="domclick.ru"]');return link?{href:link.href,target:link.target,rel:link.rel,label:link.getAttribute('aria-label')??link.textContent,icon:Boolean(link.querySelector('svg'))}:null;})()`,
+        );
+        if (expected === null) {
+          assert.equal(link, null);
+        } else {
+          assert.equal(link.href, expected);
+          assert.equal(link.target, "_blank");
+          assert.ok(link.rel.includes("noopener"));
+          assert.ok(link.rel.includes("noreferrer"));
+          assert.match(link.label, /Домклик/iu);
+          assert.ok(link.label.includes(id));
+          assert.equal(link.icon, true);
+        }
+      }
+    },
+  );
   await check(
     "Sold map parcels use the requested red and remain unavailable to select",
     async () => {
@@ -1160,7 +1284,10 @@ try {
     async () => {
       await openMap("1-01");
       await activate(main, "dialog[open] a[href='#form']");
-      await until(main, "document.querySelector('#inquiry-form')");
+      await until(
+        main,
+        "document.querySelector('#inquiry-form [name=plot]')?.value==='1-01'",
+      );
       assert.equal(
         await main.evaluate(
           "document.querySelector('#inquiry-form [name=plot]').value",
@@ -1208,9 +1335,16 @@ try {
   await check(
     "A pending inquiry keeps its consent and result visible until completion",
     async () => {
-      await openMap("1-01");
+      await activate(
+        main,
+        '.oinelovo-available [aria-label="Выбрать участок 1-01"]',
+      );
+      await until(main, "document.querySelector('dialog[open]')");
       await activate(main, "dialog[open] a[href='#form']");
-      await until(main, "document.querySelector('#inquiry-form')");
+      await until(
+        main,
+        "document.querySelector('#inquiry-form [name=plot]')?.value==='1-01'",
+      );
       assert.equal(
         await main.evaluate(
           "document.querySelector('#inquiry-form [name=plot]').value",
@@ -1500,6 +1634,54 @@ try {
         );
         await escape(main);
       } else if (route.includes("oynelovskie")) {
+        await main.evaluate(
+          "document.querySelector('.oinelovo-available').scrollIntoView({block:'center',behavior:'instant'})",
+        );
+        await assertAvailableControlsFit(main, ".oinelovo-available");
+        await screenshot(main, `available-plots-${width}`);
+        await activate(main, ".oinelovo-available .oinelovo-text-button");
+        await until(
+          main,
+          "document.querySelector('dialog[open] [aria-label=\"Выбрать участок 1-08\"]')",
+        );
+        await assertAvailableControlsFit(
+          main,
+          "dialog[open] .oinelovo-plot-list",
+        );
+        await screenshot(main, `all-plots-${width}`);
+        await escape(main);
+        await check(`Location control layout ${width}px`, async () => {
+          await main.evaluate(
+            "document.querySelector('#location').scrollIntoView({block:'center',behavior:'instant'})",
+          );
+          const label =
+            width < 768
+              ? "Открыть маршрут в Яндекс Навигаторе"
+              : "Скопировать координаты массива";
+          const action = await main.evaluate(
+            `(()=>{const action=document.querySelector('#location [aria-label="${label}"]');return action?{visible:action.getBoundingClientRect().width>0,hint:Boolean(action.title.trim())}:null;})()`,
+          );
+          assert.deepEqual(action, {
+            visible: true,
+            hint: true,
+          });
+          await main.evaluate(
+            `(()=>{const action=document.querySelector('#location [aria-label="${label}"]');if(!action.disabled)action.focus({preventScroll:true});})()`,
+          );
+          await screenshot(main, `location-${width}`);
+        });
+        if (width >= 768) {
+          await pressKey(main, "Tab", "Tab", 9);
+          await main.evaluate(
+            "document.querySelector('[data-plot-id=\"1-01\"]').focus()",
+          );
+          await until(main, "document.querySelector('[role=tooltip]')");
+          await check(`Map tooltip is visible above content ${width}px`, () =>
+            assertTooltipVisible(main),
+          );
+          await screenshot(main, `map-tooltip-${width}`);
+          await escape(main);
+        }
         await openMap("1-01");
         await screenshot(main, `map-popup-${width}`);
         await escape(main);
@@ -1521,7 +1703,10 @@ try {
         await escape(main);
         await openMap("1-01");
         await activate(main, "dialog[open] a[href='#form']");
-        await until(main, "document.querySelector('#inquiry-form')");
+        await until(
+          main,
+          "document.querySelector('#inquiry-form [name=plot]')?.value==='1-01'",
+        );
         await screenshot(main, `viewing-form-${width}`);
         await check(`Viewing inquiry layout ${width}px`, async () => {
           const layout = await main.evaluate(

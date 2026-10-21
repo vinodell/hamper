@@ -30,6 +30,11 @@ export interface RequestOptions {
 }
 
 const REQUEST_TIMEOUT_MS = 15_000;
+const localMockData =
+  import.meta.env.DEV &&
+  import.meta.env.VITE_USE_MOCK_DATA === "true" &&
+  typeof window !== "undefined" &&
+  ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -57,10 +62,15 @@ async function request(
   options: RequestOptions & { method?: "POST" | "PUT"; body?: string } = {},
 ): Promise<unknown> {
   const adminRequest = path.startsWith("/api/admin/");
-  const controller = new AbortController();
-  const abort = () => controller.abort();
   if (options.signal?.aborted)
     throw new DOMException("Запрос отменён", "AbortError");
+  if (adminRequest && localMockData)
+    throw new ApiError(
+      "Админ-панель недоступна в локальном демо. Для работы с API запустите npm run dev без mock-флага.",
+      403,
+    );
+  const controller = new AbortController();
+  const abort = () => controller.abort();
   options.signal?.addEventListener("abort", abort, { once: true });
   let timedOut = false;
   const timeout = setTimeout(() => {
@@ -291,15 +301,19 @@ function parseSettings(value: unknown): SiteSettings {
 }
 
 async function fetchPublicPlots(): Promise<Plot[]> {
-  if (
-    import.meta.env.DEV &&
-    import.meta.env.VITE_USE_MOCK_DATA === "true" &&
-    ["localhost", "127.0.0.1", "[::1]"].includes(window.location.hostname)
-  ) {
-    const { mockPlots } = await import("../../localTest/plots");
+  if (localMockData) {
+    const { mockPlots } = await import("../../mock/plots");
     return mockPlots;
   }
   return parseList(await request("/api/plots"), parsePublicPlot);
+}
+
+async function fetchPublicSettings(): Promise<SiteSettings> {
+  if (localMockData) {
+    const { mockSettings } = await import("../../mock/settings");
+    return parseSettings(mockSettings);
+  }
+  return parseSettings(await request("/api/settings"));
 }
 
 export const api = {
@@ -343,11 +357,7 @@ export const api = {
   ) => loadCachedPlots(fetchPublicPlots, options),
   getSettings: (
     options: RequestOptions & { force?: boolean; maxAgeMs?: number } = {},
-  ) =>
-    loadCachedSiteSettings(
-      async () => parseSettings(await request("/api/settings")),
-      options,
-    ),
+  ) => loadCachedSiteSettings(fetchPublicSettings, options),
   getAdminSettings: async (options: RequestOptions = {}) => {
     const revision = getSiteSettingsRevision();
     const settings = parseSettings(
@@ -430,6 +440,10 @@ export const api = {
         "Подтвердите согласие на обработку персональных данных.",
         400,
       );
+    if (localMockData) {
+      const { sendMockContact } = await import("../../mock/contact");
+      return sendMockContact(options);
+    }
     return parseOk(
       await request("/api/contact", {
         ...options,

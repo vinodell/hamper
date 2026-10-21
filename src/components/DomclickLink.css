@@ -1,0 +1,28 @@
+.domclick-link {
+  position: relative;
+  display: inline-grid;
+  flex: 0 0 2.75rem;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid color-mix(in srgb, var(--pine) 18%, transparent);
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--pine) 7%, var(--paper));
+  color: var(--pine);
+}
+
+.domclick-link__arrow {
+  position: absolute;
+  top: 0.25rem;
+  right: 0.25rem;
+}
+
+.domclick-link:is(:hover, :focus-visible) {
+  background: var(--pine);
+  color: var(--paper);
+}
+
+.domclick-link:focus-visible {
+  outline: 2px solid var(--gold-dark);
+  outline-offset: 3px;
+}
