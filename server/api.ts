@@ -6,8 +6,6 @@ import {
   PASSWORD_HASH_ALGORITHM,
   CONTACT_NAME_MAX_LENGTH,
   CONTACT_PHONE_MAX_LENGTH,
-  TELEGRAM_API_URL,
-  TELEGRAM_TIMEOUT_MS,
   OTHER_PLOTS_SETTLEMENT,
   PLOT_ID_MAX_LENGTH,
   PLOT_STREET_MAX_LENGTH,
@@ -19,8 +17,8 @@ import {
   REQUEST_BODY_MAX_BYTES,
   BULK_REQUEST_BODY_MAX_BYTES,
   type PlotStatus,
-} from "./constants";
-import type { Env, PlotRow, SiteSettingsRow } from "./types";
+} from "./constants.js";
+import type { Env, PlotRow, SiteSettingsRow, InquiryRow } from "./types.js";
 
 const textEncoder = new TextEncoder();
 
@@ -83,15 +81,12 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
 }
 
 function cookieHeader(request: Request, token: string, maxAge: number) {
-  // GitHub Pages and workers.dev have different sites. CHIPS permits the
-  // HttpOnly cookie without opening access to other top-level sites.
+  // The frontend and API share one Hostland origin.
   const url = new URL(request.url);
   const localHttp =
     url.protocol === "http:" &&
     ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname);
-  const attributes = localHttp
-    ? "; SameSite=Lax"
-    : "; Secure; SameSite=None; Partitioned";
+  const attributes = localHttp ? "; SameSite=Lax" : "; Secure; SameSite=Lax";
   return `${ADMIN_COOKIE}=${token}; Path=/api/admin; HttpOnly; Max-Age=${maxAge}${attributes}${maxAge === 0 ? "; Expires=Thu, 01 Jan 1970 00:00:00 GMT" : ""}`;
 }
 
@@ -242,7 +237,7 @@ async function readBody(
   return value as Record<string, unknown>;
 }
 
-function validatePlotId(value: unknown) {
+export function validatePlotId(value: unknown) {
   if (typeof value !== "string" || /[\u0000-\u001f\u007f-\u009f]/.test(value))
     throw new RequestError(400, "Некорректный номер участка");
   const id = value.trim();
@@ -329,7 +324,7 @@ function mortgageUrl(value: unknown) {
   throw new RequestError(400, "Укажите HTTPS-ссылку на объявление Домклик");
 }
 
-function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
+export function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
   if (
     typeof body.status !== "string" ||
     !allowedStatuses.has(body.status as PlotStatus)
@@ -460,8 +455,11 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
       request,
     );
 
-  if (url.pathname === "/api/health")
+  if (url.pathname === "/api/health" && request.method === "GET") {
+    await env.DB.prepare("SELECT id FROM site_settings WHERE id = 1").first();
+    await env.DB.prepare("SELECT id FROM inquiries LIMIT 1").first();
     return json({ ok: true }, 200, request, env);
+  }
 
   if (
     ["/api/settings", "/api/admin/settings"].includes(url.pathname) &&
@@ -536,48 +534,73 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const project = optionalText(body.project, 200);
     const plot = optionalText(body.plot, PLOT_ID_MAX_LENGTH);
     const comment = optionalText(body.comment, 2000);
-    const message = [
-      `📩 Новая заявка Хампер`,
-      "",
-      `👤 Имя: ${body.name.trim()}`,
-      `📞 Телефон: ${body.phone.trim()}`,
-      `🏡 Проект: ${project || "не указан"}`,
-      `📍 Участок: ${plot || "не указан"}`,
-      `💬 Комментарий: ${comment || "—"}`,
-      "✓ Согласие на обработку персональных данных: получено",
-    ].join("\n");
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), TELEGRAM_TIMEOUT_MS);
-    let sent = false;
-    try {
-      const telegramResponse = await fetch(
-        `${TELEGRAM_API_URL}/bot${env.TELEGRAM_BOT_TOKEN}/sendMessage`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: env.TELEGRAM_CHAT_ID,
-            text: message,
-          }),
-          signal: controller.signal,
-        },
-      );
-      if (telegramResponse.ok) {
-        const result: unknown = await telegramResponse.json();
-        sent =
-          typeof result === "object" &&
-          result !== null &&
-          "ok" in result &&
-          result.ok === true;
-      }
-    } catch {
-      // A network error or timeout is reported through the same failed result.
-    } finally {
-      clearTimeout(timeout);
-    }
+    const result = await env.DB.batch<{ id: number }>([
+      env.DB.prepare(
+        "INSERT INTO inquiries (name, phone, project, plot, comment, consent) VALUES (?, ?, ?, ?, ?, 1) RETURNING id",
+      ).bind(body.name.trim(), body.phone.trim(), project, plot, comment),
+      env.DB.prepare(
+        "INSERT INTO inquiry_telegram_outbox (inquiry_id, status) VALUES (last_insert_rowid(), ?)",
+      ).bind(
+        env.TELEGRAM_BOT_TOKEN?.trim() && env.TELEGRAM_CHAT_ID?.trim()
+          ? "pending"
+          : "not_configured",
+      ),
+    ]);
+    if (!result[0]?.results[0])
+      throw new Error("Inquiry storage returned no row");
+    return json({ ok: true }, 200, request, env);
+  }
+
+  if (url.pathname === "/api/admin/inquiries" && request.method === "GET") {
+    const limitText = url.searchParams.get("limit") ?? "50";
+    const beforeText = url.searchParams.get("before");
+    const limit = Number(limitText);
+    const before = beforeText === null ? null : Number(beforeText);
+    if (
+      !/^\d+$/.test(limitText) ||
+      !Number.isSafeInteger(limit) ||
+      limit < 1 ||
+      limit > 100 ||
+      (beforeText !== null &&
+        (!/^\d+$/.test(beforeText) ||
+          !Number.isSafeInteger(before) ||
+          before === null ||
+          before < 1))
+    )
+      throw new RequestError(400, "Некорректные параметры списка заявок");
+    const inquirySelect =
+      "SELECT inquiries.*, COALESCE(delivery.status, 'not_configured') AS telegram_status, COALESCE(delivery.attempts, 0) AS telegram_attempts FROM inquiries LEFT JOIN inquiry_telegram_outbox AS delivery ON delivery.inquiry_id = inquiries.id";
+    const statement =
+      before === null
+        ? env.DB.prepare(
+            `${inquirySelect} ORDER BY inquiries.id DESC LIMIT ?`,
+          ).bind(limit + 1)
+        : env.DB.prepare(
+            `${inquirySelect} WHERE inquiries.id < ? ORDER BY inquiries.id DESC LIMIT ?`,
+          ).bind(before, limit + 1);
+    const result = await statement.all<InquiryRow>();
+    const page = result.results.slice(0, limit);
     return json(
-      sent ? { ok: true } : { error: "Не удалось отправить заявку" },
-      sent ? 200 : 502,
+      {
+        items: page.map(
+          ({
+            created_at,
+            consent,
+            telegram_status,
+            telegram_attempts,
+            ...row
+          }) => ({
+            ...row,
+            consent: consent === 1,
+            createdAt: created_at,
+            telegramStatus: telegram_status,
+            telegramAttempts: telegram_attempts,
+          }),
+        ),
+        nextCursor:
+          result.results.length > limit ? (page.at(-1)?.id ?? null) : null,
+      },
+      200,
       request,
       env,
     );
@@ -722,4 +745,4 @@ export default {
       return json({ error: "Не удалось выполнить запрос" }, 500, request, env);
     }
   },
-} satisfies ExportedHandler<Env>;
+};

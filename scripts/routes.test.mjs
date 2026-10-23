@@ -30,13 +30,18 @@ const { default: createConfig } = await import(
   )
 );
 
-test("Pages navigation uses directory URLs and emits each matching index.html", () => {
+test("Hostland serves navigation from the domain root without a separate API URL", () => {
   const savedApiUrl = process.env.VITE_API_URL;
-  process.env.VITE_API_URL = "https://worker.test";
+  delete process.env.VITE_API_URL;
   try {
-    const pagesConfig = createConfig({ mode: "github-pages" });
+    const pagesConfig = createConfig({ command: "build", mode: "production" });
+    assert.equal(pagesConfig.base, "/");
     const plugin = pagesConfig.plugins.find(
-      (entry) => entry.name === "github-pages-routes",
+      (entry) => entry.name === "static-app-routes",
+    );
+    assert.ok(
+      plugin,
+      "The build emits documents for direct project/admin navigation",
     );
     const source = "<!doctype html><div id=root></div>";
     const files = [];

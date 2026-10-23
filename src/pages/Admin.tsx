@@ -3,7 +3,14 @@ import {
   isValidPlotNumber,
   normalizePlotNumber,
 } from "../lib/plotNumbers";
-import { LogOut, Plus, Save, ShieldCheck, X } from "lucide-react";
+import {
+  BookOpenCheck,
+  LogOut,
+  Plus,
+  Save,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -25,6 +32,7 @@ import { notifyPlotsUpdated } from "../lib/plotEvents";
 import { LoadingIndicator } from "../components/LoadingIndicator";
 import { AdminPlotMetadata } from "../components/AdminPlotMetadata";
 import { AdminPromotion } from "../components/AdminPromotion";
+import { AdminInquiries } from "../components/AdminInquiries";
 import { createPromotionDraft } from "../lib/promotionDrafts";
 import {
   isValidCadastralNumber,
@@ -442,6 +450,10 @@ export function Admin() {
               Добавляйте участки и обновляйте цены. Сохранённые изменения сразу
               доступны на сайте.
             </p>
+            <a className="admin-journal-link" href="#journal">
+              <BookOpenCheck size="1rem" aria-hidden="true" />
+              Journal — журнал заявок
+            </a>
           </div>
           <button
             className="button button-dark"
@@ -452,6 +464,10 @@ export function Admin() {
             <LogOut size="1.0625rem" /> {loggingOut ? "Выходим…" : "Выйти"}
           </button>
         </header>
+        <AdminInquiries
+          disabled={loggingOut}
+          onAuthenticationError={handleAuthenticationError}
+        />
         <AdminPromotion
           disabled={saving || creating || loggingOut}
           draft={promotionDraft}

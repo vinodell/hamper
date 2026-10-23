@@ -5,7 +5,7 @@ import { chooseZemli, heroFacts } from "../lib";
 import "./AboutUs.css";
 
 export const AboutUs = () => {
-  preload("https://u5hills.ru/img/52753815_1920_q70.jpg", {
+  preload(`${import.meta.env.BASE_URL}images/projects/home-hero.jpg`, {
     as: "image",
     fetchPriority: "high",
   });

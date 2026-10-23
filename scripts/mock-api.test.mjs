@@ -209,8 +209,8 @@ for (const [scenario, env, hostname] of [
     browser(context, {
       hostname,
       fetchImpl: async (url, options) => {
-        const path = new URL(url).pathname;
-        requested.push([path, options.credentials]);
+        const path = new URL(url, "https://site.example.test").pathname;
+        requested.push([url, options.credentials]);
         let payload;
         if (path === "/api/plots" || path === "/api/admin/plots")
           payload = [livePlot];
@@ -233,14 +233,48 @@ for (const [scenario, env, hostname] of [
     });
     assert.deepEqual(await api.sendContact(contact), { ok: true });
     assert.equal((await api.getAdminPlots())[0].id, "server-plot");
+    const origin = env.DEV ? "https://api.example.test" : "";
     assert.deepEqual(requested, [
-      ["/api/plots", "omit"],
-      ["/api/settings", "omit"],
-      ["/api/contact", "omit"],
-      ["/api/admin/plots", "include"],
+      [`${origin}/api/plots`, "omit"],
+      [`${origin}/api/settings`, "omit"],
+      [`${origin}/api/contact`, "omit"],
+      [`${origin}/api/admin/plots`, "include"],
     ]);
   });
 }
+
+test("production ignores a stale Cloudflare API URL and keeps public and admin requests on the website origin", async (context) => {
+  const requested = [];
+  browser(context, {
+    hostname: "hamper.example.ru",
+    fetchImpl: async (url, options) => {
+      requested.push([url, options.credentials]);
+      const pathname = new URL(url, "https://hamper.example.ru").pathname;
+      return Response.json(
+        pathname === "/api/admin/inquiries"
+          ? { items: [], nextCursor: null }
+          : pathname === "/api/contact"
+            ? { ok: true }
+            : [],
+      );
+    },
+  });
+  const { api } = await loadApi({
+    DEV: false,
+    VITE_USE_MOCK_DATA: "true",
+    VITE_API_URL: "https://former-hamper-api.example.workers.dev",
+  });
+  await api.getPlots();
+  await api.sendContact(contact);
+  await api.getAdminPlots();
+  await api.getAdminInquiries();
+  assert.deepEqual(requested, [
+    ["/api/plots", "omit"],
+    ["/api/contact", "omit"],
+    ["/api/admin/plots", "include"],
+    ["/api/admin/inquiries?limit=50", "include"],
+  ]);
+});
 
 for (const hostname of ["127.0.0.1", "[::1]"]) {
   test(`the explicit development demo also works on loopback ${hostname}`, async (context) => {

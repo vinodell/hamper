@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { transformWithOxc } from "vite";
+import { importServerModule } from "./server-test-loader.mjs";
 
 const root = new URL("../", import.meta.url);
 const moduleUrl = (code) =>
@@ -40,13 +41,7 @@ const zones = await import(
     "./MapZones": await compile("src/interactiveMap/MapZones.ts"),
   })
 );
-const worker = (
-  await import(
-    await compile("worker/src/index.ts", {
-      "./constants": await compile("worker/src/constants.ts"),
-    })
-  )
-).default;
+const { default: worker } = await importServerModule("api.ts");
 
 let moduleSequence = 0;
 const freshCache = () => import(`${cacheUrl}#${++moduleSequence}`);
@@ -322,11 +317,9 @@ const contactPayload = {
 };
 const contactEnv = {
   PUBLIC_ORIGIN: "https://site.test",
-  TELEGRAM_BOT_TOKEN: "test-token",
-  TELEGRAM_CHAT_ID: "test-chat",
   DB: {
     prepare() {
-      assert.fail("Contact sends do not need D1");
+      assert.fail("Validation failures must not access the database");
     },
   },
 };
@@ -338,7 +331,7 @@ function mockFetch(context, handler) {
   });
 }
 
-test("contact requires explicit personal data consent before sending to Telegram", async (context) => {
+test("contact requires explicit personal data consent before accepting an inquiry", async (context) => {
   let sends = 0;
   mockFetch(context, async () => {
     sends += 1;
@@ -355,7 +348,7 @@ test("contact requires explicit personal data consent before sending to Telegram
   assert.equal(sends, 0);
 });
 
-test("contact rejects invalid or excessive inputs before sending a Telegram message", async (context) => {
+test("contact rejects invalid or excessive inputs before accepting an inquiry", async (context) => {
   mockFetch(context, () => {
     assert.fail("Invalid contact data must not be sent");
   });
@@ -419,57 +412,4 @@ test("contact request limits count UTF-8 bytes when Content-Length is absent", a
     contactEnv,
   );
   assert.equal(response.status, 413);
-});
-
-test("contact sends selected project and plot once and confirms only Telegram success", async (context) => {
-  let sends = 0;
-  mockFetch(context, async (url, options) => {
-    sends += 1;
-    assert.equal(url, "https://api.telegram.org/bottest-token/sendMessage");
-    const payload = JSON.parse(options.body);
-    assert.equal(payload.chat_id, "test-chat");
-    assert.ok(payload.text.includes("👤 Имя: Анна"));
-    assert.ok(payload.text.includes("🏡 Проект: Ойнеловские дали"));
-    assert.ok(payload.text.includes("📍 Участок: 1-01"));
-    assert.ok(
-      payload.text.includes(
-        "Согласие на обработку персональных данных: получено",
-      ),
-    );
-    assert.ok(
-      payload.text.includes("💬 Комментарий: Хочу записаться на просмотр"),
-    );
-    return Response.json({ ok: true });
-  });
-  const response = await worker.fetch(
-    contactRequest(contactPayload),
-    contactEnv,
-  );
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { ok: true });
-  assert.equal(sends, 1);
-  assert.equal(response.headers.has("Set-Cookie"), false);
-});
-
-test("Telegram transport and payload failures never appear as successful contact submissions", async (context) => {
-  const original = globalThis.fetch;
-  context.after(() => {
-    globalThis.fetch = original;
-  });
-  for (const result of [
-    () => Response.json({ ok: false }),
-    () => Response.json({ error: "unavailable" }, { status: 503 }),
-    () => new Response("invalid JSON"),
-    () => {
-      throw new TypeError("Connection failed");
-    },
-  ]) {
-    globalThis.fetch = async () => result();
-    const response = await worker.fetch(
-      contactRequest(contactPayload),
-      contactEnv,
-    );
-    assert.equal(response.status, 502);
-    assert.equal(typeof (await response.json()).error, "string");
-  }
 });

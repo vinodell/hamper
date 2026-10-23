@@ -184,6 +184,150 @@ test("opening /admin validates the server cookie without reading client credenti
   assert.equal((await refreshed.api.getAdminPlots())[0].id, fixture.id);
 });
 
+test("admin inquiries are read with the session cookie and a keyset cursor without storing personal data", async (context) => {
+  const inquiry = {
+    id: 42,
+    name: "Анна",
+    phone: "+7 999 123-45-67",
+    project: "Ойнеловские дали",
+    plot: "1-02",
+    comment: "Уведомить об освобождении участка\nЗвонить после 18:00",
+    consent: true,
+    createdAt: "2026-10-22T10:25:00.000Z",
+  };
+  mockBrowser(context, async (url, options) => {
+    assert.equal(
+      url,
+      "https://worker.test/api/admin/inquiries?limit=50&before=43",
+    );
+    assertCookieRequest(options);
+    assert.equal(options.cache, "no-store");
+    assert.equal(options.headers.has("Content-Type"), false);
+    return response({ items: [inquiry], nextCursor: 42 });
+  });
+  const { api } = await loadApi();
+  assert.deepEqual(await api.getAdminInquiries({ before: 43 }), {
+    items: [
+      { ...inquiry, telegramStatus: "not_configured", telegramAttempts: 0 },
+    ],
+    nextCursor: 42,
+  });
+});
+
+test("Journal preserves validated Telegram delivery states and attempt counts", async (context) => {
+  const inquiry = {
+    id: 42,
+    name: "Анна",
+    phone: "+7 999 123-45-67",
+    project: null,
+    plot: null,
+    comment: null,
+    consent: true,
+    createdAt: "2026-10-22T10:25:00.000Z",
+  };
+  let body;
+  mockBrowser(context, async () => response(body));
+  const { api } = await loadApi();
+  for (const [telegramStatus, telegramAttempts] of [
+    ["not_configured", 0],
+    ["pending", 0],
+    ["pending", 1],
+    ["sent", 1],
+    ["failed", 3],
+  ]) {
+    const item = { ...inquiry, telegramStatus, telegramAttempts };
+    body = { items: [item], nextCursor: null };
+    assert.deepEqual(await api.getAdminInquiries(), body);
+  }
+});
+
+test("malformed inquiry pages cannot expose unvalidated personal data or a broken pagination cursor", async (context) => {
+  const inquiry = {
+    id: 42,
+    name: "Анна",
+    phone: "+7 999 123-45-67",
+    project: null,
+    plot: null,
+    comment: null,
+    consent: true,
+    createdAt: "2026-10-22T10:25:00.000Z",
+  };
+  let body;
+  mockBrowser(context, async () => response(body));
+  const { api } = await loadApi();
+  const invalid = [
+    [],
+    { items: null, nextCursor: null },
+    { items: [inquiry] },
+    { items: [{ ...inquiry, id: "42" }], nextCursor: null },
+    { items: [{ ...inquiry, consent: false }], nextCursor: null },
+    { items: [{ ...inquiry, project: {} }], nextCursor: null },
+    { items: [{ ...inquiry, createdAt: "yesterday" }], nextCursor: null },
+    { items: [{ ...inquiry, telegramStatus: "delivered" }], nextCursor: null },
+    { items: [{ ...inquiry, telegramStatus: null }], nextCursor: null },
+    { items: [{ ...inquiry, telegramAttempts: "1" }], nextCursor: null },
+    { items: [{ ...inquiry, telegramAttempts: -1 }], nextCursor: null },
+    { items: [{ ...inquiry, telegramAttempts: 1.5 }], nextCursor: null },
+    { items: [{ ...inquiry, telegramAttempts: null }], nextCursor: null },
+    {
+      items: [{ ...inquiry, createdAt: "2026-10-22 10:25:00" }],
+      nextCursor: null,
+    },
+    { items: [inquiry, inquiry], nextCursor: null },
+    { items: [inquiry], nextCursor: 43 },
+    { items: [], nextCursor: 42 },
+  ];
+  for (body of invalid)
+    await assert.rejects(
+      api.getAdminInquiries(),
+      (error) => error.status === 502,
+    );
+});
+
+test("inquiry reads preserve authentication failures and stay unavailable in the local public demo", async (context) => {
+  let calls = 0;
+  mockBrowser(context, async () => {
+    calls += 1;
+    return response({ error: "Требуется авторизация" }, 401);
+  });
+  const { api } = await loadApi();
+  await assert.rejects(
+    api.getAdminInquiries(),
+    (error) => error.status === 401,
+  );
+  const mockApi = await loadApi({ DEV: true, VITE_USE_MOCK_DATA: "true" });
+  await assert.rejects(
+    mockApi.api.getAdminInquiries(),
+    (error) => error.status === 403,
+  );
+  assert.equal(calls, 1);
+});
+
+test("loading older inquiries rejects a page outside the requested keyset boundary", async (context) => {
+  mockBrowser(context, async () =>
+    response({
+      items: [
+        {
+          id: 42,
+          name: "Анна",
+          phone: "+7 999 123-45-67",
+          project: null,
+          plot: null,
+          comment: null,
+          consent: true,
+          createdAt: "2026-10-22T10:25:00.000Z",
+        },
+      ],
+      nextCursor: null,
+    }),
+  );
+  const { api } = await loadApi();
+  await assert.rejects(
+    api.getAdminInquiries({ before: 42 }),
+    (error) => error.status === 502,
+  );
+});
+
 test("wrong credentials stop before loading plots", async (context) => {
   let calls = 0;
   mockBrowser(context, async () => {

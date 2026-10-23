@@ -149,6 +149,24 @@ export interface AdminPlot extends Plot {
   updatedAt: string;
 }
 
+export interface AdminInquiry {
+  id: number;
+  name: string;
+  phone: string;
+  project: string | null;
+  plot: string | null;
+  comment: string | null;
+  consent: true;
+  createdAt: string;
+  telegramStatus: "not_configured" | "pending" | "sent" | "failed";
+  telegramAttempts: number;
+}
+
+export interface AdminInquiriesPage {
+  items: AdminInquiry[];
+  nextCursor: number | null;
+}
+
 export interface PlotUpdate {
   area: string;
   status: PlotStatus;
@@ -263,6 +281,77 @@ function parseAdminPlot(value: unknown): AdminPlot {
     street: value.street,
     description: value.description,
     updatedAt: value.updatedAt,
+  };
+}
+
+function parseAdminInquiry(value: unknown): AdminInquiry {
+  if (
+    !isRecord(value) ||
+    !Number.isSafeInteger(value.id) ||
+    typeof value.id !== "number" ||
+    value.id < 1 ||
+    typeof value.name !== "string" ||
+    !value.name.trim() ||
+    typeof value.phone !== "string" ||
+    !value.phone.trim() ||
+    !(value.project === null || typeof value.project === "string") ||
+    !(value.plot === null || typeof value.plot === "string") ||
+    !(value.comment === null || typeof value.comment === "string") ||
+    value.consent !== true ||
+    !(
+      value.telegramStatus === undefined ||
+      value.telegramStatus === "not_configured" ||
+      value.telegramStatus === "pending" ||
+      value.telegramStatus === "sent" ||
+      value.telegramStatus === "failed"
+    ) ||
+    !(
+      value.telegramAttempts === undefined ||
+      (typeof value.telegramAttempts === "number" &&
+        Number.isSafeInteger(value.telegramAttempts) &&
+        value.telegramAttempts >= 0)
+    ) ||
+    typeof value.createdAt !== "string" ||
+    !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value.createdAt) ||
+    !Number.isFinite(Date.parse(value.createdAt))
+  )
+    throw invalidResponse();
+  return {
+    id: value.id,
+    name: value.name,
+    phone: value.phone,
+    project: value.project,
+    plot: value.plot,
+    comment: value.comment,
+    consent: true,
+    createdAt: value.createdAt,
+    telegramStatus: value.telegramStatus ?? "not_configured",
+    telegramAttempts: value.telegramAttempts ?? 0,
+  };
+}
+
+function parseAdminInquiries(value: unknown): AdminInquiriesPage {
+  if (
+    !isRecord(value) ||
+    !Array.isArray(value.items) ||
+    !(
+      value.nextCursor === null ||
+      (typeof value.nextCursor === "number" &&
+        Number.isSafeInteger(value.nextCursor) &&
+        value.nextCursor > 0)
+    )
+  )
+    throw invalidResponse();
+  const items = value.items.map(parseAdminInquiry);
+  if (
+    items.some((item, index) => index > 0 && item.id >= items[index - 1].id) ||
+    (value.nextCursor !== null &&
+      value.nextCursor !== items[items.length - 1]?.id)
+  )
+    throw invalidResponse();
+  return {
+    items,
+    nextCursor: value.nextCursor,
   };
 }
 
@@ -387,6 +476,19 @@ export const api = {
     );
     replaceCachedPlots(plots.map(toPublicPlot), revision);
     return plots;
+  },
+  getAdminInquiries: async (
+    options: RequestOptions & { limit?: number; before?: number } = {},
+  ) => {
+    const { limit = 50, before, ...requestOptions } = options;
+    const query = new URLSearchParams({ limit: String(limit) });
+    if (before !== undefined) query.set("before", String(before));
+    const page = parseAdminInquiries(
+      await request(`/api/admin/inquiries?${query}`, requestOptions),
+    );
+    if (before !== undefined && page.items.some((item) => item.id >= before))
+      throw invalidResponse();
+    return page;
   },
   createPlot: async (data: PlotCreate, options: RequestOptions = {}) => {
     const plot = parseAdminPlot(

@@ -1,29 +1,21 @@
-name: Deploy to GitHub Pages
+name: Check application and prepare Hostland release
 
 on:
   push:
-    branches:
-      - main
-
+    branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: pages
-  cancel-in-progress: false
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
+  check:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,7 +25,6 @@ jobs:
         with:
           node-version: 24
           cache: npm
-          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -41,10 +32,9 @@ jobs:
       - name: Test application
         run: npm test
 
-      - name: Build
-        run: npm run build:pages
+      - name: Build application and API
+        run: npm run build
         env:
-          VITE_API_URL: ${{ secrets.VITE_API_URL }}
           VITE_PHONE_MAKS: ${{ secrets.VITE_PHONE_MAKS }}
           VITE_PHONE_VLAD: ${{ secrets.VITE_PHONE_VLAD }}
           VITE_PHONE_HREF: ${{ secrets.VITE_PHONE_HREF }}
@@ -54,14 +44,15 @@ jobs:
           VITE_TELEGRAM_VLAD: ${{ secrets.VITE_TELEGRAM_VLAD }}
           VITE_CONTACT_EMAIL: ${{ secrets.VITE_CONTACT_EMAIL }}
 
-      - name: Setup Pages
-        uses: actions/configure-pages@v5
+      - name: Package Hostland release for review
+        if: github.event_name == 'workflow_dispatch'
+        run: npm run package:hostland
 
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
+      - name: Upload release archive
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
         with:
-          path: dist
-
-      - name: Deploy
-        id: deployment
-        uses: actions/deploy-pages@v4
+          name: hamper-hostland
+          path: release/hamper-hostland.zip
+          if-no-files-found: error
+          retention-days: 14

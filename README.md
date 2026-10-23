@@ -1,185 +1,120 @@
-# Hamper
+# Хампер
 
-just private website
+React/TypeScript-сайт и Node.js API для размещения на Hostland в России.
+Страницы, изображения, шрифты и API обслуживаются с одного домена. Cloudflare,
+D1, Wrangler и GitHub Pages для работы сайта больше не нужны.
 
-## Local environment
+## Архитектура
 
-Copy `.env.example` to `.env.local` and fill in the contact values. The local env file is ignored by Git.
+- Vite собирает клиент в `dist/`; Node.js API собирается в `build/server/`.
+- `server.js` — совместимая с Hostland Passenger точка входа.
+- SQLite на сервере хранит участки, акцию и заявки. Файл находится вне `public/`.
+  WAL, ограниченное ожидание блокировок и атомарные транзакции защищают сохранения.
+- `/admin/` использует подписанную HttpOnly cookie: HTTPS, Secure, SameSite=Lax.
+  Авторизация и все административные изменения проверяются сервером.
+- `POST /api/contact` подтверждает заявку только после записи в базу. Все заявки
+  доступны после авторизации в отдельной секции **Journal** в `/admin/`: контакты,
+  участок, комментарий, дата, согласие и статус уведомления Telegram.
+- Telegram — дополнительный канал: сервер отправляет уведомления из сохранённой
+  очереди, а недоступность Telegram не мешает приёму заявки в Journal. Настройки
+  бота хранятся только в `.env.server`; без них Journal продолжает работать.
+- Версионированные JS/CSS получают длительный кеш, HTML перепроверяется, текстовые
+  ответы сжимаются. Публичный клиент разделяет запросы и обновляет данные в фоне.
+- Все изображения и шрифты сайта локальные. В браузере Яндекс, Домклик и
+  мессенджеры открываются только по нажатию пользователя; уведомления боту
+  отправляет сервер.
 
-Telegram values are usernames without `@` or `https://t.me/`; WhatsApp values are phone numbers containing only digits. The interface adds the fixed link prefixes.
+Нужен Node.js **22.13+**, рекомендуется **24 LTS**. Сторонний драйвер базы,
+MySQL, Composer и постоянно работающий Vite на хостинге не требуются.
 
-```bash
-npm install
-npm run dev
-```
-
-## Cloudflare Worker API
-
-Create the D1 database and update `worker/wrangler.jsonc` with its ID:
-
-```bash
-npx wrangler d1 create hamper-production
-npx wrangler d1 migrations apply hamper-production --remote --config worker/wrangler.jsonc
-npx wrangler d1 execute hamper-production --remote --config worker/wrangler.jsonc --file=worker/seed.sql
-```
-
-```bash
-node scripts/create-password-hash.mjs
-```
-
-Set Worker secrets with `wrangler secret put`:
-
-```bash
-npx wrangler secret put ADMIN_LOGIN --config worker/wrangler.jsonc
-npx wrangler secret put ADMIN_PASSWORD_HASH --config worker/wrangler.jsonc
-# Optional: reuse a separately managed signing secret if one is already configured.
-npx wrangler secret put SESSION_SECRET --config worker/wrangler.jsonc
-npx wrangler secret put TELEGRAM_BOT_TOKEN --config worker/wrangler.jsonc
-npx wrangler secret put TELEGRAM_CHAT_ID --config worker/wrangler.jsonc
-npx wrangler secret put PUBLIC_ORIGIN --config worker/wrangler.jsonc
-npx wrangler deploy --config worker/wrangler.jsonc
-```
-
-Set `PUBLIC_ORIGIN` to the exact frontend origin, such as `https://vinodell.github.io` (without `/hamper`). Set `VITE_API_URL` to the deployed API Worker URL in the frontend build environment. Deploy the API and matching frontend together.
-
-## Admin sign-in
-
-Open `/admin/` and enter the configured login and password. `POST /api/admin/login` verifies them once and sets a signed HttpOnly cookie valid for 24 hours. The frontend then loads `/api/admin/plots` to check that the browser accepted the cookie. Reloading the page reuses this cookie; there are no client tokens, stored passwords, session database, redirects, or separate authentication routes. The previous Basic-auth value is removed from tab storage when opening the admin page.
-
-Every admin read/write checks the cookie signature and expiry on the server. Changing the configured login, password hash, or optional `SESSION_SECRET` invalidates existing cookies. The existing password hash provides signing key material when `SESSION_SECRET` is absent, so no new secret is required. **Выйти** sends `POST /api/admin/logout` and expires the browser cookie. Expired authentication returns to the login form and preserves unsaved editor rows until re-entry.
-
-HTTPS cookies use `HttpOnly; Secure; SameSite=None; Partitioned` so separate GitHub Pages and Worker sites can work with browsers supporting partitioned cookies. Browser settings that block these cookies will produce a readable sign-in error. Using the same site for the frontend and API also avoids third-party-cookie restrictions. Admin requests accept only the configured frontend origin; public plot/contact requests send no auth cookies or Authorization header.
-
-In `/admin`, **Добавить участок** in **Другие участки** creates a plot with a unique number. Area and price must be positive with up to two decimal places. **Сохранить участки** sends one `PUT /api/admin/plots` with `{ plots: [...] }`; the Worker validates the whole batch and saves it in a database transaction.
-
-## Promotions, plot documents and applications
-
-The admin promotion panel saves its own settings with **Сохранить акцию**. Its
-switch controls the home/project ribbons and the promotion card above the plots
-table. The discount is an integer from 1 to 100; it changes the displayed offer,
-while plot prices remain the values entered by the administrator.
-
-Expand **Документы и ссылка** for a plot to enter its cadastral number, mark
-**ГПЗУ получен** / **Разрешение на строительство**, and set the mortgage listing
-URL. Empty cadastral numbers and unmarked documents are shown as unconfirmed.
-Mortgage links accept HTTPS URLs on `domclick.ru` and its subdomains. **Купить в
-ипотеку** appears in the selected available plot's map popup only after its
-listing URL is saved; no listing URLs or document completion are invented.
-
-The table's **Подробнее** opens the plot details. **Забронировать участок**
-selects that plot in the application form. Applications are requests for contact;
-the administrator confirms a reservation by changing the plot status.
-For a reserved map parcel, **Уведомить, если участок освободится** appears next
-to the close control. It opens an inquiry with the project and plot fixed, adds
-the notification request to the submitted comment, and still requires personal
-data consent. This uses the existing application channel.
-
-Plot tables and the project's available-plot list show a Domclick icon next to
-the price only when that plot has a listing URL. **Выбрать** in the project's
-list opens the same parcel details as the interactive map; booking from those
-details opens the prefilled inquiry. Map hover cards are rendered above page
-sections, including near the bottom edge of the plan.
-
-The location button in **Расположение** copies the entrance coordinates on desktop
-and opens a Yandex Navigator link on mobile. Configure `coordinates` and
-`navigatorUrl` in `oinelovoLocation` in `src/lib/constants.ts`. Empty values keep
-the corresponding action disabled with an explanation until the owner supplies
-the actual location. Copy success is shown only after the
-clipboard confirms the write; a denied write offers the coordinates for manual
-copying. `npm run test:browser:location` checks this interaction with a fictional
-location in an isolated browser fixture, without changing the site constants.
-
-The optional **При 100% оплате** price is edited next to the base price in the
-admin table and when adding a plot. It must be positive, have up to two decimal
-places, and be lower than the base price. When set, public tables, lists and map
-details show the crossed-out base price, the full-payment price and its badge.
-Leaving the field empty removes both the badge and the special price. Sorting
-and the project's minimum price use the displayed amount; promotion percentages
-do not calculate plot prices. See [implementation details](docs/full-payment-and-motion.md).
-
-The personal-data checkbox starts unchecked, resets after a successful send,
-and is required to enable submission. Both the client and the Worker reject a
-request unless `consent` is the boolean `true`; the Telegram message records the
-confirmation.
-
-### Database upgrade
-
-Before publishing this Worker against an existing database, apply the checked-in
-migrations. They preserve the plots and add metadata columns plus the singleton
-promotion settings. The Worker deploy workflow applies pending migrations before
-deployment. On an empty database the same migration command initializes all tables.
+## Локальное демо
 
 ```bash
-npx wrangler d1 migrations apply hamper-production --remote --config worker/wrangler.jsonc
-```
-
-Use migrations for setup and upgrades. `worker/schema.sql` is a reference snapshot
-of the latest schema for isolated fixtures; applying it to an existing table does
-not add missing columns. Do not apply `0001_sales_features.sql` a second time
-manually; the migrations command tracks which files have already run.
-
-### Browser verification
-
-`npm run test:browser` builds an isolated Pages version and checks the real UI,
-Worker, and a temporary SQLite database in Chrome/Chromium. It uses synthetic
-credentials/plots and intercepts Telegram sends; it does not use production D1.
-It checks promotion saves across tabs, plot document edits, popup booking,
-mandatory consent, per-plot mortgage links, and layouts at 375/768/1440/1920 px.
-The command prints a directory containing screenshots and its JSON report.
-Set `CHROME_BIN` if the browser is not at a standard installation path. Node 24+
-is needed for the SQLite-backed tests.
-
-Tailwind is a Vite build-time dependency for scoped `tw:` utilities, with the
-existing theme and CSS retained. Preflight is omitted to preserve the site's
-existing defaults. See the [Tailwind Vite setup](https://tailwindcss.com/docs/installation/using-vite)
-and [individual imports](https://tailwindcss.com/docs/preflight#disabling-preflight)
-for the integration used here.
-
-## Local API and public data
-
-Public pages share an in-memory plot cache and refresh visible data. Failed requests retain previous data and show a retry message; saves publish confirmed data immediately. Malformed responses, duplicate plot IDs, invalid numeric values, and incomplete save responses are rejected.
-
-To view the public site locally without an API, database or admin setup, run:
-
-```bash
+npm ci
 npm run dev:mock
 ```
 
-Open the localhost URL printed by Vite. The `mock/` directory contains fictional
-plots and an enabled 12% promotion. Plot **1-01** has a full-payment price,
-completed documents and its own demo Domclick URL; **1-02** is reserved and opens
-the notification inquiry; **1-03** has no special price and partially completed
-documents; **1-04** is sold. All 21 map parcels have data. The four **Другие
-участки** fixtures include categories and photographs for checking their cards.
-Domclick URLs are illustrative, not real listings; photographs still load from
-their configured image host.
+`mock/` содержит тестовые участки, акцию и имитацию заявки. Административный API
+в этом режиме отключён, данные рабочего сайта не затрагиваются. Mock действует
+только в development на localhost с явным флагом; production всегда использует API.
 
-Applications require the normal personal-data consent and simulate a successful
-send locally. They are not stored, logged or sent to the API or Telegram. Admin
-requests are disabled in this mode, so real admin data cannot replace the demo
-cache. Edit `mock/plots.ts` and `mock/settings.ts` to change demo values.
+## Локальная работа с настоящим API
 
-Mock data works only when all three conditions hold: Vite development mode,
-`VITE_USE_MOCK_DATA=true`, and a loopback hostname (`localhost`, `127.0.0.1` or
-`[::1]`). Production builds always use the API, including when a mock flag is
-accidentally present. Use `npm run dev` with the flag absent or `false` to test
-real requests; an incorrect API URL or HTML fallback remains visible as an error.
-`node --test scripts/mock-api.test.mjs` checks the local API behavior, consent,
-cancellation, admin isolation and these activation boundaries.
+1. Скопируйте `.env.example` в `.env.local` и заполните публичные контакты.
+2. Скопируйте `.env.server.example` в `.env.server`.
+3. Установите `PUBLIC_ORIGIN=http://localhost:5173`, `PUBLIC_DIR=./dist` и данные
+   администратора. Создайте хэш командой `node scripts/create-password-hash.mjs`,
+   секрет — `node -e "console.log(require('node:crypto').randomBytes(48).toString('base64url'))"`.
+4. Соберите приложение и создайте базу:
 
-To test real requests locally, create an ignored `worker/.dev.vars` with `ADMIN_LOGIN`, `ADMIN_PASSWORD_HASH`, `PUBLIC_ORIGIN=http://localhost:5173`, and the Telegram secrets, then run `npm run worker:dev`. Use `VITE_API_URL=http://localhost:8787` for the frontend. Local HTTP on localhost uses an HttpOnly `SameSite=Lax` cookie. Keep real contact sends disabled or use a test Telegram destination during development.
+```bash
+npm run build
+npm run db:migrate
+```
 
-Run `npm test`, `npm run worker:typecheck`, and `npm run build` before publishing. `npm run test:data` covers shared request cancellation, cache refresh/save races, sorting, map status resolution, and Telegram success/error responses.
+В двух терминалах запустите `npm run api:dev` и `npm run dev`, затем откройте
+`http://localhost:5173`. Vite проксирует `/api` на `127.0.0.1:8787`. Для просмотра
+готовой сборки можно указать `PUBLIC_ORIGIN=http://localhost:8787` и выполнить
+`npm start`. `.env.server`, `.env.local` и `private/` исключены из Git.
 
-`npm run typecheck` checks the frontend, Vite configuration, and Worker together.
-The public plots API omits administrative street and update timestamp fields.
-JSON bodies are limited by their actual UTF-8 size: 32 KiB for ordinary requests
-and 12 MiB for bulk plot updates; larger requests return HTTP 413.
-The build output in `dist` is generated locally and by CI, and is not versioned.
+В production клиент всегда обращается к `/api` своего домена. Старый
+`VITE_API_URL` не перенаправит опубликованный сайт в Cloudflare; эта переменная
+учитывается только для явного development-подключения к другому API.
 
-The [code quality audit](docs/code-quality-audit.md) records the verified fixes,
-validation results, and remaining work.
+## Размещение на Hostland
 
-Both deployment workflows run the full tests before publishing. The GitHub Pages build requires `VITE_API_URL` in the `github-pages` environment or repository secrets.
+```bash
+npm run build
+npm run package:hostland
+```
 
-Project and admin links end in `/`, matching the directory URLs served by GitHub Pages and avoiding an extra redirect on direct visits or reloads.
+Архив `release/hamper-hostland.zip` содержит готовые клиент и сервер,
+SQL-миграции, пример настроек, инструкцию и контрольные суммы. Действующая база,
+серверные секреты, `node_modules` и mock-данные в него не попадают. На хостинге
+устанавливать npm-зависимости не нужно.
+
+Полная инструкция по панели Hostland, домену, HTTPS, переносу D1, настройке базы,
+резервным копиям и обновлениям: [docs/hostland-migration.md](docs/hostland-migration.md).
+Публикация, переключение домена, commit и push выполняются только после отдельного
+подтверждения владельца. GitHub Actions проверяет код; ручной workflow готовит
+архив для скачивания и ничего не публикует.
+
+## Возможности сайта
+
+Admin управляет ценами и дополнительной ценой при 100% оплате, акцией,
+кадастровыми номерами, отметками ГПЗУ/разрешения и индивидуальными ссылками Домклик.
+Таблица и карта используют одни данные. «Выбрать» открывает карточку участка;
+забронированный участок позволяет оставить запрос об освобождении. Согласие на
+обработку данных обязательно и не выбирается автоматически.
+
+**Journal** собирает обращения со всех форм, включая запрос об освобождении
+забронированного участка. В шапке admin есть переход к журналу; новые заявки
+расположены сверху, старые подгружаются кнопкой. Телефон доступен для звонка,
+дата указана по Москве, статус Telegram показывает реальное состояние доставки.
+Для уведомлений задайте `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` в `.env.server`
+и перезапустите сервер. Эти значения не нужны в `VITE_*` или браузере.
+
+Кнопка в «Расположение» копирует координаты на компьютере и открывает Навигатор
+на телефоне. Значения `oinelovoLocation` задаются в `src/lib/constants.ts`;
+пустое значение оставляет соответствующее действие недоступным с пояснением.
+
+## Проверки
+
+```bash
+npm test
+npm run typecheck
+npm run build
+npm run test:browser
+npm run test:browser:location
+```
+
+HTTP-тесты проверяют авторизацию, атомарность сохранений, приём и приватность
+заявок, пагинацию, доставку Telegram с имитацией внешнего API, файловую базу
+и перезапуск. Браузерные проверки используют
+синтетические данные и локальный API: admin, формы, карта, цены и размеры
+375/768/1440/1920 px. Настоящие заявки и рабочие учётные данные не используются.
+`CHROME_BIN` позволяет указать установленный Chrome/Chromium.
+
+Tailwind используется через префикс `tw:` без Preflight; существующие CSS и
+визуальный стиль сохранены. Исторические отчёты в `docs/` описывают прежние
+реализации; актуальная инструкция размещения — документ Hostland выше.

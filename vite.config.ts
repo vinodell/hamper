@@ -1,12 +1,11 @@
-import { defineConfig, loadEnv, type Plugin } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react";
-import { cloudflare } from "@cloudflare/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { adminPath, projectRoutes } from "./src/lib/routes.ts";
 
-function githubPagesRoutes(): Plugin {
+function staticAppRoutes(): Plugin {
   return {
-    name: "github-pages-routes",
+    name: "static-app-routes",
     apply: "build",
     enforce: "post",
     generateBundle: {
@@ -14,7 +13,7 @@ function githubPagesRoutes(): Plugin {
       handler(_options, bundle) {
         const html = bundle["index.html"];
         if (!html || html.type !== "asset")
-          this.error("GitHub Pages build is missing index.html");
+          this.error("The application build is missing index.html");
 
         const paths = [adminPath, ...projectRoutes.map(({ path }) => path)];
         const files = [
@@ -28,25 +27,15 @@ function githubPagesRoutes(): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => {
-  const githubPages = mode === "github-pages";
-  if (githubPages) {
-    const { VITE_API_URL } = loadEnv(mode, process.cwd(), "VITE_API_URL");
-    if (!VITE_API_URL)
-      throw new Error(
-        "GitHub Pages requires VITE_API_URL pointing to the deployed API Worker. Set it in the github-pages environment or repository secrets.",
-      );
-    const apiUrl = new URL(VITE_API_URL);
-    if (!["https:", "http:"].includes(apiUrl.protocol))
-      throw new Error("VITE_API_URL must be an absolute HTTP(S) API URL.");
-  }
-
-  return {
-    plugins: [
-      react(),
-      tailwindcss(),
-      githubPages ? githubPagesRoutes() : cloudflare(),
-    ],
-    base: githubPages ? "/hamper/" : "/",
-  };
-});
+export default defineConfig(({ command }) => ({
+  plugins: [react(), tailwindcss(), staticAppRoutes()],
+  // Old local/CI API URLs must never enter a Hostland production bundle.
+  define:
+    command === "build" ? { "import.meta.env.VITE_API_URL": '""' } : undefined,
+  base: "/",
+  server: {
+    proxy: {
+      "/api": "http://127.0.0.1:8787",
+    },
+  },
+}));

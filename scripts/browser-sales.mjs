@@ -7,9 +7,9 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
-import { transformWithOxc } from "vite";
+import { importServerModule } from "./server-test-loader.mjs";
 
-// An isolated integration check: real UI, Worker and SQL, synthetic data only.
+// An isolated integration check: real UI, API and SQL, synthetic data only.
 const root = fileURLToPath(new URL("../", import.meta.url));
 const artifacts = await mkdtemp(path.join(tmpdir(), "hamper-sales-browser-"));
 console.log(`Browser artifacts: ${artifacts}`);
@@ -18,31 +18,11 @@ const checks = [];
 const runtimeErrors = [];
 const screenshots = [];
 const requests = [];
-const telegram = [];
 const clients = [];
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
-const moduleUrl = (code) =>
-  `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
-const constants = await transformWithOxc(
-  await readFile(path.join(root, "worker/src/constants.ts"), "utf8"),
-  "constants.ts",
-);
-const source = await transformWithOxc(
-  await readFile(path.join(root, "worker/src/index.ts"), "utf8"),
-  "worker.ts",
-);
-const worker = (
-  await import(
-    moduleUrl(
-      source.code.replace(
-        /(["'])\.\/constants\1/g,
-        JSON.stringify(moduleUrl(constants.code)),
-      ),
-    )
-  )
-).default;
+const worker = (await importServerModule("api.ts")).default;
 const database = new DatabaseSync(":memory:");
-database.exec(await readFile(path.join(root, "worker/schema.sql"), "utf8"));
+database.exec(await readFile(path.join(root, "server/schema.sql"), "utf8"));
 const insert = database.prepare(
   "INSERT INTO plots (id, settlement, area, status, price, description, mortgage_url) VALUES (?, ?, ?, ?, ?, ?, ?)",
 );
@@ -118,26 +98,14 @@ const adminLogin = "browser-test-admin";
 const adminPassword = "browser-test-password";
 const salt = Buffer.from("browser-test-only-salt");
 const hash = pbkdf2Sync(adminPassword, salt, 100_000, 32, "sha256");
-let holdTelegram = false;
+let holdContactResponse = false;
+let failInquiryReads = false;
 let signingVersion = 1;
-let releaseTelegram;
+let releaseContactResponse;
 const originalFetch = globalThis.fetch;
-globalThis.fetch = async (input, options) => {
-  if (
-    String(input).startsWith("https://api.telegram.org/botbrowser-test-token/")
-  ) {
-    telegram.push(JSON.parse(options.body));
-    if (holdTelegram)
-      await new Promise((resolve) => {
-        releaseTelegram = resolve;
-      });
-    return Response.json({ ok: true });
-  }
-  return originalFetch(input, options);
-};
 let siteOrigin;
 let apiOrigin;
-const apiServer = http.createServer(async (request, response) => {
+async function handleApiRequest(request, response) {
   try {
     const chunks = [];
     for await (const chunk of request) chunks.push(chunk);
@@ -145,30 +113,42 @@ const apiServer = http.createServer(async (request, response) => {
     const record = { method: request.method, path: request.url };
     if (body.length) record.body = JSON.parse(body.toString());
     requests.push(record);
-    const result = await worker.fetch(
-      new Request(apiOrigin + request.url, {
-        method: request.method,
-        headers: request.headers,
-        ...(["GET", "HEAD"].includes(request.method) ? {} : { body }),
-      }),
-      {
-        DB,
-        ADMIN_LOGIN: adminLogin,
-        ADMIN_PASSWORD_HASH: `${salt.toString("base64url")}:${hash.toString("base64url")}`,
-        SESSION_SECRET: `browser-test-signing-${signingVersion}`,
-        PUBLIC_ORIGIN: siteOrigin,
-        TELEGRAM_BOT_TOKEN: "browser-test-token",
-        TELEGRAM_CHAT_ID: "browser-test-chat",
-      },
-    );
+    const result =
+      failInquiryReads && request.url.startsWith("/api/admin/inquiries")
+        ? Response.json(
+            { error: "Тестовая ошибка загрузки заявок" },
+            { status: 503 },
+          )
+        : await worker.fetch(
+            new Request(apiOrigin + request.url, {
+              method: request.method,
+              headers: request.headers,
+              ...(["GET", "HEAD"].includes(request.method) ? {} : { body }),
+            }),
+            {
+              DB,
+              ADMIN_LOGIN: adminLogin,
+              ADMIN_PASSWORD_HASH: `${salt.toString("base64url")}:${hash.toString("base64url")}`,
+              SESSION_SECRET: `browser-test-signing-${signingVersion}`,
+              PUBLIC_ORIGIN: siteOrigin,
+            },
+          );
     record.status = result.status;
+    if (
+      request.url === "/api/contact" &&
+      request.method === "POST" &&
+      holdContactResponse
+    )
+      await new Promise((resolve) => {
+        releaseContactResponse = resolve;
+      });
     response.writeHead(result.status, Object.fromEntries(result.headers));
     response.end(Buffer.from(await result.arrayBuffer()));
   } catch (error) {
     response.writeHead(500);
     response.end(JSON.stringify({ error: String(error) }));
   }
-});
+}
 const mime = {
   ".html": "text/html",
   ".js": "text/javascript",
@@ -183,12 +163,11 @@ const mime = {
 const siteServer = http.createServer(async (request, response) => {
   try {
     const pathname = new URL(request.url, siteOrigin).pathname;
-    if (!pathname.startsWith("/hamper/")) {
-      response.writeHead(404);
-      response.end();
+    if (pathname.startsWith("/api/")) {
+      await handleApiRequest(request, response);
       return;
     }
-    const relative = decodeURIComponent(pathname.slice("/hamper/".length));
+    const relative = decodeURIComponent(pathname.slice(1));
     const target = path.resolve(
       buildRoot,
       relative.endsWith("/") || !relative ? `${relative}index.html` : relative,
@@ -230,21 +209,25 @@ const run = (command, args, options) =>
   });
 let chrome;
 try {
-  await listen(apiServer);
   await listen(siteServer);
-  apiOrigin = `http://127.0.0.1:${apiServer.address().port}`;
   siteOrigin = `http://127.0.0.1:${siteServer.address().port}`;
+  apiOrigin = siteOrigin;
   await run(
     process.execPath,
     [
       path.join(root, "node_modules/vite/bin/vite.js"),
       "build",
-      "--mode",
-      "github-pages",
       "--outDir",
       buildRoot,
     ],
-    { cwd: root, env: { ...process.env, VITE_API_URL: apiOrigin } },
+    {
+      cwd: root,
+      env: {
+        ...process.env,
+        // A stale local/CI setting must not escape the same-origin production API.
+        VITE_API_URL: "https://former-hamper-api.example.workers.dev",
+      },
+    },
   );
   let executable;
   for (const candidate of [
@@ -373,6 +356,12 @@ try {
   const main = await connect(
     (await targets()).find((target) => target.type === "page"),
   );
+  async function savedInquiries() {
+    const result = await admin.evaluate(
+      "fetch('/api/admin/inquiries',{credentials:'include'}).then(async response=>{if(!response.ok)throw Error('Cannot read saved inquiries: '+response.status);return response.json();})",
+    );
+    return result.items;
+  }
   async function until(client, expression) {
     for (let attempt = 0; attempt < 120; attempt++) {
       if (await client.evaluate(`Boolean(${expression})`)) return;
@@ -384,7 +373,7 @@ try {
   }
   async function navigate(client, route, ready) {
     await client.command("Page.navigate", {
-      url: `${siteOrigin}/hamper${route}`,
+      url: `${siteOrigin}${route}`,
     });
     await until(client, ready);
   }
@@ -536,7 +525,6 @@ try {
         "document.querySelector('.contact-form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))",
       );
       await delay(80);
-      assert.equal(telegram.length, 0);
       assert.equal(
         requests.some(
           (request) =>
@@ -584,6 +572,51 @@ try {
   await until(
     admin,
     "document.querySelector('.admin-promotion input[role=switch]')&&!document.querySelector('.admin-promotion fieldset').disabled",
+  );
+  await check(
+    "An authenticated admin sees an empty Journal before the first inquiry",
+    async () => {
+      await until(
+        admin,
+        "document.querySelector('.admin-inquiries-content')?.getAttribute('aria-busy')==='false'",
+      );
+      assert.match(
+        await admin.evaluate(
+          "document.querySelector('.admin-inquiries').innerText",
+        ),
+        /Заявок пока нет/,
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelectorAll('.admin-inquiry').length",
+        ),
+        0,
+      );
+      await admin.evaluate(
+        "document.querySelector('.admin-inquiries').scrollIntoView({block:'start',behavior:'instant'})",
+      );
+      await screenshot(admin, "journal-empty");
+    },
+  );
+  await check(
+    "The admin header opens the separate Journal section by keyboard",
+    async () => {
+      await admin.command("Page.bringToFront");
+      await admin.evaluate(
+        "document.querySelector('.admin-journal-link').focus()",
+      );
+      await pressKey(admin, "Enter", "Enter", 13);
+      await until(admin, "location.hash==='#journal'");
+      const journal = await admin.evaluate(
+        "(()=>{const section=document.querySelector('section#journal');const title=document.getElementById(section.getAttribute('aria-labelledby'));const bounds=title.getBoundingClientRect();return{title:title.textContent,description:section.innerText,visible:bounds.top>=0&&bounds.bottom<=innerHeight};})()",
+      );
+      assert.equal(journal.title, "Journal");
+      assert.match(
+        journal.description,
+        /сохраняются здесь независимо.*Telegram/,
+      );
+      assert.equal(journal.visible, true);
+    },
   );
   await check(
     "Admin changes the promotion and other tabs follow the confirmed save",
@@ -886,8 +919,9 @@ try {
       await activate(main, "[name=consent]");
       await activate(main, ".contact-form [type=submit]");
       await until(main, "document.querySelector('.form-success')");
-      assert.equal(telegram.length, 1);
-      assert.match(telegram[0].text, /2-01/);
+      const saved = await savedInquiries();
+      assert.equal(saved.length, 1);
+      assert.equal(saved[0].plot, "2-01");
       assert.equal(
         requests.findLast(
           (request) =>
@@ -1252,7 +1286,7 @@ try {
       assert.match(form.text, /Участок 1-02 (?:сейчас )?забронирован/);
       assert.match(form.text, /если он освободится/iu);
       const comment = "Предпочитаю звонок после 18:00";
-      const telegramBefore = telegram.length;
+      const inquiriesBefore = (await savedInquiries()).length;
       await fill(main, "#inquiry-form [name=name]", "Ожидающий посетитель");
       await fill(main, "#inquiry-form [name=phone]", "+7 999 123 45 67");
       await fill(main, "#inquiry-form [name=comment]", comment);
@@ -1262,7 +1296,8 @@ try {
         main,
         "document.querySelector('#inquiry-form .form-success')",
       );
-      assert.equal(telegram.length, telegramBefore + 1);
+      const saved = await savedInquiries();
+      assert.equal(saved.length, inquiriesBefore + 1);
       const sent = requests.findLast(
         (request) =>
           request.path === "/api/contact" && request.method === "POST",
@@ -1272,10 +1307,10 @@ try {
       assert.equal(sent.body.consent, true);
       assert.match(sent.body.comment, /уведомить.*освобод/iu);
       assert.ok(sent.body.comment.endsWith(comment));
-      assert.match(telegram.at(-1).text, /Ойнеловские дали/);
-      assert.match(telegram.at(-1).text, /1-02/);
-      assert.match(telegram.at(-1).text, /уведомить.*освобод/iu);
-      assert.ok(telegram.at(-1).text.includes(comment));
+      assert.equal(saved[0].project, "Ойнеловские дали");
+      assert.equal(saved[0].plot, "1-02");
+      assert.match(saved[0].comment, /уведомить.*освобод/iu);
+      assert.ok(saved[0].comment.includes(comment));
       await activate(main, ".project-dialog__close");
     },
   );
@@ -1328,7 +1363,10 @@ try {
       );
       assert.equal(sent.body.plot, "1-01");
       assert.equal(sent.body.comment, comment);
-      assert.doesNotMatch(telegram.at(-1).text, /уведомить.*освобод/iu);
+      assert.doesNotMatch(
+        (await savedInquiries())[0].comment,
+        /уведомить.*освобод/iu,
+      );
       await activate(main, ".project-dialog__close");
     },
   );
@@ -1360,7 +1398,7 @@ try {
       await fill(main, "#inquiry-form [name=name]", "Тестовый посетитель");
       await fill(main, "#inquiry-form [name=phone]", "+7 999 123 45 67");
       await activate(main, "#inquiry-form [name=consent]");
-      holdTelegram = true;
+      holdContactResponse = true;
       await activate(main, "#inquiry-form [type=submit]");
       await until(
         main,
@@ -1371,12 +1409,12 @@ try {
         await main.evaluate("Boolean(document.querySelector('#inquiry-form'))"),
         true,
       );
-      for (let attempt = 0; attempt < 40 && !releaseTelegram; attempt++)
+      for (let attempt = 0; attempt < 40 && !releaseContactResponse; attempt++)
         await delay(50);
-      assert.ok(releaseTelegram);
-      holdTelegram = false;
-      releaseTelegram();
-      releaseTelegram = undefined;
+      assert.ok(releaseContactResponse);
+      holdContactResponse = false;
+      releaseContactResponse();
+      releaseContactResponse = undefined;
       await until(
         main,
         "document.querySelector('#inquiry-form .form-success')",
@@ -1593,6 +1631,263 @@ try {
       );
     },
   );
+  await check(
+    "The admin inbox displays submitted inquiries after a page reload",
+    async () => {
+      await navigate(
+        admin,
+        "/admin/",
+        "document.querySelectorAll('.admin-inquiry').length===4",
+      );
+      const inquiry = await admin.evaluate(
+        "(()=>{const cards=[...document.querySelectorAll('.admin-inquiry')];const card=cards.find(item=>item.querySelector('h3').textContent==='Ожидающий посетитель');return{text:card?.innerText,phone:card?.querySelector('a[href^=\"tel:\"]').getAttribute('href'),date:card?.querySelector('time').dateTime};})()",
+      );
+      assert.match(inquiry.text, /Ойнеловские дали/);
+      assert.match(inquiry.text, /1-02/);
+      assert.match(inquiry.text, /уведомить.*освобод/iu);
+      assert.match(inquiry.text, /Согласие на обработку данных получено/);
+      assert.equal(inquiry.phone, "tel:+79991234567");
+      assert.match(inquiry.date, /^\d{4}-\d{2}-\d{2}T/);
+    },
+  );
+  async function submitFixtureInquiry(name) {
+    const response = await originalFetch(`${siteOrigin}/api/contact`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Origin: siteOrigin },
+      body: JSON.stringify({
+        name,
+        phone: "+7 999 123 45 67",
+        project: "Ойнеловские дали",
+        plot: "1-02",
+        comment: "Первая строка\nВторая строка",
+        consent: true,
+      }),
+    });
+    assert.equal(response.status, 200);
+  }
+  await check(
+    "The inbox loads older inquiries once and refreshes from the newest record",
+    async () => {
+      for (let index = 5; index <= 52; index++)
+        await submitFixtureInquiry(`Тестовая заявка ${index}`);
+      await activate(admin, ".admin-inquiries-refresh");
+      await until(
+        admin,
+        "document.querySelectorAll('.admin-inquiry').length===50&&!document.querySelector('.admin-inquiries-refresh').disabled",
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelector('.admin-inquiry h3').textContent",
+        ),
+        "Тестовая заявка 52",
+      );
+      await activate(admin, ".admin-inquiries-more");
+      await until(
+        admin,
+        "document.querySelectorAll('.admin-inquiry').length===52&&!document.querySelector('.admin-inquiries-more')",
+      );
+      const ids = await admin.evaluate(
+        "[...document.querySelectorAll('.admin-inquiry')].map(item=>item.querySelector('.admin-inquiry-meta span').textContent)",
+      );
+      assert.equal(new Set(ids).size, 52);
+      await submitFixtureInquiry(
+        "Новая заявка <script>window.unexpectedInquiryScript=true</script>",
+      );
+      await activate(admin, ".admin-inquiries-refresh");
+      await until(
+        admin,
+        "document.querySelectorAll('.admin-inquiry').length===50&&!document.querySelector('.admin-inquiries-refresh').disabled",
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelector('.admin-inquiry h3').textContent",
+        ),
+        "Новая заявка <script>window.unexpectedInquiryScript=true</script>",
+      );
+      assert.equal(
+        await admin.evaluate("window.unexpectedInquiryScript===undefined"),
+        true,
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelector('.admin-inquiry-comment').textContent",
+        ),
+        "Первая строка\nВторая строка",
+      );
+      assert.equal(
+        await admin.evaluate(
+          "getComputedStyle(document.querySelector('.admin-inquiry-comment')).whiteSpace",
+        ),
+        "pre-wrap",
+      );
+    },
+  );
+  await check(
+    "Journal distinguishes Telegram delivery states while retaining every inquiry",
+    async () => {
+      // Synthetic status fixtures exercise the UI, not a real Telegram delivery.
+      const fixtures = [
+        [
+          "sent",
+          1,
+          "Отправлено в Telegram",
+          "Заявка также сохранена в Journal",
+        ],
+        ["pending", 0, "В очереди Telegram", "Заявка уже сохранена"],
+        ["failed", 4, "Не отправлено в Telegram", "Заявка сохранена"],
+        [
+          "not_configured",
+          0,
+          "Telegram не настроен",
+          "Заявка сохранена в Journal",
+        ],
+      ];
+      const rows = database
+        .prepare("SELECT id FROM inquiries ORDER BY id DESC LIMIT 4")
+        .all();
+      const update = database.prepare(
+        "UPDATE inquiry_telegram_outbox SET status = ?, attempts = ? WHERE inquiry_id = ?",
+      );
+      for (const [index, row] of rows.entries())
+        update.run(fixtures[index][0], fixtures[index][1], row.id);
+      await activate(admin, ".admin-inquiries-refresh");
+      await until(
+        admin,
+        "!document.querySelector('.admin-inquiries-refresh').disabled&&document.querySelector('.admin-inquiry-delivery[data-status=sent]')",
+      );
+      for (const [index, row] of rows.entries()) {
+        const [status, attempts, label, detail] = fixtures[index];
+        const content = await admin.evaluate(
+          `(()=>{const card=[...document.querySelectorAll('.admin-inquiry')].find(item=>item.querySelector('.admin-inquiry-meta span').textContent===${JSON.stringify(`Заявка №${row.id}`)});return card?.querySelector('.admin-inquiry-delivery')?.innerText;})()`,
+        );
+        assert.ok(content?.includes(label), `${status} has a clear label`);
+        assert.ok(
+          content.includes(detail),
+          `${status} keeps its saved state clear`,
+        );
+        assert.equal(content.includes("Попыток:"), attempts > 0);
+        if (attempts > 0) assert.ok(content.includes(`Попыток: ${attempts}`));
+      }
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelectorAll('.admin-inquiry').length",
+        ),
+        50,
+      );
+    },
+  );
+  await check(
+    "An inbox read failure retains visible inquiries and can be retried",
+    async () => {
+      failInquiryReads = true;
+      await activate(admin, ".admin-inquiries-refresh");
+      await until(
+        admin,
+        "document.querySelector('.admin-inquiries [role=alert]')",
+      );
+      assert.match(
+        await admin.evaluate(
+          "document.querySelector('.admin-inquiries [role=alert]').innerText",
+        ),
+        /Тестовая ошибка/,
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelectorAll('.admin-inquiry').length",
+        ),
+        50,
+      );
+      await admin.evaluate(
+        "document.querySelector('.admin-inquiries').scrollIntoView({block:'start',behavior:'instant'})",
+      );
+      await screenshot(admin, "journal-error");
+      failInquiryReads = false;
+      await activate(admin, ".admin-inquiries-refresh");
+      await until(
+        admin,
+        "!document.querySelector('.admin-inquiries [role=alert]')&&!document.querySelector('.admin-inquiries-refresh').disabled",
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelectorAll('.admin-inquiry').length",
+        ),
+        50,
+      );
+    },
+  );
+  await check(
+    "Inbox session expiry hides personal data and preserves unsaved plot edits",
+    async () => {
+      await fill(admin, '[aria-label="Цена 2-01"]', "1510000");
+      signingVersion += 1;
+      await activate(admin, ".admin-inquiries-refresh");
+      await until(admin, "document.querySelector('.admin-login')");
+      assert.equal(
+        await admin.evaluate(
+          "Boolean(document.querySelector('.admin-inquiries'))",
+        ),
+        false,
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.body.innerText.includes('Новая заявка <script>')",
+        ),
+        false,
+      );
+      await reenterAdmin();
+      assert.equal(
+        await admin.evaluate(
+          "document.querySelector('[aria-label=\"Цена 2-01\"]').value",
+        ),
+        "1510000",
+      );
+      await fill(admin, '[aria-label="Цена 2-01"]', "1500000");
+      await until(
+        admin,
+        "document.querySelectorAll('.admin-inquiry').length===50",
+      );
+      const browserStorage = await admin.evaluate(
+        "[localStorage,sessionStorage].flatMap(storage=>Object.keys(storage).map(key=>storage.getItem(key))).join('\\n')",
+      );
+      assert.doesNotMatch(
+        browserStorage,
+        /Ожидающий посетитель|Новая заявка <script>|Первая строка/,
+      );
+    },
+  );
+  await check(
+    "The inbox keeps plot controls nearby and supports keyboard scrolling",
+    async () => {
+      await admin.command("Page.bringToFront");
+      const region = '[role="region"][aria-label="Список заявок"]';
+      const layout = await admin.evaluate(
+        `(()=>{const region=document.querySelector(${JSON.stringify(region)});return{height:region.getBoundingClientRect().height,scrollable:region.scrollHeight>region.clientHeight,tabIndex:region.tabIndex};})()`,
+      );
+      assert.ok(layout.height <= 513);
+      assert.equal(layout.scrollable, true);
+      assert.equal(layout.tabIndex, 0);
+      await admin.evaluate(
+        `document.querySelector(${JSON.stringify(region)}).focus()`,
+      );
+      await pressKey(admin, "End", "End", 35);
+      await until(
+        admin,
+        `document.querySelector(${JSON.stringify(region)}).scrollTop>0`,
+      );
+      assert.notEqual(
+        await admin.evaluate(
+          `getComputedStyle(document.querySelector(${JSON.stringify(region)})).outlineStyle`,
+        ),
+        "none",
+      );
+      await screenshot(admin, "journal-keyboard-focus");
+      await pressKey(admin, "Home", "Home", 36);
+      await until(
+        admin,
+        `document.querySelector(${JSON.stringify(region)}).scrollTop===0`,
+      );
+    },
+  );
   for (const width of [375, 768, 1440, 1920]) {
     await main.command("Emulation.setDeviceMetricsOverride", {
       width,
@@ -1744,7 +2039,40 @@ try {
         JSON.stringify(layout),
       );
     });
+    await check(`Journal layout ${width}px`, async () => {
+      await admin.evaluate(
+        "document.querySelector('.admin-inquiries-scroll').scrollTop=0;document.querySelector('#journal').scrollIntoView({block:'start',behavior:'instant'})",
+      );
+      const layout = await admin.evaluate(
+        "(()=>{const section=document.querySelector('#journal');const bounds=section.getBoundingClientRect();return{withinViewport:bounds.left>=0&&bounds.right<=innerWidth,overflow:document.documentElement.scrollWidth>innerWidth,deliveryOverflows:[...section.querySelectorAll('.admin-inquiry')].some(card=>{const bounds=card.getBoundingClientRect();const delivery=card.querySelector('.admin-inquiry-delivery').getBoundingClientRect();return delivery.left<bounds.left||delivery.right>bounds.right;})};})()",
+      );
+      assert.deepEqual(layout, {
+        withinViewport: true,
+        overflow: false,
+        deliveryOverflows: false,
+      });
+      await screenshot(admin, `journal-${width}`);
+    });
   }
+  await check(
+    "Logging out removes the inbox and personal data from the page",
+    async () => {
+      await activate(admin, ".admin-header button");
+      await until(admin, "document.querySelector('.admin-login')");
+      assert.equal(
+        await admin.evaluate(
+          "Boolean(document.querySelector('.admin-inquiries'))",
+        ),
+        false,
+      );
+      assert.equal(
+        await admin.evaluate(
+          "document.body.innerText.includes('Новая заявка <script>')",
+        ),
+        false,
+      );
+    },
+  );
   assert.deepEqual(runtimeErrors, []);
   const report = { checks, runtimeErrors, screenshots, artifacts };
   await writeFile(
@@ -1759,13 +2087,10 @@ try {
     ),
   );
 } finally {
-  releaseTelegram?.();
+  releaseContactResponse?.();
   clients.forEach((client) => client.websocket.close());
   chrome?.kill();
-  apiServer.closeAllConnections();
   siteServer.closeAllConnections();
-  apiServer.close();
   siteServer.close();
-  globalThis.fetch = originalFetch;
   database.close();
 }

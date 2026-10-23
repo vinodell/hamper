@@ -21,8 +21,9 @@ export { projectRoutes } from "./routes";
 
 const env = import.meta.env;
 
-export const apiUrl =
-  import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") ?? "";
+export const apiUrl = import.meta.env.DEV
+  ? (import.meta.env.VITE_API_URL?.trim().replace(/\/+$/, "") ?? "")
+  : "";
 
 export const siteConfig = {
   brand: "Хампер",
@@ -103,7 +104,7 @@ export const settlementFormats: SettlementFormat[] = [
     label: "КАМЕРНЫЙ ФОРМАТ",
     title: "Ойнеловские дали",
     copy: "Приватная территория для тех, кто ценит тишину и узкий круг соседей.",
-    image: "https://u5hills.ru/img/53858747_1920_q70.jpg",
+    image: `${import.meta.env.BASE_URL}images/projects/oinelovo.jpg`,
     facts: [
       { text: "21 участок", icon: Users },
       { text: "Электричество", icon: Zap },
@@ -115,7 +116,7 @@ export const settlementFormats: SettlementFormat[] = [
     label: "РАСШИРЕННАЯ ИНФРАСТРУКТУРА",
     title: "Другие участки",
     copy: "Оптимальный выбор с большим разнообразием участков и расширенными зонами отдыха.",
-    image: "https://u5hills.ru/img/53858749_1920_q70.jpg",
+    image: `${import.meta.env.BASE_URL}images/projects/other-plots.jpg`,
     facts: [
       { text: "54 участка", icon: House },
       { text: "Закрытая территория", icon: Fence },

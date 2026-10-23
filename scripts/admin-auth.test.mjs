@@ -1,37 +1,16 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHmac, pbkdf2Sync } from "node:crypto";
-import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
-import { transformWithOxc } from "vite";
-
-const sourceRoot = new URL("../worker/src/", import.meta.url);
-const asModule = (code) =>
-  `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
-const constantsSource = await transformWithOxc(
-  await readFile(new URL("constants.ts", sourceRoot), "utf8"),
-  "constants.ts",
-);
-const constantsUrl = asModule(constantsSource.code);
+import { importServerModule } from "./server-test-loader.mjs";
 const {
   ADMIN_COOKIE,
   ADMIN_COOKIE_TTL_SECONDS,
   PASSWORD_HASH_ITERATIONS,
   PASSWORD_HASH_ALGORITHM,
-} = await import(constantsUrl);
-const workerSource = await transformWithOxc(
-  await readFile(new URL("index.ts", sourceRoot), "utf8"),
-  "index.ts",
-);
-const { default: worker } = await import(
-  asModule(
-    workerSource.code.replace(
-      /(["'])\.\/constants\1/g,
-      JSON.stringify(constantsUrl),
-    ),
-  )
-);
+} = await importServerModule("constants.ts");
+const { default: worker } = await importServerModule("api.ts");
 
 const login = "test-admin";
 const password = "local-test-password";
@@ -242,8 +221,7 @@ test("login verifies credentials once and grants a signed HttpOnly cookie for on
   for (const attribute of [
     "HttpOnly",
     "Secure",
-    "SameSite=None",
-    "Partitioned",
+    "SameSite=Lax",
     "Path=/api/admin",
     "Max-Age=86400",
   ])
@@ -345,7 +323,7 @@ test("password hash CLI produces hashes accepted by admin login at valid passwor
   }
 });
 
-test("every protected read and write rejects invalid cookies before accessing D1", async (t) => {
+test("every protected read and write rejects invalid cookies before accessing the database", async (t) => {
   for (const [operation, path, options] of operations) {
     const { env, calls } = fixture();
     const valid = signedCookie(env);
@@ -532,7 +510,7 @@ test("logout expires the browser cookie using the same path and attributes", asy
   assert.deepEqual(await response.json(), { ok: true });
   assert.equal(
     response.headers.get("Set-Cookie"),
-    `${ADMIN_COOKIE}=; Path=/api/admin; HttpOnly; Max-Age=0; Secure; SameSite=None; Partitioned; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
+    `${ADMIN_COOKIE}=; Path=/api/admin; HttpOnly; Max-Age=0; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
   );
   const afterLogout = await worker.fetch(request("/api/admin/plots"), env);
   assert.equal(afterLogout.status, 401);

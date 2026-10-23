@@ -3,30 +3,11 @@ import { createHmac } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { DatabaseSync } from "node:sqlite";
 import test from "node:test";
-import { transformWithOxc } from "vite";
+import { importServerModule } from "./server-test-loader.mjs";
 
 const root = new URL("../", import.meta.url);
-const moduleUrl = (code) =>
-  `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
-const constants = await transformWithOxc(
-  await readFile(new URL("worker/src/constants.ts", root), "utf8"),
-  "constants.ts",
-);
-const source = await transformWithOxc(
-  await readFile(new URL("worker/src/index.ts", root), "utf8"),
-  "index.ts",
-);
-const worker = (
-  await import(
-    moduleUrl(
-      source.code.replace(
-        /(["'])\.\/constants\1/g,
-        JSON.stringify(moduleUrl(constants.code)),
-      ),
-    )
-  )
-).default;
-const schema = await readFile(new URL("worker/schema.sql", root), "utf8");
+const { default: worker } = await importServerModule("api.ts");
+const schema = await readFile(new URL("server/schema.sql", root), "utf8");
 
 function d1Adapter(database, { afterQuery } = {}) {
   return {
@@ -430,15 +411,15 @@ test("promotion settings persist independently of plot saves and are readable pu
 
 test("existing databases migrate without losing plots and receive safe sales defaults", async (context) => {
   const initial = await readFile(
-    new URL("worker/migrations/0000_initial.sql", root),
+    new URL("server/migrations/0000_initial.sql", root),
     "utf8",
   );
   const migration = await readFile(
-    new URL("worker/migrations/0001_sales_features.sql", root),
+    new URL("server/migrations/0001_sales_features.sql", root),
     "utf8",
   );
   const fullPayment = await readFile(
-    new URL("worker/migrations/0002_full_payment_price.sql", root),
+    new URL("server/migrations/0002_full_payment_price.sql", root),
     "utf8",
   );
   const legacySchema = `
@@ -482,15 +463,15 @@ test("existing databases migrate without losing plots and receive safe sales def
 
 test("the complete migration chain initializes an empty database for sales requests", async (context) => {
   const initial = await readFile(
-    new URL("worker/migrations/0000_initial.sql", root),
+    new URL("server/migrations/0000_initial.sql", root),
     "utf8",
   );
   const sales = await readFile(
-    new URL("worker/migrations/0001_sales_features.sql", root),
+    new URL("server/migrations/0001_sales_features.sql", root),
     "utf8",
   );
   const fullPayment = await readFile(
-    new URL("worker/migrations/0002_full_payment_price.sql", root),
+    new URL("server/migrations/0002_full_payment_price.sql", root),
     "utf8",
   );
   const { request } = fixture(context, initial + sales + fullPayment);
