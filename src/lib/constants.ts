@@ -1,19 +1,12 @@
 import type { IndividualPlotDetails } from "../data/individualPlots";
 import type { LucideIcon } from "lucide-react";
 import {
-  Car,
-  CarFront,
   Droplets,
   Factory,
-  Fence,
-  House,
   Map,
-  MapPinned,
   ShieldCheck,
   ShoppingBag,
   Sparkles,
-  TreePine,
-  Users,
   Zap,
 } from "lucide-react";
 
@@ -47,6 +40,12 @@ export const navigation = [
   ["Акции", "#form"],
 ] as const;
 
+export const homeNavigation = [
+  ["Посёлки", "#poselki"],
+  ["О компании", "#about-company"],
+  ["Контакты", "#form"],
+] as const;
+
 export const plotStatuses = ["Свободен", "Забронирован", "Продан"] as const;
 export type PlotStatus = (typeof plotStatuses)[number];
 
@@ -73,57 +72,11 @@ export interface InfoItem {
   text: string;
 }
 
-interface IconFact {
-  icon: LucideIcon;
-  text: string;
-}
-
-export interface SettlementFormat {
-  label: string;
-  title: string;
-  copy: string;
-  image: string;
-  facts: IconFact[];
-}
-
 export interface TableSectionProps {
   initialFilter?: Exclude<PlotFilter, "Все">;
   onSelectPlot?: (plot: Plot) => void;
   sortable?: boolean;
 }
-
-export const heroFacts: IconFact[] = [
-  { icon: MapPinned, text: "21 участок" },
-  { icon: CarFront, text: "25 км от КАД" },
-  { icon: Fence, text: "уютная территория" },
-  { icon: TreePine, text: "общие зоны отдыха" },
-];
-
-export const settlementFormats: SettlementFormat[] = [
-  {
-    label: "КАМЕРНЫЙ ФОРМАТ",
-    title: "Ойнеловские дали",
-    copy: "Приватная территория для тех, кто ценит тишину и узкий круг соседей.",
-    image: `${import.meta.env.BASE_URL}images/projects/oinelovo.jpg`,
-    facts: [
-      { text: "21 участок", icon: Users },
-      { text: "Электричество", icon: Zap },
-      { text: "Детская площадка", icon: TreePine },
-      { text: "Гостевая парковка", icon: Car },
-    ],
-  },
-  {
-    label: "РАСШИРЕННАЯ ИНФРАСТРУКТУРА",
-    title: "Другие участки",
-    copy: "Оптимальный выбор с большим разнообразием участков и расширенными зонами отдыха.",
-    image: `${import.meta.env.BASE_URL}images/projects/other-plots.jpg`,
-    facts: [
-      { text: "54 участка", icon: House },
-      { text: "Закрытая территория", icon: Fence },
-      { text: "Прогулочные зоны", icon: TreePine },
-    ],
-  },
-];
 
 export const infrastructure: InfoItem[] = [
   {

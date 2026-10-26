@@ -1,15 +1,15 @@
 # Ойнеловские дали: рендер интерактивной карты
 
-Asset: `public/images/masterplan-oinelovo-v1.webp`.
+Source asset: `docs/design/source-assets/masterplan-oinelovo-v1.webp`.
 Created with built-in `image_gen`; exported as lossless WebP. The original generation remains in the Codex generated-images folder.
 
 The site serves optimized WebP derivatives through `srcset`: `masterplan-oinelovo-1024.webp` (1024 × 1536, 738 KB) and `masterplan-oinelovo-640.webp` (640 × 960, 278 KB). Both retain the full framing and the overlay alignment. The original lossless asset is retained for future exports.
 
-`public/images/masterplan-background.webp` is a 1200 × 675 derivative of the existing local aerial photograph. It is loaded lazily behind the map, with a static CSS blur and a light overlay. Only this decorative layer is blurred; the plan and its clickable polygons stay sharp.
+The old decorative background and unused `GeneralPlan` section were removed during cleanup. The active `Oinelovo` page serves only the optimized plan derivatives and its canopy mask. Design sources are kept outside `public/` and are not copied into releases.
 
 The image is an illustrative architectural concept, not evidence of existing houses, landscaping, or amenities. Interactive boundaries and numbers are drawn from `src/interactiveMap/MapZones.ts`; existing source paths remain unchanged. Generated fences can deviate slightly from the overlay, which defines the actual click areas.
 
-References: the supplied `render-example.png` for visual style, `public/bg-pic-oinelovo.png` for local context, and an SVG guide rasterized directly from all 21 existing map polygons. The guide has an 800 × 1200 coordinate space, with the original plan offset by (63, 86).
+References: the supplied `render-example.png` for visual style, `docs/design/source-assets/bg-pic-oinelovo.png` for local context, and an SVG guide rasterized directly from all 21 existing map polygons. The guide has an 800 × 1200 coordinate space, with the original plan offset by (63, 86).
 
 ## Live plot data
 

@@ -6,6 +6,7 @@ import { Logo } from "../images";
 import {
   chooseZemli,
   closeMenuMsg,
+  homeNavigation,
   navigation,
   openMenuMsg,
   projectRoutes,
@@ -14,7 +15,13 @@ import {
 
 import "./Header.css";
 
-export const Header = () => {
+export const Header = ({
+  variant = "default",
+  onInquiry,
+}: {
+  variant?: "default" | "landing";
+  onInquiry?: () => void;
+}) => {
   const menu = useMobileMenu();
   const { pathname } = useLocation();
   const headerRef = useRef<HTMLElement>(null);
@@ -112,43 +119,44 @@ export const Header = () => {
         className={`main-nav ${menu.isOpen ? "is-open" : ""}`}
         aria-label="Основная навигация"
       >
-        {navigation.map(([label, href]) =>
-          label === "Проекты" ? (
-            <div className="projects-menu" key={href} ref={projectsRef}>
-              <button
-                className="projects-trigger"
-                type="button"
-                aria-expanded={projectsOpen}
-                aria-controls="projects-navigation"
-                onClick={() => setProjectsOpen((open) => !open)}
-              >
-                {label} <span aria-hidden="true">⌄</span>
-              </button>
-              <div
-                id="projects-navigation"
-                hidden={!projectsOpen}
-                className={`projects-dropdown ${projectsOpen ? "is-open" : ""}`}
-              >
-                {projectRoutes.map((project) => (
-                  <Link
-                    key={project.path}
-                    to={project.path}
-                    onClick={handleNavigation}
-                  >
-                    {project.label}
-                  </Link>
-                ))}
+        {(variant === "landing" ? homeNavigation : navigation).map(
+          ([label, href]) =>
+            label === "Проекты" ? (
+              <div className="projects-menu" key={href} ref={projectsRef}>
+                <button
+                  className="projects-trigger"
+                  type="button"
+                  aria-expanded={projectsOpen}
+                  aria-controls="projects-navigation"
+                  onClick={() => setProjectsOpen((open) => !open)}
+                >
+                  {label} <span aria-hidden="true">⌄</span>
+                </button>
+                <div
+                  id="projects-navigation"
+                  hidden={!projectsOpen}
+                  className={`projects-dropdown ${projectsOpen ? "is-open" : ""}`}
+                >
+                  {projectRoutes.map((project) => (
+                    <Link
+                      key={project.path}
+                      to={project.path}
+                      onClick={handleNavigation}
+                    >
+                      {project.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </div>
-          ) : (
-            <Link
-              key={`${label}-${href}`}
-              to={`${pathname}${href}`}
-              onClick={handleNavigation}
-            >
-              {label}
-            </Link>
-          ),
+            ) : (
+              <Link
+                key={`${label}-${href}`}
+                to={`${pathname}${href}`}
+                onClick={handleNavigation}
+              >
+                {label}
+              </Link>
+            ),
         )}
         <a
           className="mobile-phone"
@@ -157,6 +165,15 @@ export const Header = () => {
         >
           <Phone size="1.0625rem" /> {siteConfig.phone}
         </a>
+        {variant === "landing" && siteConfig.phone2 && (
+          <a
+            className="mobile-phone"
+            href={siteConfig.phone2Href}
+            onClick={handleNavigation}
+          >
+            <Phone size="1.0625rem" /> {siteConfig.phone2}
+          </a>
+        )}
       </nav>
       <div className="header-contact">
         <Phone className="phone-icon" size="1.1875rem" aria-hidden="true" />
@@ -166,13 +183,26 @@ export const Header = () => {
           <span>{siteConfig.hours}</span>
         </div>
       </div>
-      <Link
-        className="button button-gold header-cta"
-        to={plotTarget}
-        onClick={handleNavigation}
-      >
-        {chooseZemli}
-      </Link>
+      {onInquiry ? (
+        <button
+          className="button button-gold header-cta"
+          type="button"
+          onClick={() => {
+            handleNavigation();
+            onInquiry();
+          }}
+        >
+          Оставить заявку
+        </button>
+      ) : (
+        <Link
+          className="button button-gold header-cta"
+          to={plotTarget}
+          onClick={handleNavigation}
+        >
+          {chooseZemli}
+        </Link>
+      )}
       <button
         className="menu-toggle"
         ref={toggleRef}

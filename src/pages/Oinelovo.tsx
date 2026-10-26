@@ -45,7 +45,7 @@ import {
   utilities,
   type Plot,
 } from "../lib";
-import type { PlotPhoto } from "../data/individualPlots";
+import { oinelovoPhotos as photos } from "../data/oinelovoPhotos";
 import { TgLogo, WhatsupLogo } from "../images";
 
 import "./Oinelovo.css";
@@ -62,20 +62,6 @@ const parcelWords = {
 };
 const parcelCount = (count: number) =>
   `${count} ${parcelWords[pluralRules.select(count) as keyof typeof parcelWords]}`;
-const photos: PlotPhoto[] = [
-  {
-    src: "images/oinelovo/territory-1280.webp",
-    alt: "Дорога и зелёная территория посёлка",
-  },
-  {
-    src: "images/oinelovo/surroundings-1280.webp",
-    alt: "Окрестности и подъезд к участкам",
-  },
-  {
-    src: "images/oinelovo/overview-1280.webp",
-    alt: "Общий вид территории и проезда",
-  },
-];
 const mapHref = `https://yandex.ru/maps/?text=${encodeURIComponent(`${project.title}, Ленинградская область`)}`;
 const hasPhone = Boolean(siteConfig.phone || siteConfig.phone2);
 const hasMessenger = Boolean(
@@ -360,12 +346,12 @@ export function Oinelovo() {
           <div className="oinelovo-hero" id="top">
             <img
               className="oinelovo-hero-image"
-              src={asset("images/oinelovo/aerial-1600.webp")}
-              srcSet={`${asset("images/oinelovo/aerial-768.webp")} 768w, ${asset("images/oinelovo/aerial-1600.webp")} 1600w`}
+              src={asset("images/nature/oinelovo-1920.webp")}
+              srcSet={`${asset("images/nature/oinelovo-960.webp")} 960w, ${asset("images/nature/oinelovo-1920.webp")} 1920w`}
               sizes="100vw"
-              width={1600}
-              height={900}
-              alt="Вид с высоты на зелёную территорию мини-посёлка"
+              width={1920}
+              height={768}
+              alt="Лес и тихое озеро в тёплом вечернем свете"
               fetchPriority="high"
             />
             <div className="oinelovo-container oinelovo-hero-content">
@@ -611,10 +597,10 @@ export function Oinelovo() {
               >
                 <img
                   src={asset(photos[photoIndex].src)}
-                  srcSet={`${asset(photos[photoIndex].src.replace("1280", "640"))} 640w, ${asset(photos[photoIndex].src)} 1280w`}
+                  srcSet={`${asset(photos[photoIndex].preview)} 640w, ${asset(photos[photoIndex].src)} 1280w`}
                   sizes="(max-width: 47.5rem) 100vw, 55vw"
                   width={1280}
-                  height={960}
+                  height={720}
                   alt={photos[photoIndex].alt}
                   loading="lazy"
                   decoding="async"
@@ -642,7 +628,7 @@ export function Oinelovo() {
               <div className="oinelovo-gallery-block">
                 <h3>Фотографии территории</h3>
                 <div className="oinelovo-thumbnails">
-                  {galleryPhotos.map((photo) => (
+                  {galleryPhotos.slice(0, 3).map((photo) => (
                     <button
                       key={photo.src}
                       type="button"
@@ -653,9 +639,9 @@ export function Oinelovo() {
                       aria-label={`Открыть фотографию: ${photo.alt}`}
                     >
                       <img
-                        src={asset(photo.src.replace("1280", "640"))}
+                        src={asset(photo.preview)}
                         width={640}
-                        height={480}
+                        height={360}
                         alt={photo.alt}
                         loading="lazy"
                         decoding="async"

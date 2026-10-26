@@ -1,70 +1,83 @@
-import { useState } from "react";
+import { ArrowRight, ArrowUpRight, MapPin } from "lucide-react";
 import { Link } from "react-router-dom";
-import { settlementFormats, projectRoutes } from "../lib";
+import { projectRoutes } from "../lib";
 
-import "./Projects.css";
+const projects = [
+  {
+    route: projectRoutes[0],
+    image: "oinelovo-960.webp",
+    tag: "Камерный посёлок",
+    copy: "Место для спокойной жизни в окружении природы. Всего в 25 км от КАД.",
+  },
+  {
+    route: projectRoutes[1],
+    image: "home-960.webp",
+    tag: "Индивидуальные предложения",
+    copy: "Подборка участков в живописных локациях Ленинградской области.",
+  },
+];
 
-const ProjectImage = ({
-  src,
-  alt,
-  label,
-}: {
-  src: string;
-  alt: string;
-  label: string;
-}) => {
-  const [loaded, setLoaded] = useState(false);
-
+export function Projects() {
   return (
-    <div className={`format-image ${loaded ? "is-loaded" : ""}`}>
-      {!loaded && <div className="format-image-skeleton" aria-hidden="true" />}
-      <img
-        src={src}
-        alt={alt}
-        loading="lazy"
-        decoding="async"
-        onLoad={() => setLoaded(true)}
-        onError={() => setLoaded(true)}
-        className={loaded ? "is-loaded" : ""}
-      />
-      <span>{label}</span>
-    </div>
-  );
-};
-
-export const Projects = () => {
-  return (
-    <section className="section section-paper" id="poselki">
+    <section
+      className="home-projects"
+      id="poselki"
+      aria-labelledby="home-projects-title"
+    >
       <div className="container">
-        <div className="section-heading narrow">
-          <p className="eyebrow">ФОРМАТЫ ПРОЖИВАНИЯ</p>
-          <h2 className="my-text-bold">
-            Наши проекты —<br />
-            <em>выберите подходящий формат</em>
-          </h2>
+        <div className="home-section-heading">
+          <div>
+            <h2 id="home-projects-title">Актуальные проекты</h2>
+          </div>
+          <a className="home-text-link" href="#home-project-list">
+            Все проекты <ArrowRight size={18} aria-hidden="true" />
+          </a>
         </div>
-        <div className="format-grid">
-          {settlementFormats.map((format, index) => (
-            <article className="format-card" key={format.title}>
-              <ProjectImage
-                src={format.image}
-                alt={format.title}
-                label={format.label}
-              />
-              <div className="format-content">
-                <h3>{format.title}</h3>
-                <p>{format.copy}</p>
-                <ul>
-                  {format.facts.map(({ text, icon: Icon }) => (
-                    <li key={text}>
-                      <Icon size="1.0625rem" />
-                      {text}
-                    </li>
-                  ))}
-                </ul>
-                <Link className="text-link" to={projectRoutes[index].path}>
-                  Смотреть генплан <span>↗</span>
-                </Link>
+        <div className="home-project-grid" id="home-project-list">
+          {projects.map(({ route, image, tag, copy }) => (
+            <article className="home-project-card" key={route.path}>
+              <Link
+                className="home-project-card__image"
+                to={route.path}
+                aria-label={`Посмотреть проект «${route.label}»`}
+              >
+                <img
+                  src={`${import.meta.env.BASE_URL}images/nature/${image}`}
+                  alt="Лес и озеро в вечернем свете"
+                  width={960}
+                  height={384}
+                  loading="lazy"
+                  decoding="async"
+                />
+                <span className="home-project-card__tag">{tag}</span>
+                <span
+                  className="home-project-card__image-arrow"
+                  aria-hidden="true"
+                >
+                  <ArrowUpRight size={24} />
+                </span>
+              </Link>
+              <div className="home-project-card__content">
+                <h3>
+                  <Link to={route.path}>{route.label}</Link>
+                </h3>
+                <p className="home-project-card__location">
+                  <MapPin size={15} strokeWidth={1.6} aria-hidden="true" />
+                  Ленинградская область
+                </p>
+                <div className="home-project-card__bottom">
+                  <p>{copy}</p>
+                  <Link
+                    className="home-button home-button--primary home-button--small"
+                    to={route.path}
+                  >
+                    Подробнее <ArrowUpRight size={16} aria-hidden="true" />
+                    <span className="home-sr-only">
+                      {" "}
+                      о проекте «{route.label}»
+                    </span>
+                  </Link>
+                </div>
               </div>
             </article>
           ))}
@@ -72,4 +85,4 @@ export const Projects = () => {
       </div>
     </section>
   );
-};
+}

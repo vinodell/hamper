@@ -48,11 +48,13 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         run: npm run package:hostland
 
-      - name: Upload release archive
+      - name: Upload release archives
         if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: hamper-hostland
-          path: release/hamper-hostland.zip
+          path: |
+            release/hamper-hostland.zip
+            release/hamper-public-update.zip
           if-no-files-found: error
           retention-days: 14

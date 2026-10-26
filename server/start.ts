@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { SqliteDatabase } from "./database.js";
 import { createApplication } from "./http.js";
 import { applicationPaths } from "./paths.js";
@@ -14,6 +15,9 @@ function required(name: string): string {
 }
 
 export function startServer() {
+  // Passenger can launch from another directory. Hosting environment wins.
+  const configurationPath = new URL("../../.env.server", import.meta.url);
+  if (existsSync(configurationPath)) process.loadEnvFile(configurationPath);
   const { publicDir, databasePath } = applicationPaths(import.meta.url);
   const adminLogin = required("ADMIN_LOGIN");
   const passwordHash = required("ADMIN_PASSWORD_HASH");
@@ -47,26 +51,35 @@ export function startServer() {
     TELEGRAM_BOT_TOKEN: process.env.TELEGRAM_BOT_TOKEN,
     TELEGRAM_CHAT_ID: process.env.TELEGRAM_CHAT_ID,
   };
-  const server = createApplication({ env, publicDir });
+  let server: ReturnType<typeof createApplication>;
+  try {
+    server = createApplication({ env, publicDir });
+  } catch (error) {
+    DB.close();
+    throw error;
+  }
   const delivery = startTelegramDelivery(env);
-  let disposed = false;
+  let disposal: Promise<void> | undefined;
   const dispose = () => {
-    if (disposed) return;
-    disposed = true;
-    void delivery.stop().finally(() => DB.close());
+    disposal ??= delivery.stop().finally(() => DB.close());
+    return disposal;
   };
   server.once("close", dispose);
-  server.on("error", (error) => {
+  const fatal = (error: unknown) => {
     console.error("Unable to start HTTP server", error);
-    dispose();
-    process.exitCode = 1;
-  });
-  server.listen(port, process.env.HOST || "127.0.0.1", () => {
-    const address = server.address();
-    console.info(
-      `Hamper server listening on ${typeof address === "string" ? address : address?.port}; public origin: ${parsedOrigin.origin}`,
-    );
-  });
+    void dispose().finally(() => process.exit(1));
+  };
+  server.on("error", fatal);
+  try {
+    server.listen(port, process.env.HOST || "127.0.0.1", () => {
+      const address = server.address();
+      console.info(
+        `Hamper server listening on ${typeof address === "string" ? address : address?.port}; public origin: ${parsedOrigin.origin}`,
+      );
+    });
+  } catch (error) {
+    fatal(error);
+  }
   let closing = false;
   const shutdown = () => {
     if (closing) return;

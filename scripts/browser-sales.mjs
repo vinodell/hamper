@@ -226,6 +226,13 @@ try {
         ...process.env,
         // A stale local/CI setting must not escape the same-origin production API.
         VITE_API_URL: "https://former-hamper-api.example.workers.dev",
+        VITE_PHONE_MAKS: "+7 (999) 123-45-67",
+        VITE_PHONE_VLAD: "+7 (999) 765-43-21",
+        VITE_PHONE_HREF: "tel:+79991234567",
+        VITE_WHATSAPP_MAKS: "79991234567",
+        VITE_WHATSAPP_VLAD: "79997654321",
+        VITE_TELEGRAM_MAKS: "synthetic_maks",
+        VITE_TELEGRAM_VLAD: "synthetic_vlad",
       },
     },
   );
@@ -438,10 +445,27 @@ try {
   }
   const tablePrice = (id) =>
     `tr:has([aria-label="Подробнее об участке ${id}"]) .plot-price`;
-  async function screenshot(client, name) {
+  async function screenshot(client, name, fullPage = false) {
+    // Background tabs can report decoded images before Chrome paints them.
+    await client.command("Page.bringToFront");
+    await delay(100);
+    const metrics = fullPage
+      ? await client.command("Page.getLayoutMetrics")
+      : null;
     const result = await client.command("Page.captureScreenshot", {
       format: "png",
-      captureBeyondViewport: false,
+      captureBeyondViewport: fullPage,
+      ...(metrics
+        ? {
+            clip: {
+              x: 0,
+              y: 0,
+              width: metrics.cssContentSize.width,
+              height: metrics.cssContentSize.height,
+              scale: 1,
+            },
+          }
+        : {}),
     });
     const file = path.join(artifacts, `${name}.png`);
     await writeFile(file, Buffer.from(result.data, "base64"));
@@ -498,6 +522,49 @@ try {
 
   await navigate(main, "/", "document.querySelector('.promotion-ribbon')");
   await check(
+    "Completed projects can be browsed forwards, backwards and with the keyboard",
+    async () => {
+      const region = '[aria-label="Завершённые проекты"]';
+      const counter = `${region} [role="status"]`;
+      const next = `${region} [aria-label="Следующий проект"]`;
+      const previous = `${region} [aria-label="Предыдущий проект"]`;
+      await activate(main, next);
+      assert.equal(
+        await main.evaluate(`document.querySelector('${counter}').textContent`),
+        "02 / 03",
+      );
+      await activate(main, previous);
+      assert.equal(
+        await main.evaluate(`document.querySelector('${counter}').textContent`),
+        "01 / 03",
+      );
+      await activate(main, previous);
+      assert.equal(
+        await main.evaluate(`document.querySelector('${counter}').textContent`),
+        "03 / 03",
+      );
+      await main.evaluate(`document.querySelector('${next}').focus()`);
+      await pressKey(main, "Enter", "Enter", 13);
+      assert.equal(
+        await main.evaluate(`document.querySelector('${counter}').textContent`),
+        "01 / 03",
+      );
+      assert.equal(
+        await main.evaluate(
+          `document.activeElement===document.querySelector('${next}')`,
+        ),
+        true,
+        "Changing slides must preserve keyboard focus",
+      );
+      await pressKey(main, "Enter", "Enter", 13);
+      assert.equal(
+        await main.evaluate(`document.querySelector('${counter}').textContent`),
+        "02 / 03",
+      );
+      await activate(main, previous);
+    },
+  );
+  await check(
     "Promotion starts from the persisted 10 percent setting",
     async () => {
       assert.match(
@@ -511,6 +578,8 @@ try {
   await check(
     "Consent is unchecked and submitting cannot bypass it",
     async () => {
+      await activate(main, ".header-cta");
+      await until(main, "document.querySelector('#home-inquiry-form')");
       assert.equal(
         await main.evaluate("document.querySelector('[name=consent]').checked"),
         false,
@@ -531,6 +600,96 @@ try {
             request.path === "/api/contact" && request.method === "POST",
         ),
         false,
+      );
+    },
+  );
+  await check(
+    "The home inquiry closes with Escape and restores its opener",
+    async () => {
+      await escape(main);
+      assert.equal(
+        await main.evaluate("Boolean(document.querySelector('dialog[open]'))"),
+        false,
+      );
+      assert.equal(
+        await main.evaluate(
+          "document.activeElement.classList.contains('header-cta')",
+        ),
+        true,
+      );
+    },
+  );
+  await check(
+    "Each home contact has its own phone, WhatsApp and Telegram links",
+    async () => {
+      const links = await main.evaluate(
+        "[...document.querySelectorAll('[aria-label=\"Телефоны и мессенджеры\"] a')].map(link=>link.getAttribute('href')).sort()",
+      );
+      assert.deepEqual(
+        links,
+        [
+          "tel:+79991234567",
+          "tel:+79997654321",
+          "https://wa.me/79991234567",
+          "https://wa.me/79997654321",
+          "https://t.me/synthetic_maks",
+          "https://t.me/synthetic_vlad",
+        ].sort(),
+      );
+    },
+  );
+  await check(
+    "The village gallery opens all five new photographs, supports navigation and restores focus",
+    async () => {
+      await navigate(
+        main,
+        "/projects/oynelovskie-dali/",
+        "document.querySelector('.oinelovo-hero-gallery')",
+      );
+      await activate(main, ".oinelovo-hero-gallery");
+      await until(
+        main,
+        "document.querySelector('.oinelovo-photo-dialog[open]')",
+      );
+      const gallery = ".oinelovo-photo-dialog .plot-carousel";
+      assert.equal(
+        await main.evaluate(
+          `document.querySelectorAll('${gallery} [aria-label="Выбор фотографии"] button').length`,
+        ),
+        5,
+      );
+      const loaded = new Set();
+      for (let index = 1; index <= 5; index++) {
+        await activate(main, `${gallery} [aria-label="Фотография ${index}"]`);
+        await until(
+          main,
+          `(()=>{const image=document.querySelector('${gallery} img');return image?.complete&&image.naturalWidth>0&&getComputedStyle(image).opacity==='1'&&document.querySelector('${gallery} [aria-live]').textContent==='${index} / 5'})()`,
+        );
+        const photo = await main.evaluate(
+          `(()=>{const image=document.querySelector('${gallery} img');return{src:image.currentSrc,alt:image.alt}})()`,
+        );
+        assert.ok(photo.alt.length > 10);
+        assert.equal(new URL(photo.src).origin, siteOrigin);
+        loaded.add(photo.src);
+      }
+      assert.equal(loaded.size, 5);
+      await activate(main, `${gallery} [aria-label="Следующая фотография"]`);
+      await until(
+        main,
+        `document.querySelector('${gallery} [aria-live]').textContent==='1 / 5'`,
+      );
+      await main.evaluate(`document.querySelector('${gallery}').focus()`);
+      await pressKey(main, "ArrowLeft", "ArrowLeft", 37);
+      await until(
+        main,
+        `document.querySelector('${gallery} [aria-live]').textContent==='5 / 5'`,
+      );
+      await escape(main);
+      assert.equal(
+        await main.evaluate(
+          "document.activeElement===document.querySelector('.oinelovo-hero-gallery')&&!document.querySelector('dialog[open]')",
+        ),
+        true,
       );
     },
   );
@@ -1918,7 +2077,69 @@ try {
         );
         await main.evaluate("document.fonts.ready.then(()=>true)");
       });
-      if (route.includes("drugie")) {
+      if (route === "/") {
+        await main.evaluate(
+          "[...document.images].forEach(image=>image.loading='eager')",
+        );
+        await until(
+          main,
+          "[...document.querySelectorAll('main img')].every(image=>image.complete&&image.naturalWidth>0)",
+        );
+        const pageHeight = await main.evaluate(
+          "document.documentElement.scrollHeight",
+        );
+        for (let top = 0; top < pageHeight; top += 700) {
+          await main.evaluate(`scrollTo({top:${top},behavior:'instant'})`);
+          await delay(80);
+        }
+        await main.evaluate(
+          "document.querySelector('#poselki').scrollIntoView({behavior:'instant'})",
+        );
+        await delay(150);
+        await screenshot(main, `home-projects-${width}`);
+        await main.evaluate("scrollTo({top:0,behavior:'instant'})");
+        await delay(100);
+        await check(`Home photographs load locally ${width}px`, async () => {
+          assert.equal(
+            await main.evaluate(
+              "[...document.querySelectorAll('main img')].every(image=>image.complete&&image.naturalWidth>0&&new URL(image.currentSrc).origin===location.origin)",
+            ),
+            true,
+          );
+        });
+        await screenshot(main, `home-${width}`, true);
+        await activate(main, ".header-cta");
+        await until(main, "document.querySelector('#home-inquiry-form')");
+        await check(`Home inquiry fits the viewport ${width}px`, async () => {
+          assert.equal(
+            await main.evaluate(
+              "(()=>{const dialog=document.querySelector('dialog[open]');const bounds=dialog.getBoundingClientRect();return bounds.left>=0&&bounds.right<=innerWidth&&dialog.scrollWidth<=dialog.clientWidth})()",
+            ),
+            true,
+          );
+        });
+        await screenshot(main, `home-inquiry-${width}`);
+        await escape(main);
+        if (width < 1280) {
+          await activate(main, ".menu-toggle");
+          await until(
+            main,
+            "document.querySelector('.menu-toggle').getAttribute('aria-expanded')==='true'",
+          );
+          await activate(main, '.main-nav a[href="/#about-company"]');
+          await check(
+            `Home mobile menu navigates to the company ${width}px`,
+            async () => {
+              assert.equal(
+                await main.evaluate(
+                  "location.hash==='#about-company'&&document.querySelector('.menu-toggle').getAttribute('aria-expanded')==='false'&&!document.body.classList.contains('menu-open')",
+                ),
+                true,
+              );
+            },
+          );
+        }
+      } else if (route.includes("drugie")) {
         await activate(main, '[aria-label="Подробнее об участке 2-01"]');
         await screenshot(main, `popup-${width}`);
         assert.equal(
@@ -1929,6 +2150,13 @@ try {
         );
         await escape(main);
       } else if (route.includes("oynelovskie")) {
+        await activate(main, ".oinelovo-hero-gallery");
+        await until(
+          main,
+          "(()=>{const image=document.querySelector('.oinelovo-photo-dialog .plot-carousel-slide img');return image?.complete&&image.naturalWidth>0&&getComputedStyle(image).opacity==='1'})()",
+        );
+        await screenshot(main, `village-gallery-${width}`);
+        await escape(main);
         await main.evaluate(
           "document.querySelector('.oinelovo-available').scrollIntoView({block:'center',behavior:'instant'})",
         );

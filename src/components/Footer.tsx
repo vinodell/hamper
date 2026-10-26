@@ -1,10 +1,15 @@
 import { Link } from "react-router-dom";
 import { Logo } from "../images";
-import { navigation, offertaMsg, siteConfig } from "../lib";
+import { homeNavigation, navigation, offertaMsg, siteConfig } from "../lib";
 
 import "./Footer.css";
 
-export const Footer = () => {
+export const Footer = ({
+  variant = "default",
+}: {
+  variant?: "default" | "landing";
+}) => {
+  const isLanding = variant === "landing";
   return (
     <footer className="footer">
       <div className="container footer-top">
@@ -20,18 +25,29 @@ export const Footer = () => {
           </span>
         </Link>
         <div className="footer-links">
-          {navigation.map(([label, href]) => (
+          {(isLanding ? homeNavigation : navigation).map(([label, href]) => (
             <Link
               key={`${label}-${href}`}
-              to={label === "Проекты" ? "/#poselki" : href}
+              to={
+                isLanding
+                  ? `/${href}`
+                  : label === "Проекты"
+                    ? "/#poselki"
+                    : href
+              }
             >
               {label}
             </Link>
           ))}
         </div>
+        {isLanding && (
+          <span className="home-footer-copyright">
+            {siteConfig.copyright}. Все права защищены.
+          </span>
+        )}
       </div>
       <div className="container footer-bottom">
-        <span>{siteConfig.copyright}</span>
+        {!isLanding && <span>{siteConfig.copyright}</span>}
         <span>{offertaMsg}</span>
         <a href="#">Наверх ↑</a>
       </div>

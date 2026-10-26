@@ -52,20 +52,55 @@ function chunkedRequest(url, chunks) {
   });
 }
 
-async function startPassengerFixture(directory, telegram = false) {
-  const script = telegram
-    ? "globalThis.fetch = async () => Response.json({ok:true}); require('./server.js')"
-    : "require('./server.js')";
-  const child = spawn(process.execPath, ["-e", script], {
-    cwd: directory,
-    env: {
-      ...process.env,
-      PORT: "0",
-      TELEGRAM_BOT_TOKEN: telegram ? "123456:synthetic-test-token" : "",
-      TELEGRAM_CHAT_ID: telegram ? "-100000000000" : "",
+function passengerProcess(
+  directory,
+  { telegram = false, cwd = directory, env = {} } = {},
+) {
+  const environment = { ...process.env };
+  for (const key of [
+    "ADMIN_LOGIN",
+    "ADMIN_PASSWORD_HASH",
+    "SESSION_SECRET",
+    "PUBLIC_ORIGIN",
+    "PUBLIC_DIR",
+    "DATABASE_PATH",
+    "HOST",
+    "PORT",
+    "TELEGRAM_BOT_TOKEN",
+    "TELEGRAM_CHAT_ID",
+    "NODE_OPTIONS",
+  ])
+    delete environment[key];
+  const script = [
+    "process.stdin.resume();",
+    telegram && "globalThis.fetch = async () => Response.json({ok:true});",
+    "require(process.argv[1]);",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return spawn(
+    process.execPath,
+    ["-e", script, path.join(directory, "server.js")],
+    {
+      cwd,
+      env: {
+        ...environment,
+        PORT: "0",
+        TELEGRAM_BOT_TOKEN: telegram ? "123456:synthetic-test-token" : "",
+        TELEGRAM_CHAT_ID: telegram ? "-100000000000" : "",
+        ...env,
+      },
+      stdio: ["pipe", "pipe", "pipe"],
     },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
+  );
+}
+
+async function startPassengerFixture(
+  directory,
+  telegram = false,
+  options = {},
+) {
+  const child = passengerProcess(directory, { telegram, ...options });
   const origin = await new Promise((resolve, reject) => {
     let output = "";
     let errors = "";
@@ -98,6 +133,7 @@ async function startPassengerFixture(directory, telegram = false) {
     async close() {
       if (child.exitCode !== null) return;
       const ended = once(child, "exit");
+      child.stdin.end();
       child.kill("SIGTERM");
       await ended;
     },
@@ -340,7 +376,7 @@ test("failed bulk persistence rolls back earlier plot changes instead of publish
   );
 });
 
-test("Passenger starts the delivery runtime and resumes saved data and queued inquiries after restart", async (context) => {
+async function passengerFixture(context) {
   const directory = await mkdtemp(path.join(tmpdir(), "hamper-passenger-"));
   context.after(() => rm(directory, { recursive: true, force: true }));
   await mkdir(path.join(directory, "build/server"), { recursive: true });
@@ -387,6 +423,86 @@ test("Passenger starts the delivery runtime and resumes saved data and queued in
   const DB = new SqliteDatabase(path.join(directory, "private/data.sqlite"));
   DB.exec(schema);
   DB.close();
+  return directory;
+}
+
+async function assertPassengerFailure(context, child, expectedError) {
+  context.after(() => child.kill("SIGKILL"));
+  let errors = "";
+  child.stderr.on("data", (data) => {
+    errors += data;
+  });
+  const timeout = setTimeout(() => child.kill("SIGKILL"), 1500);
+  const [code, signal] = await once(child, "exit");
+  clearTimeout(timeout);
+  assert.match(errors, expectedError);
+  assert.equal(
+    signal,
+    null,
+    "startup failure must exit without waiting for Passenger's timeout",
+  );
+  assert.equal(code, 1);
+}
+
+test("Passenger fails fast on missing configuration even with its stdin pipe open", async (context) => {
+  const directory = await passengerFixture(context);
+  await rm(path.join(directory, ".env.server"));
+  await assertPassengerFailure(
+    context,
+    passengerProcess(directory),
+    /ADMIN_LOGIN is required/,
+  );
+});
+
+test("Passenger exits after an HTTP listen failure with its stdin pipe open", async (context) => {
+  const directory = await passengerFixture(context);
+  const occupied = http.createServer();
+  occupied.listen(0, "127.0.0.1");
+  await once(occupied, "listening");
+  context.after(() => new Promise((resolve) => occupied.close(resolve)));
+  await assertPassengerFailure(
+    context,
+    passengerProcess(directory, {
+      env: { PORT: String(occupied.address().port) },
+    }),
+    /EADDRINUSE/,
+  );
+});
+
+test("Passenger loads application configuration from its root when launched elsewhere and preserves environment overrides", async (context) => {
+  const directory = await passengerFixture(context);
+  const cwd = path.join(directory, "unrelated-directory");
+  await mkdir(cwd);
+  await writeFile(
+    path.join(cwd, ".env.server"),
+    "ADMIN_LOGIN=unrelated-directory\nSESSION_SECRET=short\n",
+  );
+  const running = await startPassengerFixture(directory, false, {
+    cwd,
+    env: { PUBLIC_ORIGIN: "https://environment.test" },
+  });
+  context.after(() => running.close());
+  const health = await fetch(running.origin + "/api/health");
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { ok: true });
+  const plots = await fetch(running.origin + "/api/plots");
+  assert.equal(plots.status, 200);
+  assert.deepEqual(await plots.json(), []);
+  const admin = await fetch(running.origin + "/api/admin/plots");
+  assert.equal(admin.status, 401);
+  assert.equal(
+    admin.headers.get("access-control-allow-origin"),
+    "https://environment.test",
+  );
+  const html = await fetch(running.origin + "/admin", {
+    headers: { Accept: "text/html" },
+  });
+  assert.equal(html.status, 200);
+  assert.match(await html.text(), /<title>Hostland<\/title>/);
+});
+
+test("Passenger starts the delivery runtime and resumes saved data and queued inquiries after restart", async (context) => {
+  const directory = await passengerFixture(context);
   let running = await startPassengerFixture(directory, true);
   context.after(() => running.close());
   const payload = `v1.${Math.floor(Date.now() / 1000) + 86400}.00000000-0000-4000-8000-000000000000`;

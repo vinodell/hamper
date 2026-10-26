@@ -4,25 +4,10 @@ import { formatPhone, usePlots } from "../hooks";
 import { TgLogo, WhatsupLogo } from "../images";
 import { siteConfig, PHONE_PATTERN, type Plot } from "../lib";
 import { api } from "../lib/api";
+import { contactPeople } from "../lib/contactDetails";
 
 import "./Contacts.css";
-
-const mobileContacts = [
-  {
-    id: "vlad",
-    phone: siteConfig.phone2,
-    phoneHref: siteConfig.phone2Href,
-    telegram: siteConfig.vladTelegram,
-    whatsapp: siteConfig.vladWhatsapp,
-  },
-  {
-    id: "maks",
-    phone: siteConfig.phone,
-    phoneHref: siteConfig.phoneHref,
-    telegram: siteConfig.maksTelegram,
-    whatsapp: siteConfig.maksWhatsapp,
-  },
-].filter(({ phone, telegram, whatsapp }) => phone || telegram || whatsapp);
+import "../components/ContactDialog.css";
 
 export type ContactRequestKind = "viewing" | "availability";
 
@@ -175,7 +160,7 @@ export const Contacts = ({
             </p>
 
             <div className="contact-details">
-              {mobileContacts.map(
+              {contactPeople.map(
                 ({ id, phone, phoneHref, telegram, whatsapp }) => (
                   <div className="mobile-contacts" key={id}>
                     {phone && (

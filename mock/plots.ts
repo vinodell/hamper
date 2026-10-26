@@ -33,7 +33,7 @@ export const mockPlots: Plot[] = [
   {
     id: "1-03",
     settlement: "Ойнеловские дали",
-    area: "6,5",
+    area: "9",
     price: "1400000",
     fullPaymentPrice: null,
     status: "Свободен",
