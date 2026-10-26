@@ -49,7 +49,7 @@ npm run dev:mock
 
 ```bash
 npm run build
-npm run db:migrate
+npm run db -- migrate
 ```
 
 В двух терминалах запустите `npm run api:dev` и `npm run dev`, затем откройте
@@ -60,6 +60,16 @@ npm run db:migrate
 В production клиент всегда обращается к `/api` своего домена. Старый
 `VITE_API_URL` не перенаправит опубликованный сайт в Cloudflare; эта переменная
 учитывается только для явного development-подключения к другому API.
+
+Все операции базы доступны через одну команду `db`:
+
+```bash
+npm run db -- migrate
+npm run db -- import-d1 /path/to/export.json
+npm run db -- backup /private/path/backup.sqlite
+```
+
+Для просмотра production-версии используйте `npm run build`, затем `npm start`.
 
 ## Размещение на Hostland
 
@@ -115,8 +125,11 @@ npm test
 npm run typecheck
 npm run build
 npm run test:browser
-npm run test:browser:location
 ```
+
+`build` уже включает проверку типов клиента и сервера. `test:browser` последовательно
+запускает основной браузерный набор и проверки координат/Навигатора. Отдельный
+тестовый файл можно запустить напрямую: `node --test scripts/data.test.mjs`.
 
 HTTP-тесты проверяют авторизацию, атомарность сохранений, приём и приватность
 заявок, пагинацию, доставку Telegram с имитацией внешнего API, файловую базу

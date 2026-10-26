@@ -12,14 +12,13 @@ export const isSelectableZone = (zone: MapZone) =>
   zone.status === "available" || zone.status === "reserved";
 
 export function resolveMapZones(plots: Plot[]): MapZone[] {
-  const byId = new Map(
-    plots
-      .filter((plot) => plot.settlement === "Ойнеловские дали")
-      .map((plot) => [plot.id, plot]),
-  );
+  const plotsById = new Map<string, Plot>();
+  for (const plot of plots) {
+    if (plot.settlement === "Ойнеловские дали") plotsById.set(plot.id, plot);
+  }
 
   return mapZones.map((zone): MapZone => {
-    const plot = byId.get(zone.plotId);
+    const plot = plotsById.get(zone.plotId);
     if (!plot) return { ...zone, status: "unknown" };
     return {
       ...zone,

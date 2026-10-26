@@ -672,9 +672,12 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     const uniqueIds = new Set(updates.map(({ id }) => id));
     if (uniqueIds.size !== updates.length)
       throw new RequestError(400, "Номера участков не должны повторяться");
+    const placeholders = Array.from(uniqueIds, () => "?").join(", ");
     const existing = await env.DB.prepare(
-      "SELECT id, full_payment_price FROM plots",
-    ).all<Pick<PlotRow, "id" | "full_payment_price">>();
+      `SELECT id, full_payment_price FROM plots WHERE id IN (${placeholders})`,
+    )
+      .bind(...uniqueIds)
+      .all<Pick<PlotRow, "id" | "full_payment_price">>();
     const existingById = new Map(existing.results.map((row) => [row.id, row]));
     if (updates.some(({ id }) => !existingById.has(id)))
       return json({ error: "Участок не найден" }, 404, request, env);

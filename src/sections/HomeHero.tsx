@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowUpRight, Coins, House, Ruler } from "lucide-react";
 import { usePlots } from "../hooks/usePlots";
 import { formatPlotNumber, projectRoutes } from "../lib";
+import { summarizePlots } from "../lib/plotSummary";
 
 const asset = (name: string) =>
   `${import.meta.env.BASE_URL}images/nature/${name}`;
@@ -8,17 +9,19 @@ const asset = (name: string) =>
 export function HomeHero() {
   const { plots } = usePlots();
   const available = plots.filter((plot) => plot.status === "Свободен");
-  const areas = available.map((plot) => Number(plot.area.replace(",", ".")));
-  const prices = available.map((plot) => Number(plot.price.replace(",", ".")));
-  const minArea = areas.length
-    ? formatPlotNumber(String(Math.min(...areas)))
-    : null;
-  const maxArea = areas.length
-    ? formatPlotNumber(String(Math.max(...areas)))
-    : null;
-  const minPrice = prices.length
-    ? formatPlotNumber(String(Math.min(...prices)))
-    : null;
+  const summary = summarizePlots(available);
+  const minArea =
+    summary.minimumArea === null
+      ? null
+      : formatPlotNumber(String(summary.minimumArea));
+  const maxArea =
+    summary.maximumArea === null
+      ? null
+      : formatPlotNumber(String(summary.maximumArea));
+  const minPrice =
+    summary.minimumAvailablePrice === null
+      ? null
+      : formatPlotNumber(String(summary.minimumAvailablePrice));
 
   return (
     <section className="home-hero" id="top" aria-labelledby="home-title">

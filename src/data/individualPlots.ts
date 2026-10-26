@@ -17,4 +17,6 @@ export interface IndividualPlotDetails {
  * "images/plots/2-01/01.webp". Absolute https URLs are also supported.
  * No category or photographs are assumed when a plot has no entry here.
  */
-export const individualPlots: Record<string, IndividualPlotDetails> = {};
+export const individualPlots: Readonly<
+  Partial<Record<string, IndividualPlotDetails>>
+> = {};

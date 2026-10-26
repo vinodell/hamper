@@ -50,19 +50,23 @@ export const InteractiveMap = ({
   );
 
   const zones = useMemo(() => resolveMapZones(plots), [plots]);
-  const selectableZones = useMemo(
-    () =>
-      new Map(zones.filter(isSelectableZone).map((zone) => [zone.id, zone])),
-    [zones],
-  );
+  const { selectableZonesById, selectableZonesByPlotId } = useMemo(() => {
+    const selectableZonesById = new Map<string, MapZone>();
+    const selectableZonesByPlotId = new Map<string, MapZone>();
+    for (const zone of zones) {
+      if (!isSelectableZone(zone)) continue;
+      selectableZonesById.set(zone.id, zone);
+      if (!selectableZonesByPlotId.has(zone.plotId))
+        selectableZonesByPlotId.set(zone.plotId, zone);
+    }
+    return { selectableZonesById, selectableZonesByPlotId };
+  }, [zones]);
   const hoveredZone =
     hoveredZoneId && !selectedPlotId
-      ? selectableZones.get(hoveredZoneId)
+      ? selectableZonesById.get(hoveredZoneId)
       : undefined;
   const selectedZone = selectedPlotId
-    ? zones.find(
-        (zone) => zone.plotId === selectedPlotId && isSelectableZone(zone),
-      )
+    ? selectableZonesByPlotId.get(selectedPlotId)
     : undefined;
 
   useEffect(() => setImageFailed(false), [imageSrc]);

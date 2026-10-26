@@ -63,6 +63,14 @@ for (const [id, settlement, status, mortgage] of [
     mortgage,
   );
 
+// Distinct areas and a cheaper sold plot exercise the public summary rules.
+const setPlotFigures = database.prepare(
+  "UPDATE plots SET area = ?, price = ? WHERE id = ?",
+);
+setPlotFigures.run("12", "100000", "1-05");
+setPlotFigures.run("9.5", "1600000", "1-06");
+setPlotFigures.run("10", "1700000", "1-07");
+
 const DB = {
   prepare(sql) {
     const statement = database.prepare(sql);
@@ -521,6 +529,28 @@ try {
   }
 
   await navigate(main, "/", "document.querySelector('.promotion-ribbon')");
+  await check(
+    "Home and village summaries preserve available prices and their different area ranges",
+    async () => {
+      assert.deepEqual(
+        await main.evaluate(
+          "[...document.querySelectorAll('.home-hero__facts strong')].map(element=>element.textContent.replace(/\\s/g,''))",
+        ),
+        ["2проекта", "8,12–10соток", "от1500000₽"],
+      );
+      await navigate(
+        main,
+        "/projects/oynelovskie-dali/",
+        "document.querySelector('.oinelovo-hero-facts')",
+      );
+      const facts = await main.evaluate(
+        "document.querySelector('.oinelovo-hero-facts').textContent.replace(/\\s/g,'')",
+      );
+      assert.ok(facts.includes("8участков8,12–12соток"));
+      assert.ok(facts.includes("от1500000₽заучасток"));
+      await navigate(main, "/", "document.querySelector('.promotion-ribbon')");
+    },
+  );
   await check(
     "Completed projects can be browsed forwards, backwards and with the keyboard",
     async () => {
@@ -1242,6 +1272,12 @@ try {
   await check(
     "Map list, tooltip and accessible label use the saved full-payment price",
     async () => {
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('.oinelovo-hero-facts > div:last-child').textContent.replace(/\\s/g,'')",
+        ),
+        "от1250000₽при100%оплате",
+      );
       await assertPrice(
         main,
         ".oinelovo-plot-list .plot-price",

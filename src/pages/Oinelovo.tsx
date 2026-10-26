@@ -46,6 +46,7 @@ import {
   type Plot,
 } from "../lib";
 import { oinelovoPhotos as photos } from "../data/oinelovoPhotos";
+import { summarizePlots } from "../lib/plotSummary";
 import { TgLogo, WhatsupLogo } from "../images";
 
 import "./Oinelovo.css";
@@ -259,27 +260,22 @@ export function Oinelovo() {
     [projectPlots],
   );
   const stats = useMemo(() => {
-    const areas = projectPlots.map((plot) =>
-      Number(plot.area.replace(",", ".")),
-    );
-    const prices = availablePlots.map((plot) =>
-      Number((plot.fullPaymentPrice ?? plot.price).replace(",", ".")),
-    );
-    const minimumPrice = prices.length ? Math.min(...prices) : null;
-    const minimumPricePlot =
-      minimumPrice === null
-        ? undefined
-        : availablePlots[prices.indexOf(minimumPrice)];
+    const summary = summarizePlots(projectPlots, "full-payment");
     return {
       count: projectPlots.length || mapZones.length,
-      area: areas.length
-        ? `${formatPlotNumber(String(Math.min(...areas)))}–${formatPlotNumber(String(Math.max(...areas)))}`
-        : "",
+      area:
+        summary.minimumArea === null || summary.maximumArea === null
+          ? ""
+          : `${formatPlotNumber(String(summary.minimumArea))}–${formatPlotNumber(String(summary.maximumArea))}`,
       price:
-        minimumPrice === null ? "" : formatPlotNumber(String(minimumPrice)),
-      priceRequiresFullPayment: Boolean(minimumPricePlot?.fullPaymentPrice),
+        summary.minimumAvailablePrice === null
+          ? ""
+          : formatPlotNumber(String(summary.minimumAvailablePrice)),
+      priceRequiresFullPayment: Boolean(
+        summary.cheapestAvailablePlot?.fullPaymentPrice,
+      ),
     };
-  }, [availablePlots, projectPlots]);
+  }, [projectPlots]);
   const galleryPhotos = useMemo(
     () => [...photos.slice(photoIndex), ...photos.slice(0, photoIndex)],
     [photoIndex],

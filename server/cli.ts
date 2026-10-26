@@ -29,7 +29,9 @@ export function runCli(args: string[]) {
     import.meta.url,
   );
   if (command !== "migrate" && !existsSync(databasePath))
-    throw new Error("Database does not exist. Run npm run db:migrate first.");
+    throw new Error(
+      "Database does not exist. Run npm run db -- migrate first.",
+    );
   const database = new SqliteDatabase(databasePath);
   try {
     if (command === "migrate") return applyMigrations(database, migrationsDir);

@@ -72,12 +72,7 @@ await writeFile(
       engines: { node: ">=22.13.0" },
       scripts: {
         start: "node server.js",
-        "db:migrate":
-          "node --env-file-if-exists=.env.server build/server/cli.js migrate",
-        "db:import":
-          "node --env-file-if-exists=.env.server build/server/cli.js import-d1",
-        "db:backup":
-          "node --env-file-if-exists=.env.server build/server/cli.js backup",
+        db: "node --env-file-if-exists=.env.server build/server/cli.js",
       },
     },
     null,

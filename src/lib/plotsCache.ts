@@ -23,7 +23,10 @@ function publish(next: PlotsSnapshot) {
 }
 
 function withDetails(plot: Plot): Plot {
-  return { ...plot, ...individualPlots[plot.id] };
+  const details = Object.hasOwn(individualPlots, plot.id)
+    ? individualPlots[plot.id]
+    : undefined;
+  return { ...plot, ...details };
 }
 
 function samePlot(left: Plot, right: Plot): boolean {

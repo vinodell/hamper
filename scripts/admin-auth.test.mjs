@@ -62,12 +62,23 @@ function fixture() {
           return this;
         },
         async all() {
-          if (sql === "SELECT id, full_payment_price FROM plots")
+          if (
+            /^SELECT id, full_payment_price FROM plots WHERE id IN \(\?(?:, \?)*\)$/.test(
+              sql,
+            )
+          )
             return {
-              results: [...rows.values()].map((row) => ({
-                id: row.id,
-                full_payment_price: row.full_payment_price ?? null,
-              })),
+              results: values.flatMap((id) => {
+                const row = rows.get(id);
+                return row
+                  ? [
+                      {
+                        id: row.id,
+                        full_payment_price: row.full_payment_price ?? null,
+                      },
+                    ]
+                  : [];
+              }),
             };
           assert.ok(
             [
