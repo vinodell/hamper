@@ -399,6 +399,8 @@ async function passengerFixture(context) {
     "start",
     "http",
     "api",
+    "plotValidation",
+    "validation",
     "constants",
     "database",
     "paths",

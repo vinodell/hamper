@@ -261,7 +261,8 @@ test("compiled migration/import/backup CLI commands work in the standalone Hostl
     "backup",
     "database",
     "paths",
-    "api",
+    "plotValidation",
+    "validation",
     "constants",
   ]) {
     const source = await readFile(

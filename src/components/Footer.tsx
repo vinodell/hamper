@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Logo } from "../images";
+import { Brand } from "./Brand";
 import { homeNavigation, navigation, offertaMsg, siteConfig } from "../lib";
 
 import "./Footer.css";
@@ -13,17 +13,7 @@ export const Footer = ({
   return (
     <footer className="footer">
       <div className="container footer-top">
-        <Link
-          className="brand brand-footer"
-          to="/"
-          aria-label="Хампер — главная"
-        >
-          <Logo />
-          <span className="brand-name">
-            {siteConfig.brand}
-            <small>{siteConfig.brandSubtitle}</small>
-          </span>
-        </Link>
+        <Brand className="brand-footer" />
         <div className="footer-links">
           {(isLanding ? homeNavigation : navigation).map(([label, href]) => (
             <Link

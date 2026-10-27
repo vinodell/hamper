@@ -37,7 +37,7 @@ export function HomeHero() {
       />
       <div className="container home-hero__inner">
         <h1 id="home-title">
-          Мини-послеки
+          Мини-поселки
           <br />
           Хампер village
         </h1>
@@ -88,9 +88,6 @@ export function HomeHero() {
           </a>
         </div>
       </div>
-      <span className="home-hero__caption" aria-hidden="true">
-        Ближе к природе. Ближе к себе.
-      </span>
     </section>
   );
 }

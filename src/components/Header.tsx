@@ -2,7 +2,7 @@ import { Menu, Phone, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useMobileMenu } from "../hooks";
-import { Logo } from "../images";
+import { Brand } from "./Brand";
 import {
   chooseZemli,
   closeMenuMsg,
@@ -102,18 +102,7 @@ export const Header = ({
 
   return (
     <header className="site-header" ref={headerRef}>
-      <Link
-        className="brand"
-        aria-label="Хампер — главная"
-        to="/"
-        onClick={handleNavigation}
-      >
-        <Logo />
-        <span className="brand-name">
-          {siteConfig.brand}
-          <small>{siteConfig.brandSubtitle}</small>
-        </span>
-      </Link>
+      <Brand onClick={handleNavigation} />
       <nav
         id="main-navigation"
         className={`main-nav ${menu.isOpen ? "is-open" : ""}`}

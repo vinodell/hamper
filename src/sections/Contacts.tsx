@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowUpRight, Check, Mail, Phone, ShieldCheck } from "lucide-react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { ArrowUpRight, Check, Mail, ShieldCheck } from "lucide-react";
 import { formatPhone, usePlots } from "../hooks";
-import { TgLogo, WhatsupLogo } from "../images";
-import { siteConfig, PHONE_PATTERN, type Plot } from "../lib";
+import { ContactPeople } from "../components/ContactPeople";
+import { PhoneInput } from "../components/PhoneInput";
+import { siteConfig, type Plot } from "../lib";
 import { api } from "../lib/api";
-import { contactPeople } from "../lib/contactDetails";
+import { isValidRussianPhone, PHONE_REQUIRED_MESSAGE } from "../lib/phone";
 
 import "./Contacts.css";
 import "../components/ContactDialog.css";
@@ -38,6 +39,9 @@ export const Contacts = ({
     "idle" | "sending" | "success" | "error"
   >("idle");
   const [submitError, setSubmitError] = useState("");
+  const phoneErrorId = useId();
+  const validPhone = isValidRussianPhone(phone);
+  const invalidPhone = formState === "error" && !validPhone;
   const pendingSubmission = useRef(false);
   const availabilityPlot =
     requestKind === "availability" && selectedPlot?.status === "Забронирован"
@@ -81,6 +85,11 @@ export const Contacts = ({
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (pendingSubmission.current) return;
+    if (!validPhone) {
+      setFormState("error");
+      setSubmitError(PHONE_REQUIRED_MESSAGE);
+      return;
+    }
     if (!consent) {
       setFormState("error");
       setSubmitError(
@@ -160,40 +169,7 @@ export const Contacts = ({
             </p>
 
             <div className="contact-details">
-              {contactPeople.map(
-                ({ id, phone, phoneHref, telegram, whatsapp }) => (
-                  <div className="mobile-contacts" key={id}>
-                    {phone && (
-                      <a
-                        className="contact-phone"
-                        href={phoneHref}
-                        aria-label={`Позвонить: ${phone}`}
-                      >
-                        <Phone size="1.125rem" />
-                        {phone}
-                      </a>
-                    )}
-                    {telegram && (
-                      <a
-                        className="social-logo"
-                        href={`https://t.me/${telegram}`}
-                        aria-label="Написать в Telegram"
-                      >
-                        <TgLogo />
-                      </a>
-                    )}
-                    {whatsapp && (
-                      <a
-                        className="social-logo"
-                        href={`https://wa.me/${whatsapp}`}
-                        aria-label="Написать в WhatsApp"
-                      >
-                        <WhatsupLogo />
-                      </a>
-                    )}
-                  </div>
-                ),
-              )}
+              <ContactPeople />
               {siteConfig.email && (
                 <div className="mobile-contacts email-container">
                   <a href={`mailto:${siteConfig.email}`}>
@@ -229,19 +205,18 @@ export const Contacts = ({
 
           <label>
             Телефон *
-            <input
-              type="tel"
+            <PhoneInput
               value={phone}
-              onChange={(event) => setPhone(event.target.value)}
-              onBlur={(event) => setPhone(formatPhone(event.target.value))}
-              name="phone"
-              placeholder="+7 (___) ___-__-__"
-              pattern={PHONE_PATTERN}
-              required
-              autoComplete="tel"
-              inputMode="tel"
-              aria-label="Телефон"
+              onChange={setPhone}
+              onBlur={() => {
+                if (phone && !validPhone) {
+                  setFormState("error");
+                  setSubmitError(PHONE_REQUIRED_MESSAGE);
+                }
+              }}
               disabled={formState === "sending"}
+              invalid={invalidPhone}
+              describedBy={invalidPhone ? phoneErrorId : undefined}
             />
           </label>
           <label>
@@ -366,7 +341,7 @@ export const Contacts = ({
           <button
             className={`button button-gold${isDialog ? " tw:group tw:sm:col-span-2 tw:motion-safe:transition-colors tw:duration-200" : ""}`}
             type="submit"
-            disabled={formState === "sending" || !consent}
+            disabled={formState === "sending" || !consent || !validPhone}
           >
             {formState === "sending"
               ? "Отправляем…"
@@ -410,6 +385,7 @@ export const Contacts = ({
           )}
           {formState === "error" && (
             <small
+              id={phoneErrorId}
               className={`form-error${isDialog ? " tw:sm:col-span-2" : ""}`}
               role="alert"
             >

@@ -28,30 +28,13 @@
 }
 
 .home-page .site-header {
-  --header-height: 5.25rem;
+  --header-height: var(--site-header-height);
   min-height: var(--header-height);
   gap: 2rem;
   padding-block: 0.75rem;
   background: var(--paper);
 }
 
-.home-page .brand {
-  min-width: 10rem;
-  gap: 0.65rem;
-}
-.home-page .brand > svg {
-  width: 2.5rem;
-  height: 2.5rem;
-  fill: var(--home-green);
-}
-.home-page .brand-name {
-  font: 1.8rem/1 var(--font-heading);
-  color: var(--home-ink);
-  letter-spacing: -0.055em;
-}
-.home-page .brand-name small {
-  display: none;
-}
 .home-page .main-nav {
   justify-content: flex-start;
   gap: 2.25rem;
@@ -510,9 +493,9 @@
 }
 .home-contact {
   display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
   align-items: stretch;
-  gap: 2rem;
+  gap: 1.5rem;
   padding: 1.25rem;
   border-radius: 0.75rem;
   background: #f0eee6;
@@ -521,52 +504,24 @@
   align-self: center;
 }
 .home-contact h2 {
-  margin-bottom: 0.75rem;
+  margin-bottom: 1rem;
   font-size: clamp(1.75rem, 2.4vw, 2.15rem);
   letter-spacing: -0.04em;
 }
-.home-contact__people {
-  display: grid;
-  max-width: 29rem;
+.home-contact .home-contact__people {
+  width: fit-content;
+  max-width: 100%;
   gap: 0.4rem;
 }
-.home-contact-person {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.75rem;
-  min-width: 0;
+.home-contact .home-contact__people .contact-person {
+  justify-content: flex-start;
+  column-gap: 0.875rem;
+  row-gap: 0.25rem;
 }
-.home-contact-person__phone {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-height: 2.75rem;
-  font-size: 0.85rem;
-  white-space: nowrap;
-}
-.home-contact-person__messengers {
-  display: flex;
-  gap: 0.35rem;
-}
-.home-messenger {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  padding: 0.25rem;
-  border-radius: 50%;
-  transition:
-    transform 180ms ease,
-    box-shadow 180ms ease;
-}
-.home-messenger svg {
-  width: 100%;
-  height: 100%;
-}
-.home-messenger--telegram {
-  padding: 0.35rem;
-  background: #47776f;
+.home-contact .home-contact__people .contact-person__phone {
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
 }
 .home-contact__photo {
   position: relative;
@@ -582,6 +537,10 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+
+.home-page .footer .brand-footer {
+  color: #1e514a;
 }
 
 .home-page .footer {
@@ -662,13 +621,6 @@
     background: var(--home-green);
     border-color: var(--home-green);
   }
-  .home-contact-person__phone:hover {
-    color: var(--home-green);
-  }
-  .home-messenger:hover {
-    transform: translateY(-0.15rem);
-    box-shadow: 0 0.3rem 0.6rem rgb(33 65 44 / 0.12);
-  }
 }
 
 @media (min-width: 80em) {
@@ -691,9 +643,6 @@
   }
   .home-contact {
     gap: 1.75rem;
-  }
-  .home-contact__people {
-    max-width: none;
   }
 }
 
@@ -734,7 +683,7 @@
 }
 
 @media (max-width: 47.999em) {
-  .home-page .container {
+  .home-page .container:not(.footer-top) {
     width: min(calc(100% - 2.5rem), 80rem);
   }
   .home-page .site-header {
@@ -745,17 +694,6 @@
     grid-template-rows: 1fr;
     gap: 0.55rem;
     padding: 0.6rem 1.25rem;
-  }
-  .home-page .site-header .brand {
-    gap: 0.4rem;
-    min-width: 0;
-  }
-  .home-page .site-header .brand > svg {
-    width: 2rem;
-    height: 2rem;
-  }
-  .home-page .site-header .brand-name {
-    font-size: 1.5rem;
   }
   .home-page .site-header .header-cta {
     grid-column: 2;
@@ -916,16 +854,6 @@
   .home-contact h2 {
     font-size: 1.75rem;
   }
-  .home-contact__people {
-    gap: 0.65rem;
-  }
-  .home-contact-person {
-    justify-content: space-between;
-    flex-wrap: nowrap;
-  }
-  .home-contact-person__phone {
-    font-size: 0.8rem;
-  }
   .home-contact__photo {
     min-height: 8rem;
   }
@@ -975,14 +903,9 @@
     scroll-behavior: auto !important;
   }
   .home-page
-    :is(
-      .home-button,
-      .home-messenger,
-      .home-text-link,
-      .home-project-card__image
-    ):hover
+    :is(.home-button, .home-text-link, .home-project-card__image):hover
     :is(svg, img, span),
-  .home-page :is(.home-button, .home-messenger):active {
+  .home-page .home-button:active {
     transform: none;
   }
 }

@@ -1,4 +1,5 @@
 import { PLOTS_REFRESH_MS } from "./constants";
+import { waitForSharedRequest } from "./waitForSharedRequest";
 
 export interface SiteSettings {
   promotion: {
@@ -85,20 +86,6 @@ export function publishSavedSiteSettings(
   publishReady(settings);
 }
 
-function waitForSettings(promise: Promise<SiteSettings>, signal?: AbortSignal) {
-  if (!signal) return promise;
-  if (signal.aborted)
-    return Promise.reject(new DOMException("Запрос отменён", "AbortError"));
-  return new Promise<SiteSettings>((resolve, reject) => {
-    const abort = () =>
-      reject(new DOMException("Запрос отменён", "AbortError"));
-    signal.addEventListener("abort", abort, { once: true });
-    promise.then(resolve, reject).finally(() => {
-      signal.removeEventListener("abort", abort);
-    });
-  });
-}
-
 export function loadCachedSiteSettings(
   load: () => Promise<SiteSettings>,
   options: { force?: boolean; maxAgeMs?: number; signal?: AbortSignal } = {},
@@ -110,7 +97,7 @@ export function loadCachedSiteSettings(
     updatedAt = 0;
     if (pending) refreshQueued = true;
   }
-  if (pending) return waitForSettings(pending, options.signal);
+  if (pending) return waitForSharedRequest(pending, options.signal);
   if (
     snapshot.settings &&
     !snapshot.error &&
@@ -156,5 +143,5 @@ export function loadCachedSiteSettings(
       throw reason;
     },
   );
-  return waitForSettings(pending, options.signal);
+  return waitForSharedRequest(pending, options.signal);
 }

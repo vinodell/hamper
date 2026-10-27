@@ -19,12 +19,15 @@ async function compile(file, imports = {}) {
 }
 
 const constantsUrl = moduleUrl("export const PLOTS_REFRESH_MS = 30000;");
+const sharedRequestUrl = await compile("src/lib/waitForSharedRequest.ts");
 const settingsUrl = await compile("src/lib/siteSettings.ts", {
   "./constants": constantsUrl,
+  "./waitForSharedRequest": sharedRequestUrl,
 });
 const cacheUrl = await compile("src/lib/plotsCache.ts", {
   "./constants": constantsUrl,
   "../data/individualPlots": await compile("src/data/individualPlots.ts"),
+  "./waitForSharedRequest": sharedRequestUrl,
 });
 let sequence = 0;
 const freshSettings = () => import(`${settingsUrl}#${++sequence}`);

@@ -456,7 +456,8 @@
 
 .oinelovo-about-facts {
   display: grid;
-  grid-template-columns: auto auto 1fr 1fr;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 0.875rem;
   width: 100%;
   margin-block: 1.625rem 1.875rem;
@@ -464,10 +465,12 @@
 
 .oinelovo-about-facts > div {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 0.5rem;
   min-width: 0;
   font-size: 0.6875rem;
+  text-align: left;
 }
 
 .oinelovo-about-facts > div > span,
@@ -489,6 +492,7 @@
 }
 
 .oinelovo-about-facts strong {
+  max-width: 100%;
   font-size: 0.875rem;
   line-height: 1.3;
 }
@@ -964,7 +968,7 @@
   font-style: normal;
 }
 
-.oinelovo-contact-card > div {
+.oinelovo-contact-card > div:not(.contact-people) {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -975,13 +979,13 @@
   stroke-width: 1.25;
 }
 
-.oinelovo-contact-card a {
+.oinelovo-contact-card > div:not(.contact-people) a {
   display: block;
   line-height: 1.6;
   white-space: nowrap;
 }
 
-.oinelovo-contact-card a:hover {
+.oinelovo-contact-card > div:not(.contact-people) a:hover {
   text-decoration: underline;
   text-underline-offset: 0.2em;
 }
@@ -990,22 +994,6 @@
   display: block;
   color: var(--muted);
   font-size: 0.625rem;
-}
-
-.oinelovo-messenger-icons {
-  display: flex;
-  gap: 0.5rem;
-  color: var(--pine);
-}
-
-.oinelovo-messenger-icons svg {
-  width: 1.5rem;
-  height: 1.5rem;
-}
-
-.oinelovo-page svg[aria-label="Telegram"] {
-  border-radius: 50%;
-  background: var(--pine);
 }
 
 .oinelovo-contact-action {
@@ -1019,11 +1007,6 @@
 .oinelovo-contact-action:hover {
   text-decoration: underline;
   text-underline-offset: 0.2em;
-}
-
-.oinelovo-contact-card .oinelovo-messengers {
-  gap: 0.75rem;
-  font-size: 0.625rem;
 }
 
 .oinelovo-page .project-dialog {
@@ -1174,10 +1157,10 @@
   }
   .oinelovo-contact-card {
     grid-column: 1 / -1;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
     gap: 1rem;
   }
-  .oinelovo-contact-card > div {
+  .oinelovo-contact-card > div:not(.contact-people) {
     gap: 0.75rem;
   }
 }
@@ -1447,14 +1430,11 @@
     gap: 1.5rem;
     font-size: 0.875rem;
   }
-  .oinelovo-contact-card a {
+  .oinelovo-contact-card > div:not(.contact-people) a {
     min-height: 2.25rem;
     line-height: 2.25rem;
   }
   .oinelovo-contact-card small {
-    font-size: 0.75rem;
-  }
-  .oinelovo-contact-card .oinelovo-messengers {
     font-size: 0.75rem;
   }
   .oinelovo-page .project-dialog .oinelovo-plot-list li {
@@ -1567,5 +1547,20 @@
   .oinelovo-page .oinelovo-thumbnails img,
   .oinelovo-page .oinelovo-thumbnails > button:hover img {
     transform: none;
+  }
+}
+
+.oinelovo-contact-card .oinelovo-contact__people {
+  grid-row: span 2;
+  align-self: center;
+}
+
+.oinelovo-contact-card__hours {
+  align-self: end;
+}
+
+@media (max-width: 47.5em) {
+  .oinelovo-contact-card .oinelovo-contact__people {
+    grid-row: auto;
   }
 }

@@ -3,14 +3,19 @@ body.menu-open {
 }
 
 .site-header {
-    --header-height: 7.625rem;
+    --header-height: var(--site-header-height);
+    height: var(--header-height);
     min-height: var(--header-height);
     background: var(--bg);
     display: grid;
     grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: clamp(1rem, 2vw, 2rem);
-    padding: 1rem max(1.25rem, calc((100vw - var(--container)) / 2));
+    padding: 0.75rem
+        max(
+            var(--site-chrome-gutter),
+            calc((100% - var(--site-chrome-width)) / 2)
+        );
     position: relative;
     z-index: 5;
 }
@@ -83,9 +88,9 @@ body.menu-open {
 
 .header-contact {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0.75rem;
-    font-size: 0.9375rem;
+    font-size: 0.8rem;
 }
 
 .header-contact a {
@@ -94,13 +99,15 @@ body.menu-open {
     text-decoration: underline;
     text-underline-offset: 0.1875rem;
     white-space: nowrap;
+    line-height: 1.4;
 }
 
 .header-contact span {
     display: block;
     text-align: right;
-    font-size: 0.8125rem;
-    margin-top: 0.4375rem;
+    font-size: 0.65rem;
+    margin-top: 0.2rem;
+    line-height: 1.4;
 }
 
 .header-cta {
@@ -125,12 +132,11 @@ body.menu-open {
 
 @media (max-width: 79.999em) {
     .site-header {
-        --header-height: 5.25rem;
         height: var(--header-height);
         min-height: 0;
         grid-template-columns: minmax(0, 1fr) auto auto;
         gap: 1rem;
-        padding: 0.75rem 1.25rem;
+        padding-block: 0.75rem;
     }
 
     .header-contact {
@@ -215,23 +221,26 @@ body.menu-open {
     }
 }
 
-@media (max-width: 40em) {
+@media (max-width: 47.999em) {
     .site-header {
-        --header-height: 8.75rem;
-        grid-template-columns: minmax(0, 1fr) auto;
-        grid-template-rows: 1fr auto;
-        column-gap: 0.75rem;
-        row-gap: 0.5rem;
+        grid-template-columns: minmax(0, 1fr) auto auto;
+        grid-template-rows: 1fr;
+        gap: 0.55rem;
+        padding-block: 0.6rem;
     }
 
     .header-cta {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        width: 100%;
+        grid-column: 2;
+        grid-row: 1;
+        min-height: 2.5rem;
+        padding: 0.55rem 0.85rem;
+        font-size: 0.65rem;
     }
 
     .menu-toggle {
-        grid-column: 2;
+        grid-column: 3;
         grid-row: 1;
+        width: 2.3rem;
+        height: 2.5rem;
     }
 }

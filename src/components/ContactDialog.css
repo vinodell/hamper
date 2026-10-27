@@ -131,6 +131,12 @@
 
 .project-dialog:is(.oinelovo-inquiry, .home-inquiry)
   .contact-form
+  input[aria-invalid="true"] {
+  border-color: #a0342b;
+}
+
+.project-dialog:is(.oinelovo-inquiry, .home-inquiry)
+  .contact-form
   :is(input, select, textarea):disabled {
   opacity: 0.6;
   cursor: not-allowed;

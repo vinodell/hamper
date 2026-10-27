@@ -1,3 +1,4 @@
+import { Brand } from "../components/Brand";
 import {
   isValidFullPaymentPrice,
   isValidPlotNumber,
@@ -17,6 +18,7 @@ import {
   useMemo,
   useState,
   type FormEvent,
+  type PropsWithChildren,
 } from "react";
 import {
   api,
@@ -68,6 +70,32 @@ const samePlot = (left: AdminPlot, right: AdminPlot) =>
   (left.buildingPermitDone ?? false) === (right.buildingPermitDone ?? false) &&
   (left.mortgageUrl ?? "") === (right.mortgageUrl ?? "");
 
+function AdminFrame({
+  children,
+  canLeave,
+}: PropsWithChildren<{ canLeave: () => boolean }>) {
+  return (
+    <>
+      <header className="admin-brand-header">
+        <Brand
+          onClick={(event) => {
+            if (
+              event.button !== 0 ||
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey
+            )
+              return;
+            if (!canLeave()) event.preventDefault();
+          }}
+        />
+      </header>
+      <main className="admin-shell">{children}</main>
+    </>
+  );
+}
+
 export function Admin() {
   const [authenticated, setAuthenticated] = useState(false);
   const [login, setLogin] = useState("");
@@ -111,6 +139,11 @@ export function Admin() {
     Object.entries(newPlot).some(
       ([key, value]) => value !== emptyPlot[key as keyof PlotCreate],
     );
+
+  const canLeave = () =>
+    !busy &&
+    (!hasUnsavedChanges ||
+      window.confirm("Есть несохранённые изменения. Выйти и потерять их?"));
 
   useEffect(() => {
     if (!hasUnsavedChanges) return;
@@ -337,12 +370,7 @@ export function Admin() {
   };
 
   const logout = async () => {
-    if (busy) return;
-    if (
-      hasUnsavedChanges &&
-      !window.confirm("Есть несохранённые изменения. Выйти и потерять их?")
-    )
-      return;
+    if (!canLeave()) return;
     setLoggingOut(true);
     setError("");
     try {
@@ -382,14 +410,14 @@ export function Admin() {
 
   if (loading)
     return (
-      <main className="admin-shell">
+      <AdminFrame canLeave={canLeave}>
         <LoadingIndicator label="Загружаем панель управления…" />
-      </main>
+      </AdminFrame>
     );
 
   if (!authenticated)
     return (
-      <main className="admin-shell">
+      <AdminFrame canLeave={canLeave}>
         <form
           className="admin-login"
           onSubmit={handleLogin}
@@ -436,11 +464,11 @@ export function Admin() {
             {loggingIn ? "Входим…" : "Войти"}
           </button>
         </form>
-      </main>
+      </AdminFrame>
     );
 
   return (
-    <main className="admin-shell">
+    <AdminFrame canLeave={canLeave}>
       <div className="admin-container">
         <header className="admin-header">
           <div>
@@ -855,6 +883,6 @@ export function Admin() {
           )}
         </div>
       </div>
-    </main>
+    </AdminFrame>
   );
 }

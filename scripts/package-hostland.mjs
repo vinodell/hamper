@@ -14,10 +14,33 @@ import { fileURLToPath } from "node:url";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const releaseDir = path.join(root, "release");
+const generatedAt = new Date();
+const timeZone = "Europe/Moscow";
+const dateParts = Object.fromEntries(
+  new Intl.DateTimeFormat("sv-SE", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  })
+    .formatToParts(generatedAt)
+    .map(({ type, value }) => [type, value]),
+);
+const creationDate = `${dateParts.year}-${dateParts.month}-${dateParts.day}`;
+const creationTime = `${dateParts.hour}:${dateParts.minute}:${dateParts.second}`;
+const generatedAtMoscow = `${creationDate} ${creationTime} MSK`;
+const archiveStamp = `${creationDate}_${creationTime.replaceAll(":", "-")}_MSK`;
 const staging = path.join(releaseDir, "hamper-hostland");
-const archive = path.join(releaseDir, "hamper-hostland.zip");
+const archive = path.join(releaseDir, `hamper-hostland_${archiveStamp}.zip`);
 const updateStaging = path.join(releaseDir, "hamper-public-update");
-const updateArchive = path.join(releaseDir, "hamper-public-update.zip");
+const updateArchive = path.join(
+  releaseDir,
+  `hamper-public-update_${archiveStamp}.zip`,
+);
 for (const filename of [
   "dist/index.html",
   "build/server/start.js",
@@ -119,11 +142,17 @@ async function writeManifest(directory) {
   await writeFile(
     path.join(directory, "release-manifest.json"),
     JSON.stringify(
-      { generatedAt: new Date().toISOString(), files: hashes },
+      {
+        generatedAt: generatedAt.toISOString(),
+        generatedAtMoscow,
+        timeZone,
+        files: hashes,
+      },
       null,
       2,
     ) + "\n",
   );
+  return hashes;
 }
 
 await rm(updateStaging, { recursive: true, force: true });
@@ -152,15 +181,71 @@ release-manifest.json содержит SHA-256 файлов архива; его
 не нужно загружать в public/.
 `,
 );
+const archives = [];
 for (const [directory, filename] of [
   [staging, archive],
   [updateStaging, updateArchive],
 ]) {
-  await writeManifest(directory);
+  const hashes = await writeManifest(directory);
   await rm(filename, { force: true });
   execFileSync("zip", ["-q", "-r", filename, "."], { cwd: directory });
+  const contents = await readFile(filename);
+  const filenames = Object.keys(hashes);
+  archives.push({
+    archive: path.basename(filename),
+    bytes: contents.byteLength,
+    sha256: createHash("sha256").update(contents).digest("hex"),
+    manifestFiles: filenames.length,
+    publicFiles: filenames.filter((file) => file.startsWith("public/")).length,
+  });
   console.log(`Hostland release: ${filename}`);
   console.log(`Reviewable files: ${directory}`);
+}
+await writeFile(
+  path.join(releaseDir, "verification.json"),
+  JSON.stringify(
+    {
+      generatedAt: generatedAt.toISOString(),
+      generatedAtMoscow,
+      timeZone,
+      archives,
+    },
+    null,
+    2,
+  ) + "\n",
+);
+await writeFile(
+  path.join(releaseDir, "README.md"),
+  `# Актуальный релиз Хампер
+
+Создан: **${generatedAtMoscow}** (${timeZone}).
+
+- [${path.basename(archive)}](${path.basename(archive)}) — полное Node.js-приложение и клиент. Инструкция внутри: INSTALL.md.
+- [${path.basename(updateArchive)}](${path.basename(updateArchive)}) — только обновление public/ работающего сайта. Инструкция внутри: UPDATE.md.
+- verification.json — дата создания, размеры и SHA-256 архивов.
+- hamper-hostland/ и hamper-public-update/ — распакованные версии для review.
+- review/ — сохранённые снимки интерфейса и отчёты проверок.
+- hostland-data-*/ и hostland-initial/ — отдельные выгрузки данных; в ZIP они не входят.
+
+Для обновления только интерфейса сохраните копию старой public/ вне публичного каталога сайта и замените public/ целиком из public-update, включая .htaccess. Не создавайте public/public/.
+Настройки .env.server и рабочую базу сохраняйте при любом обновлении. Для изменений API используйте полный архив и INSTALL.md.
+
+Упаковщик удаляет предыдущие архивы этих двух типов после создания обоих новых. Выгрузки данных и review сохраняются.
+Публикация, commit и push автоматически не выполняются.
+`,
+);
+
+// Remove only archives produced by this packager, after both new ZIPs exist.
+const currentArchiveNames = archives.map(({ archive }) => archive);
+const generatedArchivePattern =
+  /^hamper-(?:hostland|public-update)(?:_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}_MSK)?\.zip$/;
+for (const entry of await readdir(releaseDir, { withFileTypes: true })) {
+  if (
+    entry.isFile() &&
+    generatedArchivePattern.test(entry.name) &&
+    !currentArchiveNames.includes(entry.name)
+  )
+    await rm(path.join(releaseDir, entry.name));
 }
 console.log(
   "Includes no server secrets or database. Deployment remains manual.",

@@ -1,7 +1,7 @@
 import { Menu, Phone, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Logo } from "../images";
+import { Brand } from "./Brand";
 import { offertaMsg, siteConfig } from "../lib";
 
 import "./OinelovoChrome.css";
@@ -84,18 +84,7 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
   return (
     <header className="oinelovo-header" ref={headerRef}>
       <div className="oinelovo-container oinelovo-header__row">
-        <Link
-          to="/"
-          className="brand oinelovo-header__brand"
-          aria-label={`${siteConfig.brand} — главная`}
-          onClick={() => closeMenu()}
-        >
-          <Logo />
-          <span className="brand-name">
-            {siteConfig.brand}
-            <small>{siteConfig.brandSubtitle}</small>
-          </span>
-        </Link>
+        <Brand onClick={() => closeMenu()} />
 
         <nav
           className="oinelovo-header__desktop-nav"
@@ -200,17 +189,7 @@ export function OinelovoFooter() {
   return (
     <footer className="oinelovo-footer">
       <div className="oinelovo-container oinelovo-footer__row">
-        <Link
-          className="brand brand-footer oinelovo-footer__brand"
-          to="/"
-          aria-label={`${siteConfig.brand} — главная`}
-        >
-          <Logo />
-          <span className="brand-name">
-            {siteConfig.brand}
-            <small>{siteConfig.brandSubtitle}</small>
-          </span>
-        </Link>
+        <Brand className="brand-footer" />
         <nav aria-label="Навигация в подвале">
           {pageLinks.map(([label, href]) =>
             href.startsWith("/") ? (

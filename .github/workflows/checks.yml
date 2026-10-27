@@ -54,7 +54,8 @@ jobs:
         with:
           name: hamper-hostland
           path: |
-            release/hamper-hostland.zip
-            release/hamper-public-update.zip
+            release/hamper-hostland_*.zip
+            release/hamper-public-update_*.zip
+            release/verification.json
           if-no-files-found: error
           retention-days: 14

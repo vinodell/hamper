@@ -40,8 +40,14 @@
 
 `npm run build && npm run package:hostland` пересобирает два актуальных архива:
 
-- `release/hamper-hostland.zip` — полное приложение для Hostland;
-- `release/hamper-public-update.zip` — обновление `public/` без замены API и базы.
+- `release/hamper-hostland_YYYY-MM-DD_HH-mm-ss_MSK.zip` — полное приложение для Hostland;
+- `release/hamper-public-update_YYYY-MM-DD_HH-mm-ss_MSK.zip` — обновление `public/` без замены API и базы.
+
+В имени указаны дата и время упаковки по Москве. Точные имена свежей пары
+находятся в `release/README.md`, время создания и SHA-256 —
+в `release/verification.json`. Распакованные каталоги `hamper-hostland/` и
+`hamper-public-update/` сохраняют фиксированные имена. После успешного создания
+обоих архивов упаковщик удаляет только предыдущие ZIP этих двух типов.
 
 Оба содержат manifests SHA-256 и инструкции. Старые временные startup-патчи и
 архивы редизайна убраны после проверки новой упаковки. Выгрузки
@@ -66,8 +72,8 @@
 также проверяются автоматически.
 
 | Standards review | Spec review |
-| --- | --- |
-| 0 замечаний | 0 замечаний |
+| ---------------- | ----------- |
+| 0 замечаний      | 0 замечаний |
 
 В обоих ZIP проверены SHA-256, целостность и точное совпадение `public/` с `dist/`;
 встроены все десять WebP. Полный архив запущен после распаковки: health, маршруты,

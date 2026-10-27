@@ -25,9 +25,11 @@ const refreshMs = Number(
   constants.match(/PLOTS_REFRESH_MS = ([\d_]+);/)[1].replaceAll("_", ""),
 );
 const detailsUrl = await compile("src/data/individualPlots.ts");
+const sharedRequestUrl = await compile("src/lib/waitForSharedRequest.ts");
 const cacheUrl = await compile("src/lib/plotsCache.ts", {
   "../data/individualPlots": detailsUrl,
   "./constants": moduleUrl(`export const PLOTS_REFRESH_MS = ${refreshMs};`),
+  "./waitForSharedRequest": sharedRequestUrl,
 });
 const numbersUrl = await compile("src/lib/plotNumbers.ts");
 const sorting = await import(

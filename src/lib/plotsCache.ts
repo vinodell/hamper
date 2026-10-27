@@ -1,5 +1,6 @@
 import { individualPlots } from "../data/individualPlots";
 import { PLOTS_REFRESH_MS, type Plot } from "./constants";
+import { waitForSharedRequest } from "./waitForSharedRequest";
 
 export interface PlotsSnapshot {
   plots: Plot[];
@@ -110,21 +111,6 @@ export function invalidatePlotsCache() {
   if (pending) refreshQueued = true;
 }
 
-function waitForPlots(promise: Promise<Plot[]>, signal?: AbortSignal) {
-  if (!signal) return promise;
-  if (signal.aborted)
-    return Promise.reject(new DOMException("Запрос отменён", "AbortError"));
-  // Cancel the caller's wait, preserving the shared preload for other views.
-  return new Promise<Plot[]>((resolve, reject) => {
-    const abort = () =>
-      reject(new DOMException("Запрос отменён", "AbortError"));
-    signal.addEventListener("abort", abort, { once: true });
-    promise.then(resolve, reject).finally(() => {
-      signal.removeEventListener("abort", abort);
-    });
-  });
-}
-
 export function loadCachedPlots(
   load: () => Promise<Plot[]>,
   options: { force?: boolean; maxAgeMs?: number; signal?: AbortSignal } = {},
@@ -132,7 +118,7 @@ export function loadCachedPlots(
   if (options.signal?.aborted)
     return Promise.reject(new DOMException("Запрос отменён", "AbortError"));
   if (options.force) invalidatePlotsCache();
-  if (pending) return waitForPlots(pending, options.signal);
+  if (pending) return waitForSharedRequest(pending, options.signal);
   if (
     hasSnapshot &&
     !snapshot.error &&
@@ -180,5 +166,5 @@ export function loadCachedPlots(
       throw reason;
     },
   );
-  return waitForPlots(pending, options.signal);
+  return waitForSharedRequest(pending, options.signal);
 }

@@ -17,6 +17,8 @@ const authUrl = asModule(await compile("adminAuth"));
 const numbersUrl = asModule(await compile("plotNumbers"));
 const numbers = await import(numbersUrl);
 const metadataUrl = asModule(await compile("plotMetadata"));
+const phoneUrl = asModule(await compile("phone"));
+const sharedRequestUrl = asModule(await compile("waitForSharedRequest"));
 const { mergeAdminDrafts, toPlotUpdate } = await import(
   asModule(
     (await compile("adminDrafts")).replace(
@@ -49,10 +51,12 @@ async function loadApi(env = { DEV: false }) {
     export const plotStatuses = ["Свободен", "Забронирован", "Продан"];
     export const PLOTS_REFRESH_MS = 30000;`);
   const settingsUrl = `${asModule(
-    settingsCode.replace(
-      /(["'])\.\/constants\1/g,
-      JSON.stringify(constantsUrl),
-    ),
+    settingsCode
+      .replace(/(["'])\.\/constants\1/g, JSON.stringify(constantsUrl))
+      .replace(
+        /(["'])\.\/waitForSharedRequest\1/g,
+        JSON.stringify(sharedRequestUrl),
+      ),
   )}#${sequence}`;
   const replacements = {
     adminAuth: authUrl,
@@ -60,11 +64,12 @@ async function loadApi(env = { DEV: false }) {
     constants: constantsUrl,
     plotsCache: cacheUrl,
     plotMetadata: metadataUrl,
+    phone: phoneUrl,
     siteSettings: settingsUrl,
   };
   const code = apiCode
     .replace(
-      /(["'])\.\/(adminAuth|plotNumbers|constants|plotsCache|plotMetadata|siteSettings)\1/g,
+      /(["'])\.\/(adminAuth|plotNumbers|constants|plotsCache|plotMetadata|phone|siteSettings)\1/g,
       (_, _quote, name) => JSON.stringify(replacements[name]),
     )
     .replaceAll("import.meta.env", JSON.stringify(env));
@@ -554,6 +559,99 @@ test("contact submission requires an explicit consent before any network request
     );
   }
   assert.equal(calls, 0);
+});
+
+test("contact submission requires a phone number before any network request", async (context) => {
+  let calls = 0;
+  mockBrowser(context, async () => {
+    calls += 1;
+    return response({ ok: true });
+  });
+  const { api, ApiError } = await loadApi();
+  await assert.rejects(
+    api.sendContact({
+      name: "Анна",
+      phone: "",
+      project: "",
+      plot: "",
+      comment: "",
+      consent: true,
+    }),
+    (error) => error instanceof ApiError && error.status === 400,
+  );
+  assert.equal(calls, 0);
+});
+
+test("contact submission rejects incomplete or malformed Russian phone numbers without sending them", async (context) => {
+  let calls = 0;
+  mockBrowser(context, async () => {
+    calls += 1;
+    return response({ ok: true });
+  });
+  const { api, ApiError } = await loadApi();
+  for (const phone of [
+    undefined,
+    null,
+    79991234567,
+    "   ",
+    "+7",
+    "+7 (999) 123-45-6",
+    "9991234567",
+    "+7 (999) 123-45-678",
+    "+1 (999) 123-45-67",
+    "+44 20 1234 5678",
+    "+7 (999) 123-45-67 доб. 1",
+    "+7 (999) ABC-45-67",
+    `+7${" ".repeat(30)}9991234567`,
+  ]) {
+    await assert.rejects(
+      api.sendContact({
+        name: "Анна",
+        phone,
+        project: "",
+        plot: "",
+        comment: "",
+        consent: true,
+      }),
+      (error) =>
+        error instanceof ApiError &&
+        error.status === 400 &&
+        /номер телефона полностью/.test(error.message),
+      `Invalid phone must be rejected: ${JSON.stringify(phone)}`,
+    );
+  }
+  assert.equal(calls, 0);
+});
+
+test("contact submission accepts complete Russian phone numbers in display, digit and domestic formats", async (context) => {
+  const sentPhones = [];
+  mockBrowser(context, async (url, options) => {
+    assert.equal(url, "https://worker.test/api/contact");
+    sentPhones.push(JSON.parse(options.body).phone);
+    return response({ ok: true });
+  });
+  const { api } = await loadApi();
+  const phones = [
+    "+7 (999) 123-45-67",
+    "+79991234567",
+    "79991234567",
+    "8 (999) 123-45-67",
+    "89991234567",
+    "+7 (812) 123-45-67",
+  ];
+  for (const phone of phones)
+    assert.deepEqual(
+      await api.sendContact({
+        name: "Анна",
+        phone,
+        project: "",
+        plot: "",
+        comment: "",
+        consent: true,
+      }),
+      { ok: true },
+    );
+  assert.deepEqual(sentPhones, phones);
 });
 
 test("protected mutations use cookie authentication and return validated data", async (context) => {

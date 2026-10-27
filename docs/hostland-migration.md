@@ -52,9 +52,14 @@ npm run package:hostland
 Для упаковки нужен установленный `zip`. Команда создаёт два архива и их
 распакованные версии для ревью:
 
-- `release/hamper-hostland.zip` и `release/hamper-hostland/` — полное приложение;
-- `release/hamper-public-update.zip` и `release/hamper-public-update/` — обновление
+- `release/hamper-hostland_YYYY-MM-DD_HH-mm-ss_MSK.zip` и `release/hamper-hostland/` — полное приложение;
+- `release/hamper-public-update_YYYY-MM-DD_HH-mm-ss_MSK.zip` и `release/hamper-public-update/` — обновление
   только клиентской части: `public/`, `UPDATE.md` и `release-manifest.json`.
+
+Имена ZIP содержат дату и время упаковки по Москве (`Europe/Moscow`). Точные
+имена свежих архивов указаны в `release/README.md`; время создания и SHA-256
+обоих ZIP сохранены в `release/verification.json`. Распакованные каталоги
+сохраняют фиксированные имена.
 
 Оба используют одну клиентскую сборку. Полный архив содержит:
 
@@ -75,7 +80,8 @@ release-manifest.json        # контрольные суммы файлов
 Рабочая БД, резервные копии, `.env.server`, mock-данные, `node_modules` и исходные
 DJI JPG/HEIC/DNG не упаковываются. Оптимизированные WebP включены. Архивы не
 являются резервной копией данных. Упаковщик заново создаёт только собственные
-каталоги и ZIP; другие выгрузки данных в `release/` сохраняются.
+каталоги и удаляет старые ZIP этих двух типов после успешного создания обоих
+новых архивов. Выгрузки данных и `release/review/` сохраняются.
 
 ## 2. Создать приложение в панели Hostland
 
@@ -284,7 +290,8 @@ node --env-file-if-exists=.env.server build/server/cli.js backup /private/path/b
 но не заменяет проверенный снимок данных приложения.
 
 Для обновления только интерфейса и фотографий используйте
-`release/hamper-public-update.zip`:
+`release/hamper-public-update_YYYY-MM-DD_HH-mm-ss_MSK.zip` (точное имя —
+в `release/README.md`):
 
 1. Сохраните резервную копию текущей `public/` вне публичного каталога сайта.
 2. Загрузите новую папку `public/` и замените старую целиком, включая `.htaccess`.
@@ -298,7 +305,8 @@ node --env-file-if-exists=.env.server build/server/cli.js backup /private/path/b
 При таком обновлении `.env.server`, `private/`, база и API остаются на месте;
 перезапуск, миграция и импорт данных не требуются.
 
-Для обновления сервера используйте полный `release/hamper-hostland.zip`:
+Для обновления сервера используйте полный
+`release/hamper-hostland_YYYY-MM-DD_HH-mm-ss_MSK.zip`:
 загружайте новый `public/`, `build/server/`, `server/migrations/` и startup-файл,
 сохраняя `.env.server` и каталог данных. Не удаляйте всё приложение вместе с БД.
 Затем выполните `migrate`, обновите `tmp/restart.txt` и проверьте health/admin.

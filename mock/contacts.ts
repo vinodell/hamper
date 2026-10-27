@@ -1,0 +1,9 @@
+export const mockContactEnv = {
+  VITE_PHONE_MAKS: "+7 (999) 123-45-67",
+  VITE_PHONE_VLAD: "+7 (999) 765-43-21",
+  VITE_PHONE_HREF: "tel:+79991234567",
+  VITE_WHATSAPP_MAKS: "79991234567",
+  VITE_WHATSAPP_VLAD: "79997654321",
+  VITE_TELEGRAM_MAKS: "synthetic_maks",
+  VITE_TELEGRAM_VLAD: "synthetic_vlad",
+} as const;

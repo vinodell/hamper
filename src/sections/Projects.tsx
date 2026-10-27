@@ -5,13 +5,15 @@ import { projectRoutes } from "../lib";
 const projects = [
   {
     route: projectRoutes[0],
-    image: "oinelovo-960.webp",
+    image: "oinelovo-meadow-960.webp",
+    imageAlt: "Лес и зелёные луга в тёплом вечернем свете",
     tag: "Камерный посёлок",
     copy: "Место для спокойной жизни в окружении природы. Всего в 25 км от КАД.",
   },
   {
     route: projectRoutes[1],
     image: "home-960.webp",
+    imageAlt: "Лес и озеро в вечернем свете",
     tag: "Индивидуальные предложения",
     copy: "Подборка участков в живописных локациях Ленинградской области.",
   },
@@ -34,7 +36,7 @@ export function Projects() {
           </a>
         </div>
         <div className="home-project-grid" id="home-project-list">
-          {projects.map(({ route, image, tag, copy }) => (
+          {projects.map(({ route, image, imageAlt, tag, copy }) => (
             <article className="home-project-card" key={route.path}>
               <Link
                 className="home-project-card__image"
@@ -43,7 +45,7 @@ export function Projects() {
               >
                 <img
                   src={`${import.meta.env.BASE_URL}images/nature/${image}`}
-                  alt="Лес и озеро в вечернем свете"
+                  alt={imageAlt}
                   width={960}
                   height={384}
                   loading="lazy"

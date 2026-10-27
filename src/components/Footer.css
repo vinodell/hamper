@@ -20,8 +20,11 @@
     border-bottom: 0.0625rem solid rgba(255, 255, 255, 0.16);
 }
 
-.brand-footer .brand-name {
-    color: #c5ceb9;
+.footer .footer-top {
+    width: min(
+        calc(100% - 2 * var(--site-chrome-gutter)),
+        var(--site-chrome-width)
+    );
 }
 
 .footer-links {
@@ -50,7 +53,6 @@
 }
 
 @media (max-width: 47.5rem) {
-
     .footer-top,
     .footer-bottom {
         align-items: flex-start;

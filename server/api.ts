@@ -1,24 +1,25 @@
 import {
   ADMIN_COOKIE,
   ADMIN_COOKIE_TTL_SECONDS,
-  allowedStatuses,
   PASSWORD_HASH_ITERATIONS,
   PASSWORD_HASH_ALGORITHM,
   CONTACT_NAME_MAX_LENGTH,
   CONTACT_PHONE_MAX_LENGTH,
   OTHER_PLOTS_SETTLEMENT,
   PLOT_ID_MAX_LENGTH,
-  PLOT_STREET_MAX_LENGTH,
-  PLOT_DESCRIPTION_MAX_LENGTH,
-  PLOT_CADASTRAL_NUMBER_MAX_LENGTH,
-  PLOT_MORTGAGE_URL_MAX_LENGTH,
   FULL_PAYMENT_PRICE_ERROR,
   BULK_PLOTS_MAX_LENGTH,
   REQUEST_BODY_MAX_BYTES,
   BULK_REQUEST_BODY_MAX_BYTES,
-  type PlotStatus,
 } from "./constants.js";
 import type { Env, PlotRow, SiteSettingsRow, InquiryRow } from "./types.js";
+import {
+  validateFullPaymentPrice,
+  validatePlotId,
+  validatePlotUpdate,
+  type PlotUpdate,
+} from "./plotValidation.js";
+import { optionalText, ValidationError } from "./validation.js";
 
 const textEncoder = new TextEncoder();
 
@@ -29,19 +30,6 @@ class RequestError extends Error {
   ) {
     super(message);
   }
-}
-
-interface PlotUpdate {
-  area: string;
-  status: PlotStatus;
-  price: string;
-  fullPaymentPrice?: string | null;
-  street?: string | null;
-  description?: string | null;
-  cadastralNumber?: string | null;
-  gpzuDone?: boolean;
-  buildingPermitDone?: boolean;
-  mortgageUrl?: string | null;
 }
 
 function constantTimeEqual(left: Uint8Array, right: Uint8Array) {
@@ -235,121 +223,6 @@ async function readBody(
   if (typeof value !== "object" || value === null || Array.isArray(value))
     throw new RequestError(400, "Некорректный формат данных");
   return value as Record<string, unknown>;
-}
-
-export function validatePlotId(value: unknown) {
-  if (typeof value !== "string" || /[\u0000-\u001f\u007f-\u009f]/.test(value))
-    throw new RequestError(400, "Некорректный номер участка");
-  const id = value.trim();
-  if (!id || id.length > PLOT_ID_MAX_LENGTH)
-    throw new RequestError(400, "Некорректный номер участка");
-  return id;
-}
-
-function positiveDecimal(value: unknown) {
-  if (typeof value !== "string")
-    throw new RequestError(400, "Некорректные данные участка");
-  const decimal = value.trim().replace(",", ".");
-  const number = Number(decimal);
-  if (
-    !/^\d+(?:\.\d{1,2})?$/.test(decimal) ||
-    !Number.isFinite(number) ||
-    number <= 0
-  )
-    throw new RequestError(400, "Некорректные данные участка");
-  return decimal;
-}
-
-function optionalFullPaymentPrice(value: unknown) {
-  if (value === undefined) return undefined;
-  if (value === null || (typeof value === "string" && !value.trim()))
-    return null;
-  return positiveDecimal(value);
-}
-
-function validateFullPaymentPrice(
-  price: string,
-  fullPaymentPrice: string | null | undefined,
-) {
-  if (
-    fullPaymentPrice !== undefined &&
-    fullPaymentPrice !== null &&
-    !(Number(fullPaymentPrice) < Number(price))
-  )
-    throw new RequestError(400, FULL_PAYMENT_PRICE_ERROR);
-}
-
-function optionalText(value: unknown, maxLength: number) {
-  if (value === undefined || value === null) return null;
-  if (typeof value !== "string" || value.length > maxLength)
-    throw new RequestError(400, "Некорректные текстовые данные");
-  return value.trim() || null;
-}
-
-function cadastralNumber(value: unknown) {
-  if (value === undefined) return undefined;
-  const number = optionalText(value, PLOT_CADASTRAL_NUMBER_MAX_LENGTH);
-  if (number !== null && !/^\d{2}:\d{2}:\d{6,7}:\d{1,10}$/.test(number))
-    throw new RequestError(400, "Некорректный кадастровый номер");
-  return number;
-}
-
-function optionalBoolean(value: unknown) {
-  if (value === undefined) return undefined;
-  if (typeof value !== "boolean")
-    throw new RequestError(400, "Некорректное значение отметки документа");
-  return value;
-}
-
-function mortgageUrl(value: unknown) {
-  if (value === undefined) return undefined;
-  const text = optionalText(value, PLOT_MORTGAGE_URL_MAX_LENGTH);
-  if (text === null) return null;
-  try {
-    const url = new URL(text);
-    if (
-      url.protocol === "https:" &&
-      /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)*domclick\.ru$/.test(
-        url.hostname,
-      ) &&
-      !url.username &&
-      !url.password &&
-      !url.port &&
-      url.href.length <= PLOT_MORTGAGE_URL_MAX_LENGTH
-    )
-      return url.href;
-  } catch {
-    // Invalid URLs receive the same validation error as disallowed hosts.
-  }
-  throw new RequestError(400, "Укажите HTTPS-ссылку на объявление Домклик");
-}
-
-export function validatePlotUpdate(body: Record<string, unknown>): PlotUpdate {
-  if (
-    typeof body.status !== "string" ||
-    !allowedStatuses.has(body.status as PlotStatus)
-  )
-    throw new RequestError(400, "Некорректный статус участка");
-  const plot: PlotUpdate = {
-    area: positiveDecimal(body.area),
-    status: body.status as PlotStatus,
-    price: positiveDecimal(body.price),
-    fullPaymentPrice: optionalFullPaymentPrice(body.fullPaymentPrice),
-    street:
-      body.street === undefined
-        ? undefined
-        : optionalText(body.street, PLOT_STREET_MAX_LENGTH),
-    description:
-      body.description === undefined
-        ? undefined
-        : optionalText(body.description, PLOT_DESCRIPTION_MAX_LENGTH),
-    cadastralNumber: cadastralNumber(body.cadastralNumber),
-    gpzuDone: optionalBoolean(body.gpzuDone),
-    buildingPermitDone: optionalBoolean(body.buildingPermitDone),
-    mortgageUrl: mortgageUrl(body.mortgageUrl),
-  };
-  validateFullPaymentPrice(plot.price, plot.fullPaymentPrice);
-  return plot;
 }
 
 function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
@@ -733,6 +606,8 @@ export default {
     } catch (error) {
       if (error instanceof RequestError)
         return json({ error: error.message }, error.status, request, env);
+      if (error instanceof ValidationError)
+        return json({ error: error.message }, 400, request, env);
       if (
         error instanceof Error &&
         error.message.includes(

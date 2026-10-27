@@ -1,4 +1,4 @@
-import { validatePlotId, validatePlotUpdate } from "./api.js";
+import { validatePlotId, validatePlotUpdate } from "./plotValidation.js";
 import { SqliteDatabase } from "./database.js";
 import type { PlotRow } from "./types.js";
 

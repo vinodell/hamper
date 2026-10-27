@@ -1,6 +1,7 @@
 import { isValidPlotNumber, normalizePlotNumber } from "./plotNumbers";
 import { apiUrl, plotStatuses, type Plot, type PlotStatus } from "./constants";
 import { isValidCadastralNumber, isValidMortgageUrl } from "./plotMetadata";
+import { isValidRussianPhone, PHONE_REQUIRED_MESSAGE } from "./phone";
 import {
   getSiteSettingsRevision,
   isValidSiteSettings,
@@ -542,6 +543,8 @@ export const api = {
         "Подтвердите согласие на обработку персональных данных.",
         400,
       );
+    if (!isValidRussianPhone(data.phone))
+      throw new ApiError(PHONE_REQUIRED_MESSAGE, 400);
     if (localMockData) {
       const { sendMockContact } = await import("../../mock/contact");
       return sendMockContact(options);

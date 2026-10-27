@@ -99,12 +99,9 @@ export function ZoneModal({ zone, onClose, onBook, onNotify }: ZoneModalProps) {
         </div>
 
         <div className={styles.modalHeader}>
-          <span className={styles.modalEyebrow}>Участок {zone.number}</span>
-
           <h2 id={titleId} className={styles.modalTitle}>
             {zone.title}
           </h2>
-
           <span className={styles.status} data-status={zone.status}>
             {zoneStatusLabels[zone.status]}
           </span>

@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useId, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import {
   ArrowRight,
   BellRing,
@@ -11,11 +10,8 @@ import {
   Clock3,
   Fence,
   House,
-  Images,
   MapPin,
-  MessageCircle,
   Navigation,
-  Phone,
   Plus,
   Ruler,
   ShoppingBag,
@@ -47,7 +43,8 @@ import {
 } from "../lib";
 import { oinelovoPhotos as photos } from "../data/oinelovoPhotos";
 import { summarizePlots } from "../lib/plotSummary";
-import { TgLogo, WhatsupLogo } from "../images";
+import { ContactPeople } from "../components/ContactPeople";
+import { contactPeople } from "../lib/contactDetails";
 
 import "./Oinelovo.css";
 
@@ -64,10 +61,6 @@ const parcelWords = {
 const parcelCount = (count: number) =>
   `${count} ${parcelWords[pluralRules.select(count) as keyof typeof parcelWords]}`;
 const mapHref = `https://yandex.ru/maps/?text=${encodeURIComponent(`${project.title}, Ленинградская область`)}`;
-const hasPhone = Boolean(siteConfig.phone || siteConfig.phone2);
-const hasMessenger = Boolean(
-  siteConfig.maksTelegram || siteConfig.maksWhatsapp,
-);
 const purchaseTerms = [
   "Возможна ипотека",
   "Возможна рассрочка",
@@ -342,20 +335,19 @@ export function Oinelovo() {
           <div className="oinelovo-hero" id="top">
             <img
               className="oinelovo-hero-image"
-              src={asset("images/nature/oinelovo-1920.webp")}
-              srcSet={`${asset("images/nature/oinelovo-960.webp")} 960w, ${asset("images/nature/oinelovo-1920.webp")} 1920w`}
+              src={asset("images/nature/oinelovo-meadow-1920.webp")}
+              srcSet={`${asset("images/nature/oinelovo-meadow-960.webp")} 960w, ${asset("images/nature/oinelovo-meadow-1920.webp")} 1920w`}
               sizes="100vw"
               width={1920}
               height={768}
-              alt="Лес и тихое озеро в тёплом вечернем свете"
+              alt="Лес и зелёные луга в тёплом вечернем свете"
               fetchPriority="high"
             />
             <div className="oinelovo-container oinelovo-hero-content">
-              <nav className="oinelovo-breadcrumbs" aria-label="Хлебные крошки">
-                <Link to="/#poselki">Все посёлки</Link>
-                <ArrowRight size="0.875rem" aria-hidden="true" />
-                <span>{project.title}</span>
-              </nav>
+              <nav
+                className="oinelovo-breadcrumbs"
+                aria-label="Хлебные крошки"
+              ></nav>
               <div className="oinelovo-hero-copy">
                 <span className="oinelovo-tag">Камерный посёлок</span>
                 <h1>
@@ -414,18 +406,6 @@ export function Oinelovo() {
                   </a>
                 </div>
               </div>
-              <button
-                className="oinelovo-hero-gallery"
-                type="button"
-                onClick={() => setDialog("gallery")}
-              >
-                <span>
-                  <Images size="1.125rem" />
-                </span>
-                Посмотреть фотографии
-                <br />
-                посёлка
-              </button>
             </div>
           </div>
 
@@ -800,69 +780,19 @@ export function Oinelovo() {
                 </div>
               </div>
               <address className="oinelovo-contact-card">
-                <div>
-                  <Phone size="1.625rem" />
-                  <span>
-                    {siteConfig.phone && (
-                      <a href={siteConfig.phoneHref}>{siteConfig.phone}</a>
-                    )}
-                    {siteConfig.phone2 && (
-                      <a href={siteConfig.phone2Href}>{siteConfig.phone2}</a>
-                    )}
-                    {!hasPhone && (
-                      <button
-                        className="oinelovo-contact-action"
-                        type="button"
-                        onClick={openInquiry}
-                      >
-                        Связаться с нами
-                      </button>
-                    )}
-                    <small>{siteConfig.hours}</small>
-                  </span>
-                </div>
-                <div className="oinelovo-messengers">
-                  {hasMessenger ? (
-                    <span
-                      className="oinelovo-messenger-icons"
-                      aria-hidden="true"
-                    >
-                      {siteConfig.maksWhatsapp && <WhatsupLogo />}
-                      {siteConfig.maksTelegram && <TgLogo />}
-                    </span>
-                  ) : (
-                    <MessageCircle size="1.625rem" />
-                  )}
-                  <span>
-                    {siteConfig.maksTelegram && (
-                      <a
-                        href={`https://t.me/${siteConfig.maksTelegram}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Написать в Telegram
-                      </a>
-                    )}
-                    {siteConfig.maksWhatsapp && (
-                      <a
-                        href={`https://wa.me/${siteConfig.maksWhatsapp}`}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        Написать в WhatsApp
-                      </a>
-                    )}
-                    {!hasMessenger && (
-                      <button
-                        className="oinelovo-contact-action"
-                        type="button"
-                        onClick={openInquiry}
-                      >
-                        Задать вопрос
-                      </button>
-                    )}
-                  </span>
-                </div>
+                <ContactPeople className="oinelovo-contact__people" />
+                {contactPeople.length === 0 && (
+                  <button
+                    className="oinelovo-contact-action"
+                    type="button"
+                    onClick={openInquiry}
+                  >
+                    Связаться с нами
+                  </button>
+                )}
+                <small className="oinelovo-contact-card__hours">
+                  {siteConfig.hours}
+                </small>
                 <div>
                   <MapPin size="1.625rem" />
                   <span>

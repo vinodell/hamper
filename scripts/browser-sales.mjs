@@ -7,6 +7,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
 import { fileURLToPath } from "node:url";
+import { createServer } from "vite";
 import { importServerModule } from "./server-test-loader.mjs";
 
 // An isolated integration check: real UI, API and SQL, synthetic data only.
@@ -113,6 +114,9 @@ let releaseContactResponse;
 const originalFetch = globalThis.fetch;
 let siteOrigin;
 let apiOrigin;
+let mockOrigin;
+let mockServer;
+const mockRequests = [];
 async function handleApiRequest(request, response) {
   try {
     const chunks = [];
@@ -332,9 +336,13 @@ try {
         );
       else if (packet.method === "Fetch.requestPaused") {
         const { requestId, request } = packet.params;
+        const mock = mockOrigin && request.url.startsWith(mockOrigin + "/");
+        const pathname = mock ? new URL(request.url).pathname : "";
+        if (mock) mockRequests.push(pathname);
         const local =
           request.url.startsWith(siteOrigin + "/") ||
-          request.url.startsWith(apiOrigin + "/");
+          request.url.startsWith(apiOrigin + "/") ||
+          (mock && !pathname.startsWith("/api/"));
         void command(
           local ? "Fetch.continueRequest" : "Fetch.failRequest",
           local ? { requestId } : { requestId, errorReason: "BlockedByClient" },
@@ -522,11 +530,144 @@ try {
     );
     assert.deepEqual(failures, []);
   }
+  async function assertContactPeople(
+    client,
+    selector = '[aria-label="Телефоны и мессенджеры"]',
+  ) {
+    const people = await client.evaluate(
+      `(()=>{const region=document.querySelector(${JSON.stringify(selector)});if(!region)throw Error('Missing contact details');return[...region.querySelectorAll('.contact-person')].map(person=>({phone:person.querySelector('a[href^="tel:"]')?.getAttribute('href'),links:[...person.querySelectorAll('a')].map(link=>({href:link.getAttribute('href'),label:link.getAttribute('aria-label')||link.textContent.trim(),icon:[...link.querySelectorAll('svg')].some(icon=>{const bounds=icon.getBoundingClientRect();const style=getComputedStyle(icon);return bounds.width>=16&&bounds.height>=16&&style.display!=='none'&&style.visibility!=='hidden'&&Number(style.opacity)>0;})})).sort((a,b)=>a.href.localeCompare(b.href))})).sort((a,b)=>a.phone.localeCompare(b.phone));})()`,
+    );
+    const expected = [
+      {
+        phone: "tel:+79991234567",
+        channels: [
+          "https://t.me/synthetic_maks",
+          "https://wa.me/79991234567",
+          "tel:+79991234567",
+        ],
+      },
+      {
+        phone: "tel:+79997654321",
+        channels: [
+          "https://t.me/synthetic_vlad",
+          "https://wa.me/79997654321",
+          "tel:+79997654321",
+        ],
+      },
+    ];
+    assert.equal(people.length, expected.length);
+    for (let index = 0; index < expected.length; index++) {
+      const actual = people[index];
+      assert.equal(actual.phone, expected[index].phone);
+      assert.deepEqual(
+        actual.links.map(({ href }) => href),
+        expected[index].channels,
+      );
+      for (const link of actual.links) {
+        assert.ok(
+          link.label,
+          `Contact link ${link.href} needs a readable name`,
+        );
+        if (!link.href.startsWith("tel:"))
+          assert.equal(
+            link.icon,
+            true,
+            `${link.href} needs a visible SVG icon`,
+          );
+      }
+    }
+  }
+  async function assertContactLayout(
+    client,
+    selector = '[aria-label="Телефоны и мессенджеры"]',
+  ) {
+    const layout = await client.evaluate(
+      `(()=>{const region=document.querySelector(${JSON.stringify(selector)});const bounds=region.getBoundingClientRect();const failures=[];for(const person of region.querySelectorAll('.contact-person')){const row=person.getBoundingClientRect();const links=[...person.querySelectorAll('a')].map(link=>link.getBoundingClientRect());if(links.some(link=>link.left<row.left-1||link.right>row.right+1||link.top<row.top-1||link.bottom>row.bottom+1))failures.push('Contact controls overflow their row');for(let index=0;index<links.length;index++)for(let other=index+1;other<links.length;other++){const a=links[index],b=links[other];if(a.left<b.right-1&&a.right>b.left+1&&a.top<b.bottom-1&&a.bottom>b.top+1)failures.push('Contact controls overlap');}}return{withinViewport:bounds.left>=0&&bounds.right<=innerWidth,failures};})()`,
+    );
+    assert.deepEqual(layout, { withinViewport: true, failures: [] });
+  }
+  async function brandGeometry(client, includeFooter = true) {
+    return client.evaluate(
+      `(()=>{const measure=selector=>{const link=document.querySelector(selector);if(!link)throw Error('Missing brand '+selector);const mark=link.querySelector(':scope > svg');const name=link.querySelector('.brand-name');if(!mark||!name)throw Error('Missing brand mark or name');const markBounds=mark.getBoundingClientRect();const nameBounds=name.getBoundingClientRect();const style=getComputedStyle(name);return{href:link.getAttribute('href'),label:link.getAttribute('aria-label'),mark:{x:markBounds.x,y:markBounds.y,width:markBounds.width,height:markBounds.height},name:{x:nameBounds.x,y:nameBounds.y,width:nameBounds.width,height:nameBounds.height},font:style.font,offset:nameBounds.y-markBounds.y};};return{header:measure('header .brand'),...(${includeFooter}?{footer:measure('footer .brand')}:{})};})()`,
+    );
+  }
+  function assertAligned(actual, expected, label, axes) {
+    for (const axis of axes)
+      assert.ok(
+        Math.abs(actual[axis] - expected[axis]) <= 1,
+        `${label} ${axis}: expected ${expected[axis]}, received ${actual[axis]}`,
+      );
+  }
   async function check(name, work) {
     await work();
     checks.push(name);
     console.log(`✓ ${name}`);
   }
+
+  // Exercise the actual dev:mock configuration, without a local .env file or API.
+  const previousMockFlag = process.env.VITE_USE_MOCK_DATA;
+  try {
+    process.env.VITE_USE_MOCK_DATA = "true";
+    mockServer = await createServer({
+      root,
+      configFile: path.join(root, "mock/vite.config.ts"),
+      envFile: false,
+      server: { host: "localhost", port: 0, strictPort: true, hmr: false },
+      logLevel: "error",
+    });
+  } finally {
+    if (previousMockFlag === undefined) delete process.env.VITE_USE_MOCK_DATA;
+    else process.env.VITE_USE_MOCK_DATA = previousMockFlag;
+  }
+  await mockServer.listen();
+  mockOrigin = new URL(mockServer.resolvedUrls.local[0]).origin;
+  const mockTarget = await main.command("Target.createTarget", {
+    url: "about:blank",
+  });
+  const mock = await connect(
+    (await targets()).find((target) => target.id === mockTarget.targetId),
+  );
+  for (const width of [375, 1440]) {
+    await mock.command("Emulation.setDeviceMetricsOverride", {
+      width,
+      height: 1000,
+      deviceScaleFactor: 1,
+      mobile: width < 768,
+    });
+    for (const { route, selector, name } of [
+      { route: "/", selector: ".container.home-contact", name: "home" },
+      {
+        route: "/projects/oynelovskie-dali/",
+        selector: ".oinelovo-contact-card",
+        name: "village",
+      },
+    ]) {
+      await mock.command("Page.navigate", { url: `${mockOrigin}${route}` });
+      await until(mock, `document.querySelector(${JSON.stringify(selector)})`);
+      await mock.evaluate("document.fonts.ready.then(()=>true)");
+      await check(
+        `dev:mock shows both phones and messenger icons in ${selector} at ${width}px without .env`,
+        async () => {
+          await assertContactPeople(mock, selector);
+          await assertContactLayout(mock, selector);
+        },
+      );
+      await mock.evaluate(
+        `document.querySelector(${JSON.stringify(selector)}).scrollIntoView({block:'center',behavior:'instant'});document.querySelectorAll('#form img').forEach(image=>image.loading='eager')`,
+      );
+      await until(
+        mock,
+        "[...document.querySelectorAll('#form img')].every(image=>image.complete&&image.naturalWidth>0)",
+      );
+      await screenshot(mock, `mock-${name}-contacts-${width}`);
+    }
+  }
+  await check("dev:mock contact pages never request a real API", async () => {
+    assert.deepEqual(
+      mockRequests.filter((pathname) => pathname.startsWith("/api/")),
+      [],
+    );
+  });
 
   await navigate(main, "/", "document.querySelector('.promotion-ribbon')");
   await check(
@@ -634,6 +775,171 @@ try {
     },
   );
   await check(
+    "A phone is required even after consent and a direct submit cannot bypass validation",
+    async () => {
+      const contactPosts = () =>
+        requests.filter(
+          (request) =>
+            request.path === "/api/contact" && request.method === "POST",
+        ).length;
+      const before = contactPosts();
+      await fill(main, "#home-inquiry-form [name=name]", "Проверка телефона");
+      await activate(main, "#home-inquiry-form [name=consent]");
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#home-inquiry-form [type=submit]').disabled",
+        ),
+        true,
+        "Consent alone must not enable a form without a complete phone number",
+      );
+      await main.evaluate(
+        "document.querySelector('#home-inquiry-form form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))",
+      );
+      await delay(80);
+      assert.equal(contactPosts(), before);
+      assert.match(
+        await main.evaluate(
+          "document.querySelector('#home-inquiry-form').innerText",
+        ),
+        /номер телефона|телефон.*полностью/i,
+      );
+    },
+  );
+  await check(
+    "A Russian phone is formatted while typing, limits length and accepts pasted 7, 8 or national numbers",
+    async () => {
+      const selector = "#home-inquiry-form [name=phone]";
+      const value = () =>
+        main.evaluate(
+          `document.querySelector(${JSON.stringify(selector)}).value`,
+        );
+      await activate(main, selector);
+      assert.equal(await value(), "+7");
+      await main.command("Input.insertText", { text: "9" });
+      assert.match(await value(), /^\+7\s*\(?9/);
+      let nationalDigits = "9";
+      for (const digit of "991234567") {
+        await main.command("Input.insertText", { text: digit });
+        nationalDigits += digit;
+        assert.equal((await value()).replace(/\D/g, ""), `7${nationalDigits}`);
+        if (nationalDigits.length === 4)
+          assert.equal(await value(), "+7 (999) 1");
+        if (nationalDigits.length === 7)
+          assert.equal(await value(), "+7 (999) 123-4");
+        if (nationalDigits.length === 9)
+          assert.equal(await value(), "+7 (999) 123-45-6");
+      }
+      assert.equal(await value(), "+7 (999) 123-45-67");
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#home-inquiry-form [type=submit]').disabled",
+        ),
+        false,
+      );
+      assert.equal(
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(selector)}).maxLength`,
+        ),
+        18,
+      );
+      await main.command("Input.insertText", { text: "890123" });
+      assert.equal(await value(), "+7 (999) 123-45-67");
+      for (const pasted of ["79991234567", "89991234567", "9991234567"]) {
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(selector)}).select()`,
+        );
+        await main.command("Input.insertText", { text: pasted });
+        assert.equal(await value(), "+7 (999) 123-45-67", pasted);
+      }
+      await main.evaluate(
+        `document.querySelector(${JSON.stringify(selector)}).setSelectionRange(16,16)`,
+      );
+      await pressKey(main, "Backspace", "Backspace", 8);
+      assert.equal(await value(), "+7 (999) 123-46-7");
+      const caret = await main.evaluate(
+        `document.querySelector(${JSON.stringify(selector)}).selectionStart`,
+      );
+      assert.ok(caret >= 14 && caret <= 15);
+      await main.evaluate(
+        `document.querySelector(${JSON.stringify(selector)}).setSelectionRange(0,2)`,
+      );
+      await pressKey(main, "Backspace", "Backspace", 8);
+      assert.ok((await value()).startsWith("+7"));
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#home-inquiry-form [type=submit]').disabled",
+        ),
+        true,
+      );
+      await main.evaluate(
+        "document.querySelector('#home-inquiry-form form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))",
+      );
+      await delay(80);
+      assert.equal(
+        requests.some(
+          (request) =>
+            request.path === "/api/contact" && request.method === "POST",
+        ),
+        false,
+        "A partial number must never leave the form",
+      );
+      await screenshot(main, "home-phone-validation");
+    },
+  );
+  await check(
+    "Phone editing supports paste into +7, replacing middle digits, forward deletion and a full clear",
+    async () => {
+      const selector = "#home-inquiry-form [name=phone]";
+      const value = () =>
+        main.evaluate(
+          `document.querySelector(${JSON.stringify(selector)}).value`,
+        );
+      const clear = async () => {
+        await main.evaluate(
+          `document.querySelector(${JSON.stringify(selector)}).select()`,
+        );
+        await pressKey(main, "Backspace", "Backspace", 8);
+        assert.equal(await value(), "+7");
+      };
+      const paste = async (text) => {
+        await main.evaluate(
+          `(()=>{const data=new DataTransfer();data.setData('text/plain',${JSON.stringify(text)});document.querySelector(${JSON.stringify(selector)}).dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData:data}));})()`,
+        );
+      };
+      for (const pasted of [
+        "+7 (999) 123-45-67",
+        "8 (999) 123-45-67",
+        "9991234567",
+      ]) {
+        await clear();
+        await paste(pasted);
+        assert.equal(await value(), "+7 (999) 123-45-67", pasted);
+      }
+      await main.evaluate(
+        `document.querySelector(${JSON.stringify(selector)}).setSelectionRange(12,12)`,
+      );
+      await pressKey(main, "Delete", "Delete", 46);
+      assert.equal(await value(), "+7 (999) 123-56-7");
+      await main.command("Input.insertText", { text: "4" });
+      assert.equal(await value(), "+7 (999) 123-45-67");
+      await main.evaluate(
+        `document.querySelector(${JSON.stringify(selector)}).setSelectionRange(9,12)`,
+      );
+      await main.command("Input.insertText", { text: "456" });
+      assert.equal(await value(), "+7 (999) 456-45-67");
+      await clear();
+      await paste("+44 20 7946 0958");
+      assert.equal(await value(), "+7");
+      assert.equal(
+        await main.evaluate(
+          "document.querySelector('#home-inquiry-form [type=submit]').disabled",
+        ),
+        true,
+        "A foreign phone must not become a valid Russian number",
+      );
+    },
+  );
+  await check(
     "The home inquiry closes with Escape and restores its opener",
     async () => {
       await escape(main);
@@ -649,34 +955,45 @@ try {
       );
     },
   );
-  await check(
-    "Each home contact has its own phone, WhatsApp and Telegram links",
-    async () => {
-      const links = await main.evaluate(
-        "[...document.querySelectorAll('[aria-label=\"Телефоны и мессенджеры\"] a')].map(link=>link.getAttribute('href')).sort()",
-      );
-      assert.deepEqual(
-        links,
-        [
-          "tel:+79991234567",
-          "tel:+79997654321",
-          "https://wa.me/79991234567",
-          "https://wa.me/79997654321",
-          "https://t.me/synthetic_maks",
-          "https://t.me/synthetic_vlad",
-        ].sort(),
-      );
-    },
-  );
+  for (const route of ["/", "/projects/oynelovskie-dali/"]) {
+    await navigate(
+      main,
+      route,
+      "document.querySelector('[aria-label=\"Телефоны и мессенджеры\"]')",
+    );
+    await check(
+      `Each contact has its own phone and visible WhatsApp and Telegram icons ${route}`,
+      async () => assertContactPeople(main),
+    );
+  }
+  await main.command("Emulation.setDeviceMetricsOverride", {
+    width: 320,
+    height: 1000,
+    deviceScaleFactor: 1,
+    mobile: true,
+  });
+  for (const route of ["/", "/projects/oynelovskie-dali/"]) {
+    await navigate(
+      main,
+      route,
+      "document.querySelector('[aria-label=\"Телефоны и мессенджеры\"]')",
+    );
+    await check(`Contact controls fit a 320px screen ${route}`, async () => {
+      await main.evaluate("document.fonts.ready.then(()=>true)");
+      await assertContactPeople(main);
+      await assertContactLayout(main);
+    });
+  }
+  await main.command("Emulation.clearDeviceMetricsOverride");
   await check(
     "The village gallery opens all five new photographs, supports navigation and restores focus",
     async () => {
       await navigate(
         main,
         "/projects/oynelovskie-dali/",
-        "document.querySelector('.oinelovo-hero-gallery')",
+        "document.querySelector('.oinelovo-gallery-block > .oinelovo-button')",
       );
-      await activate(main, ".oinelovo-hero-gallery");
+      await activate(main, ".oinelovo-gallery-block > .oinelovo-button");
       await until(
         main,
         "document.querySelector('.oinelovo-photo-dialog[open]')",
@@ -717,7 +1034,7 @@ try {
       await escape(main);
       assert.equal(
         await main.evaluate(
-          "document.activeElement===document.querySelector('.oinelovo-hero-gallery')&&!document.querySelector('dialog[open]')",
+          "document.activeElement===document.querySelector('.oinelovo-gallery-block > .oinelovo-button')&&!document.querySelector('dialog[open]')",
         ),
         true,
       );
@@ -762,6 +1079,78 @@ try {
     admin,
     "document.querySelector('.admin-promotion input[role=switch]')&&!document.querySelector('.admin-promotion fieldset').disabled",
   );
+  const guardTarget = await main.command("Target.createTarget", {
+    url: "about:blank",
+  });
+  const guard = await connect(
+    (await targets()).find((target) => target.id === guardTarget.targetId),
+  );
+  for (const { name, selector, value } of [
+    {
+      name: "plot",
+      selector: '[aria-label="Цена 2-01"]',
+      value: "1490001",
+    },
+    {
+      name: "promotion",
+      selector: "[name=discountPercent]",
+      value: "11",
+    },
+  ]) {
+    await check(`Admin logo protects an unsaved ${name} draft`, async () => {
+      await navigate(
+        guard,
+        "/admin/",
+        "document.querySelector('.admin-promotion input[role=switch]')&&!document.querySelector('.admin-promotion fieldset').disabled",
+      );
+      await guard.command("Page.bringToFront");
+      await guard.evaluate("document.fonts.ready.then(()=>true)");
+      await fill(guard, selector, value);
+      const writesBefore = requests.filter(
+        ({ method }) => !["GET", "HEAD"].includes(method),
+      ).length;
+      await guard.evaluate(
+        "window.originalConfirm=window.confirm;window.brandConfirmPrompts=[];window.confirm=message=>{window.brandConfirmPrompts.push(message);return false;}",
+      );
+      try {
+        await activate(guard, ".admin-brand-header .brand");
+        assert.equal(await guard.evaluate("location.pathname"), "/admin/");
+        assert.equal(
+          await guard.evaluate(
+            `document.querySelector(${JSON.stringify(selector)}).value`,
+          ),
+          value,
+        );
+        const cancelledPrompts = await guard.evaluate(
+          "window.brandConfirmPrompts",
+        );
+        assert.equal(cancelledPrompts.length, 1);
+        assert.match(cancelledPrompts[0], /несохранённые изменения/i);
+        await guard.evaluate(
+          "window.confirm=message=>{window.brandConfirmPrompts.push(message);return true;}",
+        );
+        await activate(guard, ".admin-brand-header .brand");
+        await until(
+          guard,
+          "location.pathname==='/'&&document.querySelector('.home-page')",
+        );
+        assert.equal(
+          await guard.evaluate("window.brandConfirmPrompts.length"),
+          2,
+        );
+        assert.equal(
+          requests.filter(({ method }) => !["GET", "HEAD"].includes(method))
+            .length,
+          writesBefore,
+          "Leaving the editor must not submit a draft",
+        );
+      } finally {
+        await guard.evaluate(
+          "window.confirm=window.originalConfirm;delete window.originalConfirm;delete window.brandConfirmPrompts;",
+        );
+      }
+    });
+  }
   await check(
     "An authenticated admin sees an empty Journal before the first inquiry",
     async () => {
@@ -2090,6 +2479,7 @@ try {
       deviceScaleFactor: 1,
       mobile: width < 768,
     });
+    let expectedBrand;
     for (const route of [
       "/",
       "/projects/drugie-uchastki/",
@@ -2113,6 +2503,63 @@ try {
         );
         await main.evaluate("document.fonts.ready.then(()=>true)");
       });
+      await check(
+        `Consistent header and footer branding ${width}px ${route}`,
+        async () => {
+          await main.evaluate("scrollTo({top:0,behavior:'instant'})");
+          const actual = await brandGeometry(main);
+          expectedBrand ??= actual;
+          for (const placement of ["header", "footer"]) {
+            const brand = actual[placement];
+            const reference = expectedBrand[placement];
+            assert.equal(brand.href, "/");
+            assert.match(brand.label, /Хампер/);
+            assert.equal(brand.font, reference.font);
+            assertAligned(
+              brand.mark,
+              reference.mark,
+              `${placement} mark ${route}`,
+              placement === "header"
+                ? ["x", "y", "width", "height"]
+                : ["x", "width", "height"],
+            );
+            assertAligned(
+              brand.name,
+              reference.name,
+              `${placement} name ${route}`,
+              placement === "header"
+                ? ["x", "y", "width", "height"]
+                : ["x", "width", "height"],
+            );
+            assert.ok(Math.abs(brand.offset - reference.offset) <= 1);
+          }
+          assertAligned(
+            actual.footer.mark,
+            actual.header.mark,
+            `Header and footer marks ${route}`,
+            ["x", "width", "height"],
+          );
+          assert.equal(actual.footer.font, actual.header.font);
+        },
+      );
+      if (route === "/" || route.includes("oynelovskie")) {
+        await check(`Contact controls fit ${width}px ${route}`, async () => {
+          await assertContactPeople(main);
+          await assertContactLayout(main);
+        });
+        await main.evaluate(
+          "document.querySelector('[aria-label=\"Телефоны и мессенджеры\"]').scrollIntoView({block:'center',behavior:'instant'});document.querySelectorAll('#form img').forEach(image=>image.loading='eager')",
+        );
+        await until(
+          main,
+          "[...document.querySelectorAll('#form img')].every(image=>image.complete&&image.naturalWidth>0)",
+        );
+        await screenshot(
+          main,
+          `${route === "/" ? "home" : "village"}-contacts-${width}`,
+        );
+        await main.evaluate("scrollTo({top:0,behavior:'instant'})");
+      }
       if (route === "/") {
         await main.evaluate(
           "[...document.images].forEach(image=>image.loading='eager')",
@@ -2186,7 +2633,7 @@ try {
         );
         await escape(main);
       } else if (route.includes("oynelovskie")) {
-        await activate(main, ".oinelovo-hero-gallery");
+        await activate(main, ".oinelovo-gallery-block > .oinelovo-button");
         await until(
           main,
           "(()=>{const image=document.querySelector('.oinelovo-photo-dialog .plot-carousel-slide img');return image?.complete&&image.naturalWidth>0&&getComputedStyle(image).opacity==='1'})()",
@@ -2285,13 +2732,39 @@ try {
         await screenshot(main, `faq-${width}`);
       }
     }
+    // Chrome may defer responsive styles while this tab is in the background.
+    await admin.command("Page.bringToFront");
     await admin.command("Emulation.setDeviceMetricsOverride", {
       width,
       height: 1000,
       deviceScaleFactor: 1,
       mobile: width < 768,
     });
+    await until(admin, `innerWidth===${width}`);
+    await admin.evaluate(
+      "new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(()=>resolve(true))))",
+    );
     await admin.evaluate("scrollTo({top:0,behavior:'instant'})");
+    await admin.evaluate("document.fonts.ready.then(()=>true)");
+    await check(`Consistent admin branding ${width}px`, async () => {
+      const { header: actual } = await brandGeometry(admin, false);
+      const reference = expectedBrand.header;
+      assert.equal(actual.href, "/");
+      assert.match(actual.label, /Хампер/);
+      assert.equal(actual.font, reference.font);
+      assertAligned(actual.mark, reference.mark, "Admin header mark", [
+        "x",
+        "y",
+        "width",
+        "height",
+      ]);
+      assertAligned(actual.name, reference.name, "Admin header name", [
+        "x",
+        "y",
+        "width",
+        "height",
+      ]);
+    });
     await screenshot(admin, `admin-${width}`);
     await check(`Admin layout ${width}px`, async () => {
       const layout = await admin.evaluate(
@@ -2354,6 +2827,7 @@ try {
   releaseContactResponse?.();
   clients.forEach((client) => client.websocket.close());
   chrome?.kill();
+  await mockServer?.close();
   siteServer.closeAllConnections();
   siteServer.close();
   database.close();

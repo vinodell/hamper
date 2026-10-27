@@ -30,6 +30,9 @@
     --footer-ink: rgba(255, 255, 255, 0.68);
     --radius: 0.1875rem;
     --container: 77.5rem;
+    --site-chrome-width: 77.5rem;
+    --site-chrome-gutter: 2rem;
+    --site-header-height: 5.25rem;
     --section-offset: 1.5rem;
     font-size: 100%;
     font-family: "DM Sans", sans-serif;
@@ -92,49 +95,6 @@ svg {
     margin: 0 auto;
 }
 
-.brand {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6875rem;
-    cursor: pointer;
-    min-width: 12.8125rem;
-}
-
-.brand-mark {
-    width: 3rem;
-    height: 3rem;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 3rem;
-}
-
-.brand-mark svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-}
-
-.brand-name {
-    font-family: "hamper-bold", serif;
-    font-size: 0.9375rem;
-    line-height: 1.05;
-    text-align: left;
-    white-space: nowrap;
-    color: #535f4c;
-}
-
-.brand-name small {
-    display: block;
-    font:
-        0.4375rem "hamper-regular",
-        sans-serif;
-    letter-spacing: 0.075rem;
-    text-transform: uppercase;
-    margin-top: 0.3125rem;
-    color: #99978d;
-}
-
 .button {
     display: inline-flex;
     justify-content: center;
@@ -144,7 +104,10 @@ svg {
     padding: 0 1.8125rem;
     border-radius: var(--radius);
     font-weight: 600;
-    transition: background-color 180ms ease, color 180ms ease, transform 180ms ease;
+    transition:
+        background-color 180ms ease,
+        color 180ms ease,
+        transform 180ms ease;
 }
 
 .button:disabled {
@@ -252,7 +215,7 @@ h2 em {
     margin-bottom: 1.5rem;
 }
 
-.section-heading>p:last-child {
+.section-heading > p:last-child {
     color: var(--muted);
     font-size: 1.0625rem;
     line-height: 1.65;
@@ -268,7 +231,7 @@ h2 em {
     font-size: 0.875rem;
     border-bottom: 0.0625rem solid currentColor;
     padding-bottom: 0.3125rem;
-    transition: gap .25s ease;
+    transition: gap 0.25s ease;
 }
 
 .text-link:hover {
@@ -303,11 +266,6 @@ td {
 }
 
 @media (max-width: 65.625rem) {
-
-    .brand {
-        min-width: 9.6875rem;
-    }
-
     .container {
         width: min(calc(100% - 3rem), var(--container));
     }
@@ -316,11 +274,6 @@ td {
 @media (max-width: 47.5rem) {
     .container {
         width: min(calc(100% - 2.5rem), var(--container));
-    }
-
-    .brand {
-        min-width: 0;
-        cursor: pointer;
     }
 
     .section {
@@ -337,7 +290,6 @@ td {
 }
 
 @media (prefers-reduced-motion: reduce) {
-
     *,
     *::before,
     *::after {
@@ -355,10 +307,10 @@ td {
 
 /* Shared interaction and responsive foundations. */
 .button:active {
-    transform: translateY(0) scale(.98);
+    transform: translateY(0) scale(0.98);
 }
 
-.container>* {
+.container > * {
     min-width: 0;
 }
 
@@ -392,5 +344,12 @@ td {
     .button:hover,
     .button:active {
         transform: none;
+    }
+}
+
+@media (max-width: 47.999em) {
+    :root {
+        --site-chrome-gutter: 1.25rem;
+        --site-header-height: 4.6rem;
     }
 }

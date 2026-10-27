@@ -137,6 +137,34 @@ test("the local demo accepts an inquiry locally and still requires explicit cons
   assert.deepEqual(await api.sendContact(contact), { ok: true });
 });
 
+test("the local demo rejects missing, incomplete and malformed Russian inquiry phones before reporting success", async (context) => {
+  browser(context);
+  const { api, ApiError } = await loadApi();
+  for (const phone of [
+    undefined,
+    null,
+    "",
+    "   ",
+    "+7",
+    "+7 (999) 123-45-6",
+    "+7 (999) 123-45-678",
+    "+1 (999) 123-45-67",
+    "+7 (999) ABC-45-67",
+    `+7${" ".repeat(30)}9991234567`,
+  ])
+    await assert.rejects(
+      api.sendContact({ ...contact, phone }),
+      (error) =>
+        error instanceof ApiError &&
+        error.status === 400 &&
+        /номер телефона полностью/.test(error.message),
+    );
+  assert.deepEqual(
+    await api.sendContact({ ...contact, phone: "8 (999) 123-45-67" }),
+    { ok: true },
+  );
+});
+
 test("cancelling a local demo inquiry prevents a successful submission result", async (context) => {
   browser(context);
   const { api } = await loadApi();
