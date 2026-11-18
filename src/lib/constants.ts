@@ -31,7 +31,6 @@ export const siteConfig = {
   maksTelegram: env.VITE_TELEGRAM_MAKS,
   hours: "ежедневно с 10 до 20",
   email: env.VITE_CONTACT_EMAIL,
-  copyright: "© 2026 Хампер",
 } as const;
 
 export const navigation = [

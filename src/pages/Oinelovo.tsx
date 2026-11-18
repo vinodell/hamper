@@ -61,11 +61,25 @@ const parcelWords = {
 const parcelCount = (count: number) =>
   `${count} ${parcelWords[pluralRules.select(count) as keyof typeof parcelWords]}`;
 const mapHref = `https://yandex.ru/maps/?text=${encodeURIComponent(`${project.title}, Ленинградская область`)}`;
+const regionalMapDocument = `<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <style>
+      html, body, #region-map { width: 100%; height: 100%; margin: 0; }
+    </style>
+  </head>
+  <body>
+    <div id="region-map"></div>
+    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Af4680d3268340c5df84931af257f4b31669d028fe6823e120f613a8765842377&amp;id=region-map&amp;width=100%25&amp;height=100%25&amp;lang=ru_RU&amp;scroll=true"></script>
+  </body>
+</html>`;
 const purchaseTerms = [
   "Возможна ипотека",
   "Возможна рассрочка",
-  "Выбор участка на интерактивном плане",
-  "Консультация перед покупкой",
+  "Скидка при полной оплате",
+  "Оплата любым удобным способом"
 ];
 const questions = [
   {
@@ -167,72 +181,28 @@ function Questions() {
 
 function RegionalMap() {
   return (
-    <a
+    <div
       className="oinelovo-region-map"
-      href={mapHref}
-      target="_blank"
-      rel="noreferrer"
-      aria-label="Найти Ойнеловские дали на Яндекс Картах"
+      role="region"
+      aria-label="Расположение Ойнеловских далей на карте"
     >
-      <svg viewBox="0 0 600 300" aria-hidden="true" focusable="false">
-        <defs>
-          <pattern
-            id="oinelovo-map-grid"
-            width="44"
-            height="44"
-            patternUnits="userSpaceOnUse"
-            patternTransform="rotate(-18)"
-          >
-            <path
-              d="M 44 0 H 0 V 44"
-              fill="none"
-              stroke="var(--paper)"
-              strokeWidth="3"
-            />
-          </pattern>
-        </defs>
-        <rect width="600" height="300" fill="var(--bg)" />
-        <path
-          d="M0 0H180L120 82 177 127 120 225 0 200ZM360 0H600V97L524 126 408 89ZM335 204L478 151 600 188V300H292Z"
-          fill="color-mix(in srgb, var(--pine) 18%, var(--paper))"
-        />
-        <rect width="600" height="300" fill="url(#oinelovo-map-grid)" />
-        <path
-          d="M390-20C350 70 465 58 426 134S356 225 450 320"
-          fill="none"
-          stroke="color-mix(in srgb, var(--pine-light) 30%, var(--paper))"
-          strokeWidth="18"
-        />
-        <path
-          d="M-20 229C92 243 146 160 253 157S371 77 491 89L620 42"
-          fill="none"
-          stroke="var(--gold)"
-          strokeWidth="9"
-        />
-        <path
-          d="M-20 229C92 243 146 160 253 157S371 77 491 89L620 42"
-          fill="none"
-          stroke="var(--paper)"
-          strokeWidth="5"
-        />
-        <path
-          d="M90-10L196 72 177 147 270 216 279 320M-20 91L140 104 288 47 385 89 620 246"
-          fill="none"
-          stroke="var(--paper)"
-          strokeWidth="7"
-        />
-      </svg>
-      <span className="oinelovo-map-label">
-        <MapPin size="1.75rem" />
-        <strong>
-          Ойнеловские дали<small>Схема · Ленинградская область</small>
-        </strong>
-      </span>
-      <span className="oinelovo-map-route">
-        <Navigation size="1rem" /> Открыть на карте{" "}
-        <ArrowRight size="0.875rem" />
-      </span>
-    </a>
+      <iframe
+        className="oinelovo-region-map__widget"
+        title="Яндекс Карта: Ойнеловские дали"
+        srcDoc={regionalMapDocument}
+        loading="lazy"
+      />
+      <a
+        className="oinelovo-map-route"
+        href={mapHref}
+        target="_blank"
+        rel="noreferrer"
+        aria-label="Найти Ойнеловские дали на Яндекс Картах"
+      >
+        <Navigation size="1rem" aria-hidden="true" /> Открыть на карте{" "}
+        <ArrowRight size="0.875rem" aria-hidden="true" />
+      </a>
+    </div>
   );
 }
 
@@ -366,7 +336,7 @@ export function Oinelovo() {
                     <span>
                       Ленинградская область
                       <br />
-                      Тишина и природа
+                      вблизи Лесколово
                     </span>
                   </div>
                   <div>
@@ -418,8 +388,9 @@ export function Oinelovo() {
               <div className="oinelovo-plan-copy">
                 <h2 id="oinelovo-plan-title">План посёлка</h2>
                 <p>
-                  Продуманные проезды и удобное расположение участков. Выберите
-                  свой на интерактивном плане.
+                  Статус участков является акутальным
+                  Выберите свой участок
+                  на интерактивном плане.
                 </p>
                 <ul className="oinelovo-legend" aria-label="Статусы участков">
                   <li>
@@ -529,7 +500,7 @@ export function Oinelovo() {
                     </span>
                     <strong>
                       {stats.count}
-                      <small>в посёлке</small>
+                      <small>участок в посёлке</small>
                     </strong>
                   </div>
                   <div>
@@ -554,7 +525,7 @@ export function Oinelovo() {
                       <Zap />
                     </span>
                     <strong>
-                      Современные<small>коммуникации</small>
+                      Необходимые<small>коммуникации</small>
                     </strong>
                   </div>
                 </div>
@@ -741,7 +712,7 @@ export function Oinelovo() {
           <div className="oinelovo-closing" id="form">
             <div className="oinelovo-container oinelovo-closing-grid">
               <div className="oinelovo-faq">
-                <h3>Частые вопросы</h3>
+                {/* <h3>Частые вопросы</h3>
                 <Questions />
                 <button
                   className="oinelovo-text-button"
@@ -749,7 +720,7 @@ export function Oinelovo() {
                   onClick={() => setDialog("faq")}
                 >
                   Все вопросы и ответы <ArrowRight size="0.875rem" />
-                </button>
+                </button> */}
               </div>
               <div className="oinelovo-visit-card">
                 <img

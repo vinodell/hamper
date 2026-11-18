@@ -51,7 +51,7 @@ export function AdminPlotMetadata({
           />
           <span>
             <strong>ГПЗУ получен</strong>
-            <small>{value.gpzuDone ? "Выполнено" : "Пока не отмечено"}</small>
+            <small>{value.gpzuDone ? "Выполнено" : "В процессе"}</small>
           </span>
           <CheckCircle2 size={18} aria-hidden="true" />
         </label>
@@ -62,12 +62,12 @@ export function AdminPlotMetadata({
             onChange={(event) =>
               onChange({ ...value, buildingPermitDone: event.target.checked })
             }
-            aria-label={`Разрешение на строительство ${plotId}`}
+            aria-label={`Уведомление о планируемом строительстве ${plotId}`}
           />
           <span>
-            <strong>Разрешение на строительство</strong>
+            <strong>Уведомление о планируемом строительстве</strong>
             <small>
-              {value.buildingPermitDone ? "Выполнено" : "Пока не отмечено"}
+              {value.buildingPermitDone ? "Выполнено" : "В процессе"}
             </small>
           </span>
           <CheckCircle2 size={18} aria-hidden="true" />

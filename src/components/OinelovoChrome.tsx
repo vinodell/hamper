@@ -9,9 +9,11 @@ import "./OinelovoChrome.css";
 const pageLinks = [
   ["Посёлки", "/#poselki"],
   ["О посёлке", "#about"],
-  ["Преимущества", "#advantages"],
+  ["Расположение", "#advantages"],
   ["Контакты", "#form"],
 ] as const;
+
+const headerLinks = pageLinks.filter(([, href]) => href !== "/#poselki");
 
 interface OinelovoHeaderProps {
   onInquiry: () => void;
@@ -90,7 +92,7 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
           className="oinelovo-header__desktop-nav"
           aria-label="Основная навигация"
         >
-          {pageLinks.map(([label, href]) =>
+          {headerLinks.map(([label, href]) =>
             href.startsWith("/") ? (
               <Link key={href} to={href}>
                 {label}
@@ -152,7 +154,7 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
           ref={menuRef}
         >
           <nav aria-label="Основная навигация">
-            {pageLinks.map(([label, href]) =>
+            {headerLinks.map(([label, href]) =>
               href.startsWith("/") ? (
                 <Link key={href} to={href} onClick={() => closeMenu()}>
                   {label}
@@ -203,7 +205,6 @@ export function OinelovoFooter() {
             ),
           )}
         </nav>
-        <p className="oinelovo-footer__copyright">{siteConfig.copyright}</p>
       </div>
       <p className="oinelovo-container oinelovo-footer__offer">{offertaMsg}</p>
     </footer>

@@ -1359,7 +1359,7 @@ try {
       );
       await activate(
         admin,
-        '[aria-label="Разрешение на строительство нового участка"]',
+        '[aria-label="Уведомление о планируемом строительстве нового участка"]',
       );
       await fill(
         admin,
@@ -1721,7 +1721,7 @@ try {
     "Open map details follow document changes from the admin tab",
     async () => {
       await activate(admin, '[aria-label="ГПЗУ получен 1-01"]');
-      await activate(admin, '[aria-label="Разрешение на строительство 1-01"]');
+      await activate(admin, '[aria-label="Уведомление о планируемом строительстве 1-01"]');
       await activate(admin, ".admin-save-all");
       await until(
         main,

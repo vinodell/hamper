@@ -17,7 +17,7 @@ export function PlotDocuments({
   const documents = [
     { label: "Получен ГПЗУ", done: gpzuDone === true },
     {
-      label: "Получено разрешение на строительство",
+      label: "Получено уведомление о планируемом строительстве",
       done: buildingPermitDone === true,
     },
   ];
@@ -36,7 +36,7 @@ export function PlotDocuments({
             </span>
             <span className="plot-documents__label">{label}</span>
             <span className="plot-documents__status">
-              {done ? "Выполнено" : "Не отмечено"}
+              {done ? "Выполнено" : "В процессе"}
             </span>
           </li>
         ))}

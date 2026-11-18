@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Brand } from "./Brand";
-import { homeNavigation, navigation, offertaMsg, siteConfig } from "../lib";
+import { homeNavigation, navigation, offertaMsg } from "../lib";
 
 import "./Footer.css";
 
@@ -30,14 +30,8 @@ export const Footer = ({
             </Link>
           ))}
         </div>
-        {isLanding && (
-          <span className="home-footer-copyright">
-            {siteConfig.copyright}. Все права защищены.
-          </span>
-        )}
       </div>
       <div className="container footer-bottom">
-        {!isLanding && <span>{siteConfig.copyright}</span>}
         <span>{offertaMsg}</span>
         <a href="#">Наверх ↑</a>
       </div>
