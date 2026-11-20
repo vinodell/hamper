@@ -336,7 +336,7 @@ test("admin can create plot documents and a mortgage listing visible in the publ
   const [visible] = await catalogue.json();
   for (const [key, value] of Object.entries(salesFields))
     assert.equal(visible[key], value, key);
-  assert.equal("street" in visible, false);
+  assert.equal(visible.street, plot.street);
   assert.equal("updatedAt" in visible, false);
 });
 

@@ -85,7 +85,7 @@ export function MapLocationAction({ location }: { location: MapDestination }) {
 
   const message =
     status === "copied"
-      ? "Координаты до массива скопированы в буфер обмена"
+      ? "Координаты массива скопированы в буфер обмена"
       : status === "error"
         ? `Не удалось скопировать координаты. Скопируйте их вручную: ${coordinates}`
         : !coordinates

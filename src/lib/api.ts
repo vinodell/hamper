@@ -261,6 +261,7 @@ function parsePublicPlot(value: unknown): Plot {
     price: price.replace(".", ","),
     fullPaymentPrice: fullPaymentPrice.replace(".", ",") || null,
     description: value.description,
+    street: typeof value.street === "string" ? value.street : null,
     cadastralNumber: value.cadastralNumber?.trim() || null,
     gpzuDone: value.gpzuDone ?? false,
     buildingPermitDone: value.buildingPermitDone ?? false,
@@ -371,7 +372,7 @@ function parseList<T extends Plot>(
 }
 
 /** Admin responses are already validated; only omit their private fields. */
-function toPublicPlot({ street, updatedAt, ...plot }: AdminPlot): Plot {
+function toPublicPlot({ updatedAt, ...plot }: AdminPlot): Plot {
   return plot;
 }
 

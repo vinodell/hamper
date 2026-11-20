@@ -83,7 +83,7 @@ function fixture() {
           assert.ok(
             [
               "SELECT * FROM plots ORDER BY settlement, id",
-              "SELECT id, settlement, area, status, price, full_payment_price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
+              "SELECT id, settlement, area, status, price, full_payment_price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
             ].includes(sql),
           );
           return { results: [...rows.values()] };
@@ -564,7 +564,7 @@ test("public requests remain cookie-free and work without authentication", async
   assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
   const data = await response.json();
   assert.equal(data[0].id, plot.id);
-  assert.equal("street" in data[0], false);
+  assert.equal(data[0].street, plot.street);
   assert.equal("updatedAt" in data[0], false);
 });
 

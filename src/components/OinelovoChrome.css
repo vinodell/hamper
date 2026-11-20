@@ -1,6 +1,5 @@
 .oinelovo-header .oinelovo-header__row,
-.oinelovo-footer .oinelovo-footer__row,
-.oinelovo-footer .oinelovo-footer__offer {
+.oinelovo-footer .oinelovo-footer__row {
   width: min(
     calc(100% - 2 * var(--site-chrome-gutter)),
     var(--site-chrome-width)
@@ -120,6 +119,13 @@
 .oinelovo-footer .oinelovo-footer__row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: clamp(1.5rem, 4vw, 4rem);
+}
+
+.oinelovo-footer .oinelovo-footer__navigation {
+  display: flex;
+  align-items: center;
   gap: clamp(1.5rem, 4vw, 4rem);
 }
 
@@ -132,8 +138,8 @@
 }
 
 .oinelovo-footer .oinelovo-footer__offer {
-  margin-top: 1rem;
-  margin-bottom: 0;
+  max-width: 22rem;
+  margin: 0;
   color: var(--footer-ink);
   font-size: 0.5625rem;
   line-height: 1.6;
@@ -219,6 +225,11 @@
   }
 
   .oinelovo-footer .oinelovo-footer__row {
+    flex-wrap: wrap;
+    gap: 1.5rem 2rem;
+  }
+
+  .oinelovo-footer .oinelovo-footer__navigation {
     flex-wrap: wrap;
     gap: 1.5rem 2rem;
   }

@@ -562,8 +562,9 @@
 
 .oinelovo-amenities-grid {
   display: grid;
-  grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.32fr) minmax(0, 0.23fr);
-  gap: 2.5rem;
+  justify-content: space-between;
+  grid-template-columns: minmax(0, 0.45fr) minmax(0, 0.45fr);
+  gap: 1rem;
   padding-block: 1.75rem;
   border-bottom: 0.0625rem solid var(--oinelovo-line);
 }
@@ -624,6 +625,7 @@
 
 .oinelovo-utilities > div {
   display: grid;
+  color: var(--muted);
   grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
   align-items: center;
   gap: 1rem;
@@ -633,7 +635,7 @@
   display: flex;
   align-items: center;
   gap: 0.625rem;
-  color: var(--pine);
+  color: var(--muted);
 }
 
 .oinelovo-utilities dt > span {
@@ -645,10 +647,6 @@
   margin: 0;
   color: var(--muted);
   font-size: 0.6875rem;
-}
-
-.oinelovo-utilities > div:first-child dd {
-  color: var(--pine);
 }
 
 .oinelovo-documents {
@@ -783,12 +781,8 @@
   color: var(--pine);
 }
 
-.oinelovo-purchase li:last-child {
-  color: var(--pine);
-}
-
 .oinelovo-purchase .oinelovo-button {
-  margin-top: 1.75rem;
+  margin-top: 4.5rem;
 }
 
 .oinelovo-closing {
@@ -799,7 +793,7 @@
 .oinelovo-closing-grid {
   display: flex;
   justify-content: space-between;
-  gap: 2.25rem;
+  gap: 26rem;
   align-items: stretch;
 }
 
@@ -889,7 +883,7 @@
 
 .oinelovo-visit-card {
   position: relative;
-  flex: 0 1 42rem;
+  flex: 1 1 0;
   min-width: 0;
   min-height: 14rem;
   overflow: hidden;
@@ -943,7 +937,7 @@
 
 .oinelovo-contact-card {
   display: grid;
-  flex: 0 1 26rem;
+  flex: 1 1 0;
   min-width: 0;
   gap: 1.625rem;
   padding: 1.625rem;

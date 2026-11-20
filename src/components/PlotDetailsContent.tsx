@@ -7,9 +7,10 @@ import "./PlotDetailsContent.css";
 type PlotDocumentsProps = Pick<
   Plot,
   "cadastralNumber" | "gpzuDone" | "buildingPermitDone"
->;
+> & { street?: string | null };
 
 export function PlotDocuments({
+  street,
   cadastralNumber,
   gpzuDone,
   buildingPermitDone,
@@ -24,10 +25,22 @@ export function PlotDocuments({
 
   return (
     <div className="plot-documents">
-      <dl className="plot-documents__cadastral">
-        <dt>Кадастровый номер</dt>
-        <dd>{cadastralNumber?.trim() || "Не указан"}</dd>
-      </dl>
+      <div
+        className={
+          street !== undefined ? "plot-documents__metadata" : undefined
+        }
+      >
+        <dl className="plot-documents__cadastral">
+          <dt>Кадастровый номер</dt>
+          <dd>{cadastralNumber?.trim() || "Не указан"}</dd>
+        </dl>
+        {street !== undefined && (
+          <dl className="plot-documents__cadastral">
+            <dt>Улица</dt>
+            <dd>{street?.trim() || "Не указана"}</dd>
+          </dl>
+        )}
+      </div>
       <ul className="plot-documents__list" aria-label="Документы участка">
         {documents.map(({ label, done }) => (
           <li key={label} data-done={done}>

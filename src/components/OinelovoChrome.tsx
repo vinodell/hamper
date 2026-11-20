@@ -191,22 +191,24 @@ export function OinelovoFooter() {
   return (
     <footer className="oinelovo-footer">
       <div className="oinelovo-container oinelovo-footer__row">
-        <Brand className="brand-footer" />
-        <nav aria-label="Навигация в подвале">
-          {pageLinks.map(([label, href]) =>
-            href.startsWith("/") ? (
-              <Link key={href} to={href}>
-                {label}
-              </Link>
-            ) : (
-              <a key={href} href={href}>
-                {label}
-              </a>
-            ),
-          )}
-        </nav>
+        <div className="oinelovo-footer__navigation">
+          <Brand className="brand-footer" />
+          <nav aria-label="Навигация в подвале">
+            {pageLinks.map(([label, href]) =>
+              href.startsWith("/") ? (
+                <Link key={href} to={href}>
+                  {label}
+                </Link>
+              ) : (
+                <a key={href} href={href}>
+                  {label}
+                </a>
+              ),
+            )}
+          </nav>
+        </div>
+        <p className="oinelovo-footer__offer">{offertaMsg}</p>
       </div>
-      <p className="oinelovo-container oinelovo-footer__offer">{offertaMsg}</p>
     </footer>
   );
 }

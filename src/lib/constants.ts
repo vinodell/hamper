@@ -3,6 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Droplets,
   Factory,
+  Home,
   Map,
   ShieldCheck,
   ShoppingBag,
@@ -59,6 +60,7 @@ export interface Plot {
   price: string;
   fullPaymentPrice?: string | null;
   description?: string | null;
+  street?: string | null;
   cadastralNumber?: string | null;
   gpzuDone?: boolean;
   buildingPermitDone?: boolean;
@@ -79,9 +81,14 @@ export interface TableSectionProps {
 
 export const infrastructure: InfoItem[] = [
   {
+    icon: Home,
+    title: "Внутренняя инфраструктура мини-поселка",
+    text: "Широкие 6м дороги, пешеходные дорожки, детская площадка и гостевая парковка, отдельная выделенная тропа к лесу.",
+  },
+  {
     icon: ShoppingBag,
     title: "Магазины и сервисы",
-    text: "В 5–10 мин езды находятся супермаркеты, аптеки и пункты выдачи заказов.",
+    text: "В 5–10 мин езды находятся магазины большинства крупных сетей, аптеки и ПВЗ.",
   },
   {
     icon: Factory,
@@ -96,10 +103,10 @@ export const infrastructure: InfoItem[] = [
 ];
 
 export const utilities: InfoItem[] = [
-  { icon: Zap, title: "Электричество", text: "15 кВт от Ленэнерго" },
+  { icon: Zap, title: "Электричество", text: "15 кВт от Ленэнерго. Подключение осуществляется напрямую через заявку в Россети ЛенЭнерго. Сопровождаем на всех этапах подачи заявок и подключения" },
+  { icon: Map, title: "Дороги", text: "Внутренние проезды с шириной дорожного полотна 6м и пешеходная дорожка. Дорога и общие зоны оформляются в долевую собственность каждому покупателю" },
   { icon: Droplets, title: "Водоснабжение", text: "Индивидуальные скважины" },
-  { icon: ShieldCheck, title: "Прописка", text: "Регистрация с пропиской" },
-  { icon: Map, title: "Дороги", text: "Широкие и доступные проезды" },
+  { icon: ShieldCheck, title: "Прописка", text: "Получены милицейские адреса. Возможна регистрация и прописка" },
 ];
 
 export const plotFilters = [

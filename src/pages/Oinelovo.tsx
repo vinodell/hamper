@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Clock3,
   Fence,
-  House,
   MapPin,
   Navigation,
   Plus,
@@ -72,7 +71,7 @@ const regionalMapDocument = `<!doctype html>
   </head>
   <body>
     <div id="region-map"></div>
-    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Af4680d3268340c5df84931af257f4b31669d028fe6823e120f613a8765842377&amp;id=region-map&amp;width=100%25&amp;height=100%25&amp;lang=ru_RU&amp;scroll=true"></script>
+    <script type="text/javascript" charset="utf-8" async src="https://api-maps.yandex.ru/services/constructor/1.0/js/?um=constructor%3Af4680d3268340c5df84931af257f4b31669d028fe6823e120f613a8765842377&amp;width=100%25&amp;height=100%25&amp;lang=ru_RU&amp;scroll=true&amp;id=region-map"></script>
   </body>
 </html>`;
 const purchaseTerms = [
@@ -389,6 +388,7 @@ export function Oinelovo() {
                 <h2 id="oinelovo-plan-title">План посёлка</h2>
                 <p>
                   Статус участков является акутальным
+                  <br></br>
                   Выберите свой участок
                   на интерактивном плане.
                 </p>
@@ -636,7 +636,7 @@ export function Oinelovo() {
                   ))}
                 </dl>
               </div>
-              <aside className="oinelovo-documents">
+              {/* <aside className="oinelovo-documents">
                 <House size="3.5rem" strokeWidth={0.8} aria-hidden="true" />
                 <p>
                   Все коммуникации
@@ -650,7 +650,7 @@ export function Oinelovo() {
                 >
                   Информация о посёлке
                 </button>
-              </aside>
+              </aside> */}
             </div>
           </div>
         </section>
@@ -711,7 +711,7 @@ export function Oinelovo() {
 
           <div className="oinelovo-closing" id="form">
             <div className="oinelovo-container oinelovo-closing-grid">
-              <div className="oinelovo-faq">
+              {/* <div className="oinelovo-faq"> */}
                 {/* <h3>Частые вопросы</h3>
                 <Questions />
                 <button
@@ -721,7 +721,7 @@ export function Oinelovo() {
                 >
                   Все вопросы и ответы <ArrowRight size="0.875rem" />
                 </button> */}
-              </div>
+              {/* </div> */}
               <div className="oinelovo-visit-card">
                 <img
                   src={asset("images/oinelovo/aerial-768.webp")}
@@ -848,12 +848,9 @@ export function Oinelovo() {
           </button>
         </ProjectDialog>
       )}
+      {/* TODO: Implement about dialog */}
       {dialog === "about" && (
         <ProjectDialog title="Ойнеловские дали" onClose={closeDialog}>
-          <p>
-            Камерный посёлок на {parcelCount(stats.count)}. Приватная
-            территория, общие зоны отдыха, детская площадка и гостевая парковка.
-          </p>
           {infrastructure.map(({ icon: Icon, title, text }) => (
             <article className="oinelovo-detail" key={title}>
               <Icon size="1.5rem" />

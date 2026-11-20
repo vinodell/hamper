@@ -173,7 +173,7 @@ test("login sends credentials once, checks the HttpOnly cookie and never stores 
   calls.forEach(([, options]) => assertCookieRequest(options));
   assert.equal(plots[0].area, "8,12");
   assert.equal(cache.cached[0].id, fixture.id);
-  assert.equal(Object.hasOwn(cache.cached[0], "street"), false);
+  assert.equal(cache.cached[0].street, fixture.street);
   assert.ok(removed.every((key) => key === "hamper.adminAuthorization"));
 });
 

@@ -16,6 +16,8 @@ import "./styles/tailwind.css";
 import "./styles/global.css";
 import "./App.css";
 
+// TODO: добавить Я метрику
+
 const Main = lazy(() =>
   import("./pages/Main").then((module) => ({ default: module.Main })),
 );

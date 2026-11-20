@@ -29,6 +29,7 @@ export function resolveMapZones(plots: Plot[]): MapZone[] {
         ? { fullPaymentPrice: Number(plot.fullPaymentPrice.replace(",", ".")) }
         : {}),
       description: plot.description ?? undefined,
+      street: plot.street,
       cadastralNumber: plot.cadastralNumber,
       gpzuDone: plot.gpzuDone,
       buildingPermitDone: plot.buildingPermitDone,

@@ -259,7 +259,7 @@ function updatePlotStatement(env: Env, id: string, plot: PlotUpdate) {
   ).bind(...values, id);
 }
 
-function mapPublicPlot(row: Omit<PlotRow, "street" | "updated_at">) {
+function mapPublicPlot(row: Omit<PlotRow, "updated_at">) {
   return {
     id: row.id,
     settlement: row.settlement,
@@ -268,6 +268,7 @@ function mapPublicPlot(row: Omit<PlotRow, "street" | "updated_at">) {
     price: row.price,
     fullPaymentPrice: row.full_payment_price,
     description: row.description,
+    street: row.street,
     cadastralNumber: row.cadastral_number,
     gpzuDone: row.gpzu_done === 1,
     buildingPermitDone: row.building_permit_done === 1,
@@ -381,8 +382,8 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
 
   if (url.pathname === "/api/plots" && request.method === "GET") {
     const result = await env.DB.prepare(
-      "SELECT id, settlement, area, status, price, full_payment_price, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
-    ).all<Omit<PlotRow, "street" | "updated_at">>();
+      "SELECT id, settlement, area, status, price, full_payment_price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
+    ).all<Omit<PlotRow, "updated_at">>();
     return json(result.results.map(mapPublicPlot), 200, request, env);
   }
 

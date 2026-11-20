@@ -132,6 +132,7 @@ export function ZoneModal({ zone, onClose, onBook, onNotify }: ZoneModalProps) {
         </div>
 
         <PlotDocuments
+          street={zone.street}
           cadastralNumber={zone.cadastralNumber}
           gpzuDone={zone.gpzuDone}
           buildingPermitDone={zone.buildingPermitDone}
