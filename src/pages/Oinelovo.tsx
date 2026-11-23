@@ -78,7 +78,7 @@ const purchaseTerms = [
   "Возможна ипотека",
   "Возможна рассрочка",
   "Скидка при полной оплате",
-  "Оплата любым удобным способом"
+  "Оплата любым удобным способом",
 ];
 const questions = [
   {
@@ -304,11 +304,11 @@ export function Oinelovo() {
           <div className="oinelovo-hero" id="top">
             <img
               className="oinelovo-hero-image"
-              src={asset("images/nature/oinelovo-meadow-1920.webp")}
-              srcSet={`${asset("images/nature/oinelovo-meadow-960.webp")} 960w, ${asset("images/nature/oinelovo-meadow-1920.webp")} 1920w`}
+              src={asset("images/nature/oinelovo-hero-1672.webp")}
+              srcSet={`${asset("images/nature/oinelovo-hero-960.webp")} 960w, ${asset("images/nature/oinelovo-hero-1672.webp")} 1672w`}
               sizes="100vw"
-              width={1920}
-              height={768}
+              width={1672}
+              height={941}
               alt="Лес и зелёные луга в тёплом вечернем свете"
               fetchPriority="high"
             />
@@ -389,8 +389,7 @@ export function Oinelovo() {
                 <p>
                   Статус участков является акутальным
                   <br></br>
-                  Выберите свой участок
-                  на интерактивном плане.
+                  Выберите свой участок на интерактивном плане.
                 </p>
                 <ul className="oinelovo-legend" aria-label="Статусы участков">
                   <li>
@@ -712,7 +711,7 @@ export function Oinelovo() {
           <div className="oinelovo-closing" id="form">
             <div className="oinelovo-container oinelovo-closing-grid">
               {/* <div className="oinelovo-faq"> */}
-                {/* <h3>Частые вопросы</h3>
+              {/* <h3>Частые вопросы</h3>
                 <Questions />
                 <button
                   className="oinelovo-text-button"
@@ -785,7 +784,7 @@ export function Oinelovo() {
               : "Записаться на просмотр"
           }
           onClose={closeDialog}
-          className="oinelovo-inquiry"
+          className="contact-dialog"
           closeDisabled={inquirySubmitting}
           icon={
             requestKind === "availability" ? (

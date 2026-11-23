@@ -2,6 +2,7 @@ import { Menu, Phone, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useMobileMenu } from "../hooks";
+import { HeaderContact } from "./HeaderContact";
 import { Brand } from "./Brand";
 import {
   chooseZemli,
@@ -164,14 +165,7 @@ export const Header = ({
           </a>
         )}
       </nav>
-      <div className="header-contact">
-        <Phone className="phone-icon" size="1.1875rem" aria-hidden="true" />
-        <div className="telephones">
-          <a href={siteConfig.phoneHref}>{siteConfig.phone}</a>
-          <a href={siteConfig.phone2Href}>{siteConfig.phone2}</a>
-          <span>{siteConfig.hours}</span>
-        </div>
-      </div>
+      <HeaderContact />
       {onInquiry ? (
         <button
           className="button button-gold header-cta"

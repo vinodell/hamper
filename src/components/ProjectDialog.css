@@ -1,6 +1,4 @@
 .project-dialog {
-  --project-dialog-surface: var(--paper);
-  --project-dialog-ink: var(--ink);
   width: min(72rem, calc(100% - 2rem));
   max-width: none;
   max-height: 90dvh;
@@ -8,8 +6,8 @@
   padding: 0;
   border: 0.0625rem solid color-mix(in srgb, var(--line) 16%, transparent);
   border-radius: 0.75rem;
-  color: var(--project-dialog-ink);
-  background: var(--project-dialog-surface);
+  color: var(--ink);
+  background: var(--paper);
   font-family: var(--font-body);
   font-weight: 400;
   box-shadow: 0 1.5rem 5rem color-mix(in srgb, var(--ink) 20%, transparent);
@@ -32,7 +30,7 @@
   padding: 1.25rem clamp(1rem, 3vw, 2rem);
   border-bottom: 0.0625rem solid
     color-mix(in srgb, var(--line) 16%, transparent);
-  background: var(--project-dialog-surface);
+  background: var(--paper);
 }
 
 .project-dialog__title {

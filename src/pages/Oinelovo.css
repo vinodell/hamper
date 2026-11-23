@@ -3,7 +3,6 @@
   --zone-available-fill: color-mix(in srgb, var(--pine) 16%, transparent);
   --zone-reserved-fill: color-mix(in srgb, var(--gold) 55%, transparent);
   --zone-sold-fill: color-mix(in srgb, #c9303e 55%, transparent);
-  --oinelovo-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-body);
@@ -70,7 +69,7 @@
     background-color 160ms ease,
     border-color 160ms ease,
     box-shadow 180ms ease,
-    transform 180ms var(--oinelovo-ease);
+    transform 180ms var(--motion-ease);
 }
 
 .oinelovo-button:active {
@@ -114,7 +113,7 @@
 }
 
 .oinelovo-text-button svg {
-  transition: transform 180ms var(--oinelovo-ease);
+  transition: transform 180ms var(--motion-ease);
 }
 
 .oinelovo-hero {
@@ -265,7 +264,7 @@
   border-radius: 50%;
   transition:
     background-color 160ms ease,
-    transform 180ms var(--oinelovo-ease);
+    transform 180ms var(--motion-ease);
 }
 
 .oinelovo-plan {
@@ -591,7 +590,7 @@
   object-fit: cover;
   transition:
     opacity 180ms ease,
-    transform 240ms var(--oinelovo-ease);
+    transform 240ms var(--motion-ease);
 }
 
 .oinelovo-thumbnails > .oinelovo-thumbnail-prev,
@@ -842,7 +841,7 @@
 .oinelovo-question-trigger svg {
   flex: none;
   color: var(--pine);
-  transition: transform 240ms var(--oinelovo-ease);
+  transition: transform 240ms var(--motion-ease);
 }
 
 .oinelovo-question[data-open="true"] .oinelovo-question-trigger svg {
@@ -854,7 +853,7 @@
   grid-template-rows: 0fr;
   opacity: 0;
   transition:
-    grid-template-rows 240ms var(--oinelovo-ease),
+    grid-template-rows 240ms var(--motion-ease),
     opacity 180ms ease;
 }
 

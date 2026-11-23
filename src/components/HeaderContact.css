@@ -1,0 +1,25 @@
+.header-contact {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.header-contact a {
+  display: block;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.header-contact a:hover {
+  color: var(--gold-dark);
+}
+
+@media (max-width: 79.999em) {
+  .header-contact {
+    display: none;
+  }
+}

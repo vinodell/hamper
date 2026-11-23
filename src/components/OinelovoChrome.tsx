@@ -1,6 +1,7 @@
 import { Menu, Phone, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { HeaderContact } from "./HeaderContact";
 import { Brand } from "./Brand";
 import { offertaMsg, siteConfig } from "../lib";
 
@@ -105,19 +106,7 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
           )}
         </nav>
 
-        {(siteConfig.phone || siteConfig.phone2) && (
-          <div className="oinelovo-header__phones">
-            <Phone size="1rem" aria-hidden="true" />
-            <div>
-              {siteConfig.phone && (
-                <a href={siteConfig.phoneHref}>{siteConfig.phone}</a>
-              )}
-              {siteConfig.phone2 && (
-                <a href={siteConfig.phone2Href}>{siteConfig.phone2}</a>
-              )}
-            </div>
-          </div>
-        )}
+        <HeaderContact />
 
         <button
           className="oinelovo-header__inquiry"

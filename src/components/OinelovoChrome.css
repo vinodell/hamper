@@ -7,7 +7,6 @@
 }
 
 .oinelovo-header {
-  --oinelovo-header-height: var(--site-header-height);
   position: relative;
   z-index: 40;
   background: var(--bg);
@@ -19,7 +18,7 @@
   display: flex;
   align-items: center;
   gap: clamp(1.25rem, 2.7vw, 2.75rem);
-  min-height: var(--oinelovo-header-height);
+  min-height: var(--site-header-height);
 }
 
 .oinelovo-header .oinelovo-header__desktop-nav,
@@ -53,27 +52,6 @@
   color: var(--gold);
 }
 
-.oinelovo-header .oinelovo-header__phones {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  margin-left: auto;
-}
-
-.oinelovo-header .oinelovo-header__phones div {
-  display: grid;
-  gap: 0.1875rem;
-}
-
-.oinelovo-header .oinelovo-header__phones a {
-  color: var(--ink);
-  font-size: 0.7rem;
-  font-weight: 600;
-  line-height: 1.3;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
 .oinelovo-header .oinelovo-header__inquiry {
   flex: 0 0 auto;
   margin-left: auto;
@@ -88,6 +66,12 @@
   white-space: nowrap;
   cursor: pointer;
   transition: background-color 160ms ease;
+}
+
+@media (min-width: 80em) {
+  .oinelovo-header .header-contact + .oinelovo-header__inquiry {
+    margin-left: 0;
+  }
 }
 
 .oinelovo-header .oinelovo-header__inquiry:hover {
@@ -151,7 +135,7 @@
   }
 
   .oinelovo-header .oinelovo-header__desktop-nav,
-  .oinelovo-header .oinelovo-header__phones {
+  .oinelovo-header .header-contact {
     display: none;
   }
 
@@ -176,7 +160,7 @@
 
   .oinelovo-header .oinelovo-header__mobile-menu {
     position: fixed;
-    inset: var(--oinelovo-header-height) 0 0;
+    inset: var(--site-header-height) 0 0;
     display: flex;
     flex-direction: column;
     gap: 2rem;

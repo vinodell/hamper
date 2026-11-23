@@ -30,7 +30,7 @@ export function Home() {
       {inquiryOpen && (
         <ProjectDialog
           title="Подберём ваш участок"
-          className="home-inquiry"
+          className="contact-dialog"
           icon={<MessageCircle size={20} aria-hidden="true" />}
           closeDisabled={submitting}
           onClose={() => setInquiryOpen(false)}

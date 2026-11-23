@@ -33,6 +33,7 @@
     --site-chrome-width: 77.5rem;
     --site-chrome-gutter: 2rem;
     --site-header-height: 5.25rem;
+    --motion-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
     --section-offset: 1.5rem;
     font-size: 100%;
     font-family: "DM Sans", sans-serif;
@@ -352,4 +353,14 @@ td {
         --site-chrome-gutter: 1.25rem;
         --site-header-height: 4.6rem;
     }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }

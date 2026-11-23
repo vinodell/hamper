@@ -53,13 +53,3 @@
 .full-payment-badge svg {
   flex-shrink: 0;
 }
-
-.plot-price__sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}

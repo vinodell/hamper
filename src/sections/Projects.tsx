@@ -5,7 +5,7 @@ import { projectRoutes } from "../lib";
 const projects = [
   {
     route: projectRoutes[0],
-    image: "oinelovo-meadow-960.webp",
+    image: "oinelovo-hero-960.webp",
     imageAlt: "Лес и зелёные луга в тёплом вечернем свете",
     tag: "Камерный посёлок",
     copy: "Место для спокойной жизни в окружении природы. Всего в 25 км от КАД.",
@@ -74,7 +74,7 @@ export function Projects() {
                     to={route.path}
                   >
                     Подробнее <ArrowUpRight size={16} aria-hidden="true" />
-                    <span className="home-sr-only">
+                    <span className="sr-only">
                       {" "}
                       о проекте «{route.label}»
                     </span>

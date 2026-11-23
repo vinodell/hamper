@@ -4,7 +4,6 @@
   --home-ink: #202927;
   --home-muted: #707570;
   --home-line: #e4e7e0;
-  --home-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
   --font-heading: Georgia, "Times New Roman", serif;
   --paper: #fcfbf8;
   --bg: #fcfbf8;
@@ -28,8 +27,7 @@
 }
 
 .home-page .site-header {
-  --header-height: var(--site-header-height);
-  min-height: var(--header-height);
+  min-height: var(--site-header-height);
   gap: 2rem;
   padding-block: 0.75rem;
   background: var(--paper);
@@ -44,22 +42,6 @@
 }
 .home-page .main-nav a:hover {
   color: var(--home-green);
-}
-.home-page .header-contact {
-  align-items: center;
-  gap: 0.7rem;
-  font-size: 0.75rem;
-}
-.home-page .header-contact a {
-  text-decoration: none;
-  font-weight: 400;
-  padding-block: 0;
-}
-.home-page .header-contact span {
-  display: none;
-}
-.home-page .phone-icon {
-  margin: 0;
 }
 .home-page .header-cta {
   min-height: 2.85rem;
@@ -198,7 +180,7 @@
     background-color 180ms ease,
     border-color 180ms ease,
     box-shadow 180ms ease,
-    transform 180ms var(--home-ease);
+    transform 180ms var(--motion-ease);
 }
 .home-button--primary {
   color: white;
@@ -227,7 +209,7 @@
   transform: scale(0.98);
 }
 .home-button svg {
-  transition: transform 180ms var(--home-ease);
+  transition: transform 180ms var(--motion-ease);
 }
 .home-hero__caption {
   position: absolute;
@@ -257,7 +239,7 @@
   font-size: 0.8rem;
 }
 .home-text-link svg {
-  transition: transform 180ms var(--home-ease);
+  transition: transform 180ms var(--motion-ease);
 }
 .home-project-grid {
   display: grid;
@@ -285,7 +267,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 500ms var(--home-ease);
+  transition: transform 500ms var(--motion-ease);
 }
 .home-project-card__tag {
   position: absolute;
@@ -309,7 +291,7 @@
   border-radius: 50%;
   background: rgb(255 255 255 / 0.94);
   color: var(--home-green);
-  transition: transform 200ms var(--home-ease);
+  transition: transform 200ms var(--motion-ease);
 }
 .home-project-card__content {
   padding: 0.95rem 1.2rem 1rem;
@@ -384,7 +366,7 @@
   font-variant-numeric: tabular-nums;
 }
 .completed-project__image {
-  animation: home-project-enter 240ms var(--home-ease);
+  animation: home-project-enter 240ms var(--motion-ease);
   position: relative;
   isolation: isolate;
   overflow: hidden;
@@ -573,22 +555,13 @@
 .home-page .project-dialog {
   --font-heading: "hamper-bold", sans-serif;
 }
-.home-page .home-inquiry {
+.home-page .contact-dialog {
   --pine: var(--home-green);
   --gold: var(--home-green);
   --gold-dark: var(--home-green);
 }
-.home-page .home-inquiry .contact-form .button {
+.home-page .contact-dialog .contact-form .button {
   color: white;
-}
-.home-sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
 }
 
 @media (hover: hover) {
@@ -688,7 +661,7 @@
   }
   .home-page .site-header {
     --header-height: 4.6rem;
-    height: var(--header-height);
+    height: var(--site-header-height);
     min-height: 0;
     grid-template-columns: minmax(0, 1fr) auto auto;
     grid-template-rows: 1fr;

@@ -30,13 +30,13 @@ export function PlotPrice({
       <span className="plot-price__amounts">
         {hasFullPaymentPrice && (
           <span className="plot-price__original">
-            <span className="plot-price__sr-only">Базовая цена: </span>
+            <span className="sr-only">Базовая цена: </span>
             <s>{format(price)}</s>
           </span>
         )}
         <strong className="plot-price__value">
           {hasFullPaymentPrice && (
-            <span className="plot-price__sr-only">
+            <span className="sr-only">
               Цена при полной оплате:{" "}
             </span>
           )}
