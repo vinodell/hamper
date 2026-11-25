@@ -1,5 +1,6 @@
 .oinelovo-header .oinelovo-header__row,
 .oinelovo-footer .oinelovo-footer__row {
+  margin-inline: auto;
   width: min(
     calc(100% - 2 * var(--site-chrome-gutter)),
     var(--site-chrome-width)
@@ -50,28 +51,6 @@
 
 .oinelovo-footer nav a:hover {
   color: var(--gold);
-}
-
-.oinelovo-header .oinelovo-header__inquiry {
-  flex: 0 0 auto;
-  margin-left: auto;
-  padding: 0.775rem 1.4rem;
-  border: 0.0625rem solid transparent;
-  border-radius: var(--radius);
-  background: var(--gold);
-  color: var(--ink);
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1.2;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: background-color 160ms ease;
-}
-
-@media (min-width: 80em) {
-  .oinelovo-header .header-contact + .oinelovo-header__inquiry {
-    margin-left: 0;
-  }
 }
 
 .oinelovo-header .oinelovo-header__inquiry:hover {
@@ -137,11 +116,6 @@
   .oinelovo-header .oinelovo-header__desktop-nav,
   .oinelovo-header .header-contact {
     display: none;
-  }
-
-  .oinelovo-header .oinelovo-header__inquiry {
-    margin-left: auto;
-    padding: 0.75rem 1rem;
   }
 
   .oinelovo-header .oinelovo-header__toggle {

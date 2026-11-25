@@ -28,6 +28,7 @@
 }
 
 .plots-table-wrap {
+  position: relative;
   overflow-x: auto;
   border: 0.0625rem solid rgba(15, 38, 31, 0.08);
   border-radius: 1.125rem;

@@ -37,7 +37,7 @@ export function IndividualPlots({
         <div className="section-heading">
           <p className="eyebrow">ОТДЕЛЬНЫЕ ЗЕМЕЛЬНЫЕ УЧАСТКИ</p>
           <h2 id="individual-plots-heading">
-            Место для <em>ваших планов</em>
+            Место для ваших планов
           </h2>
           <p>
             Выберите участок, посмотрите фотографии и сравните предложения в

@@ -18,9 +18,13 @@ const headerLinks = pageLinks.filter(([, href]) => href !== "/#poselki");
 
 interface OinelovoHeaderProps {
   onInquiry: () => void;
+  links?: ReadonlyArray<readonly [string, string]>;
 }
 
-export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
+export function OinelovoHeader({
+  onInquiry,
+  links = headerLinks,
+}: OinelovoHeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -93,7 +97,7 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
           className="oinelovo-header__desktop-nav"
           aria-label="Основная навигация"
         >
-          {headerLinks.map(([label, href]) =>
+          {links.map(([label, href]) =>
             href.startsWith("/") ? (
               <Link key={href} to={href}>
                 {label}
@@ -106,19 +110,22 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
           )}
         </nav>
 
-        <HeaderContact />
+        <div className="header-actions">
+          <HeaderContact />
 
-        <button
-          className="oinelovo-header__inquiry"
-          type="button"
-          onClick={handleInquiry}
-        >
-          <span className="oinelovo-header__inquiry-label-desktop">
-            Оставить заявку
-          </span>
-          <span className="oinelovo-header__inquiry-label-mobile">Заявка</span>
-        </button>
-
+          <button
+            className="inquiry-button oinelovo-header__inquiry"
+            type="button"
+            onClick={handleInquiry}
+          >
+            <span className="oinelovo-header__inquiry-label-desktop">
+              Оставить заявку
+            </span>
+            <span className="oinelovo-header__inquiry-label-mobile">
+              Заявка
+            </span>
+          </button>
+        </div>
         <button
           className="oinelovo-header__toggle"
           ref={toggleRef}
@@ -143,7 +150,7 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
           ref={menuRef}
         >
           <nav aria-label="Основная навигация">
-            {headerLinks.map(([label, href]) =>
+            {links.map(([label, href]) =>
               href.startsWith("/") ? (
                 <Link key={href} to={href} onClick={() => closeMenu()}>
                   {label}
@@ -176,14 +183,18 @@ export function OinelovoHeader({ onInquiry }: OinelovoHeaderProps) {
   );
 }
 
-export function OinelovoFooter() {
+export function OinelovoFooter({
+  links = pageLinks,
+}: {
+  links?: ReadonlyArray<readonly [string, string]>;
+}) {
   return (
     <footer className="oinelovo-footer">
       <div className="oinelovo-container oinelovo-footer__row">
         <div className="oinelovo-footer__navigation">
           <Brand className="brand-footer" />
           <nav aria-label="Навигация в подвале">
-            {pageLinks.map(([label, href]) =>
+            {links.map(([label, href]) =>
               href.startsWith("/") ? (
                 <Link key={href} to={href}>
                   {label}

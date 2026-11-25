@@ -37,8 +37,11 @@ CREATE TABLE IF NOT EXISTS inquiries (
   plot TEXT,
   comment TEXT,
   consent INTEGER NOT NULL CHECK(consent = 1),
+  completed_at TEXT,
   created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 );
+
+CREATE INDEX IF NOT EXISTS idx_inquiries_completed ON inquiries(completed_at, id);
 
 CREATE TABLE IF NOT EXISTS inquiry_telegram_outbox (
   inquiry_id INTEGER PRIMARY KEY REFERENCES inquiries(id) ON DELETE CASCADE,

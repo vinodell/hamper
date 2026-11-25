@@ -1,3 +1,4 @@
+import { parsePlotNumber } from "./plotNumbers";
 import type { Plot } from "./constants";
 
 export type PlotSortKey = "id" | "category" | "area" | "status" | "price";
@@ -27,14 +28,12 @@ export function comparePlots(
       );
       break;
     case "area":
-      result =
-        Number(left[key].replace(",", ".")) -
-        Number(right[key].replace(",", "."));
+      result = parsePlotNumber(left[key]) - parsePlotNumber(right[key]);
       break;
     case "price":
       result =
-        Number((left.fullPaymentPrice ?? left.price).replace(",", ".")) -
-        Number((right.fullPaymentPrice ?? right.price).replace(",", "."));
+        parsePlotNumber(left.fullPaymentPrice ?? left.price) -
+        parsePlotNumber(right.fullPaymentPrice ?? right.price);
       break;
     case "status":
       result = statusOrder[left.status] - statusOrder[right.status];

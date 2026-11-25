@@ -165,27 +165,29 @@ export const Header = ({
           </a>
         )}
       </nav>
-      <HeaderContact />
-      {onInquiry ? (
-        <button
-          className="button button-gold header-cta"
-          type="button"
-          onClick={() => {
-            handleNavigation();
-            onInquiry();
-          }}
-        >
-          Оставить заявку
-        </button>
-      ) : (
-        <Link
-          className="button button-gold header-cta"
-          to={plotTarget}
-          onClick={handleNavigation}
-        >
-          {chooseZemli}
-        </Link>
-      )}
+      <div className="header-actions">
+        <HeaderContact />
+        {onInquiry ? (
+          <button
+            className="inquiry-button"
+            type="button"
+            onClick={() => {
+              handleNavigation();
+              onInquiry();
+            }}
+          >
+            Оставить заявку
+          </button>
+        ) : (
+          <Link
+            className="button button-gold header-cta"
+            to={plotTarget}
+            onClick={handleNavigation}
+          >
+            {chooseZemli}
+          </Link>
+        )}
+      </div>
       <button
         className="menu-toggle"
         ref={toggleRef}

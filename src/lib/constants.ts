@@ -137,9 +137,6 @@ export const offertaMsg =
 export const closeMenuMsg = "Закрыть меню";
 export const openMenuMsg = "Открыть меню";
 export const chooseZemli = "Выбрать участок";
-export const PHONE_PATTERN =
-  /\s*(?:\+\s*7|7|8)?(?:[\s.\-\(\)]*\d){10}[\s.\-\(\)]*/.source;
-
 export const PLOTS_REFRESH_MS = 30_000;
 
 export interface MapDestination {

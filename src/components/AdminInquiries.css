@@ -381,3 +381,28 @@
     font-size: 0.625rem;
   }
 }
+
+.admin-inquiries-tabs,
+.admin-inquiry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.admin-inquiries-tabs button,
+.admin-inquiry-actions button {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--pine);
+}
+.admin-inquiries-tabs button[aria-pressed="true"] {
+  background: var(--pine);
+  color: var(--paper);
+}
+.admin-inquiries-tabs button:disabled,
+.admin-inquiry-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

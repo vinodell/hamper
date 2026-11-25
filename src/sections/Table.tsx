@@ -118,7 +118,7 @@ export const Table = ({
         <div className="section-heading">
           <p className="eyebrow">УЧАСТКИ И ЦЕНЫ</p>
           <h2>
-            Выберите <em>свой участок</em>
+            Выберите свой участок
           </h2>
           <p>
             {initialFilter

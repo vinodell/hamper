@@ -1,29 +1,29 @@
-import assert from "node:assert/strict";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-import test, { after } from "node:test";
-import { transformWithOxc } from "vite";
+import assert from 'node:assert/strict';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { dirname, join, relative } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import test, { after } from 'node:test';
+import { transformWithOxc } from 'vite';
 
-const projectRoot = new URL("../", import.meta.url);
-const compiledRoot = await mkdtemp(join(tmpdir(), "hamper-mock-api-"));
+const projectRoot = new URL('../', import.meta.url);
+const compiledRoot = await mkdtemp(join(tmpdir(), 'hamper-mock-api-'));
 after(() => rm(compiledRoot, { recursive: true, force: true }));
 let sequence = 0;
 
-async function loadApi(env = { DEV: true, VITE_USE_MOCK_DATA: "true" }) {
+async function loadApi(env = { DEV: true, VITE_USE_MOCK_DATA: 'true' }) {
   const modules = new Map();
   const scope = ++sequence;
   async function compile(file) {
     if (modules.has(file.href)) return modules.get(file.href);
-    const source = await readFile(file, "utf8");
+    const source = await readFile(file, 'utf8');
     let { code } = await transformWithOxc(source, fileURLToPath(file));
-    code = code.replaceAll("import.meta.env", JSON.stringify(env));
+    code = code.replaceAll('import.meta.env', JSON.stringify(env));
     const imports = [
       ...code.matchAll(/(?:from\s*|import\s*\()(["'])([^"']+)\1/g),
     ];
     for (const [, quote, specifier] of imports) {
-      const target = specifier.startsWith(".")
+      const target = specifier.startsWith('.')
         ? await compile(new URL(`${specifier}.ts`, file))
         : import.meta.resolve(specifier);
       code = code.replaceAll(
@@ -35,32 +35,32 @@ async function loadApi(env = { DEV: true, VITE_USE_MOCK_DATA: "true" }) {
       compiledRoot,
       String(scope),
       relative(fileURLToPath(projectRoot), fileURLToPath(file)),
-    ).replace(/\.ts$/, ".mjs");
+    ).replace(/\.ts$/, '.mjs');
     await mkdir(dirname(output), { recursive: true });
     await writeFile(output, code);
     const url = pathToFileURL(output).href;
     modules.set(file.href, url);
     return url;
   }
-  return import(await compile(new URL("src/lib/api.ts", projectRoot)));
+  return import(await compile(new URL('src/lib/api.ts', projectRoot)));
 }
 
-function browser(context, { hostname = "localhost", fetchImpl } = {}) {
+function browser(context, { hostname = 'localhost', fetchImpl } = {}) {
   const descriptors = Object.fromEntries(
-    ["window", "fetch"].map((key) => [
+    ['window', 'fetch'].map((key) => [
       key,
       Object.getOwnPropertyDescriptor(globalThis, key),
     ]),
   );
-  Object.defineProperty(globalThis, "window", {
+  Object.defineProperty(globalThis, 'window', {
     configurable: true,
     value: { location: { hostname } },
   });
-  Object.defineProperty(globalThis, "fetch", {
+  Object.defineProperty(globalThis, 'fetch', {
     configurable: true,
     value:
       fetchImpl ??
-      (() => assert.fail("The local demo must not send API requests")),
+      (() => assert.fail('The local demo must not send API requests')),
   });
   context.after(() => {
     for (const [key, descriptor] of Object.entries(descriptors)) {
@@ -70,7 +70,7 @@ function browser(context, { hostname = "localhost", fetchImpl } = {}) {
   });
 }
 
-test("the local public demo shows its promotion without connecting to an API", async (context) => {
+test('the local public demo shows its promotion without connecting to an API', async (context) => {
   browser(context);
   const { api } = await loadApi();
   assert.deepEqual(await api.getSettings(), {
@@ -78,7 +78,7 @@ test("the local public demo shows its promotion without connecting to an API", a
   });
 });
 
-test("the local demo exposes plot scenarios for map actions, price offers and document details", async (context) => {
+test('the local demo exposes plot scenarios for map actions, price offers and document details', async (context) => {
   browser(context);
   const { api } = await loadApi();
   const plots = await api.getPlots();
@@ -88,70 +88,70 @@ test("the local demo exposes plot scenarios for map actions, price offers and do
     return plot;
   };
   assert.equal(
-    plots.filter((plot) => plot.settlement === "Ойнеловские дали").length,
+    plots.filter((plot) => plot.settlement === 'Ойнеловские дали').length,
     21,
   );
   assert.deepEqual(
-    [find("1-01").status, find("1-02").status, find("1-04").status],
-    ["Свободен", "Забронирован", "Продан"],
+    [find('1-01').status, find('1-02').status, find('1-04').status],
+    ['Свободен', 'Забронирован', 'Продан'],
   );
-  assert.equal(find("1-01").price, "1500000");
-  assert.equal(find("1-01").fullPaymentPrice, "1300000");
-  assert.equal(find("1-03").fullPaymentPrice, null);
-  assert.equal(find("1-01").gpzuDone, true);
-  assert.equal(find("1-01").buildingPermitDone, true);
-  assert.equal(find("1-02").gpzuDone, false);
-  assert.equal(find("1-02").buildingPermitDone, false);
-  assert.equal(find("1-01").cadastralNumber, "47:07:0123456:101");
-  assert.equal(find("1-02").cadastralNumber, null);
+  assert.equal(find('1-01').price, '1500000');
+  assert.equal(find('1-01').fullPaymentPrice, '1300000');
+  assert.equal(find('1-03').fullPaymentPrice, null);
+  assert.equal(find('1-01').gpzuDone, true);
+  assert.equal(find('1-01').buildingPermitDone, true);
+  assert.equal(find('1-02').gpzuDone, false);
+  assert.equal(find('1-02').buildingPermitDone, false);
+  assert.equal(find('1-01').cadastralNumber, '47:07:0123456:101');
+  assert.equal(find('1-02').cadastralNumber, null);
   assert.equal(
-    find("1-01").mortgageUrl,
-    "https://domclick.ru/card/sale__lot__100000001",
+    find('1-01').mortgageUrl,
+    'https://domclick.ru/card/sale__lot__100000001',
   );
   assert.equal(
-    find("1-03").mortgageUrl,
-    "https://domclick.ru/card/sale__lot__100000003",
+    find('1-03').mortgageUrl,
+    'https://domclick.ru/card/sale__lot__100000003',
   );
-  assert.equal(find("local-2-01").category, "ИЖС");
-  assert.equal(find("local-2-01").photos.length, 3);
+  assert.equal(find('local-2-01').category, 'ИЖС');
+  assert.equal(find('local-2-01').photos.length, 3);
 });
 
 const contact = {
-  name: "Демо посетитель",
-  phone: "+7 (999) 123-45-67",
-  project: "Ойнеловские дали",
-  plot: "1-02",
-  comment: "Прошу уведомить, если участок 1-02 освободится от брони.",
+  name: 'Демо посетитель',
+  phone: '+7 (999) 123-45-67',
+  project: 'Ойнеловские дали',
+  plot: '1-02',
+  comment: 'Прошу уведомить, если участок 1-02 освободится от брони.',
   consent: true,
 };
 
-test("the local demo accepts an inquiry locally and still requires explicit consent", async (context) => {
+test('the local demo accepts an inquiry locally and still requires explicit consent', async (context) => {
   browser(context);
   const { api } = await loadApi();
   await assert.rejects(api.sendContact({ ...contact, consent: false }), {
     status: 400,
   });
-  await assert.rejects(api.sendContact({ ...contact, consent: "true" }), {
+  await assert.rejects(api.sendContact({ ...contact, consent: 'true' }), {
     status: 400,
   });
   assert.deepEqual(await api.sendContact(contact), { ok: true });
 });
 
-test("the local demo rejects missing, incomplete and malformed Russian inquiry phones before reporting success", async (context) => {
+test('the local demo rejects missing, incomplete and malformed Russian inquiry phones before reporting success', async (context) => {
   browser(context);
   const { api, ApiError } = await loadApi();
   for (const phone of [
     undefined,
     null,
-    "",
-    "   ",
-    "+7",
-    "+7 (999) 123-45-6",
-    "+7 (999) 123-45-678",
-    "+1 (999) 123-45-67",
-    "+7 (999) ABC-45-67",
-    `+7${" ".repeat(30)}9991234567`,
-  ])
+    '',
+    '   ',
+    '+7',
+    '+7 (999) 123-45-6',
+    '+7 (999) 123-45-678',
+    '+1 (999) 123-45-67',
+    '+7 (999) ABC-45-67',
+    `+7${' '.repeat(30)}9991234567`,
+  ]) {
     await assert.rejects(
       api.sendContact({ ...contact, phone }),
       (error) =>
@@ -159,34 +159,35 @@ test("the local demo rejects missing, incomplete and malformed Russian inquiry p
         error.status === 400 &&
         /номер телефона полностью/.test(error.message),
     );
+  }
   assert.deepEqual(
-    await api.sendContact({ ...contact, phone: "8 (999) 123-45-67" }),
+    await api.sendContact({ ...contact, phone: '8 (999) 123-45-67' }),
     { ok: true },
   );
 });
 
-test("cancelling a local demo inquiry prevents a successful submission result", async (context) => {
+test('cancelling a local demo inquiry prevents a successful submission result', async (context) => {
   browser(context);
   const { api } = await loadApi();
   const alreadyCancelled = new AbortController();
   alreadyCancelled.abort();
   await assert.rejects(
     api.sendContact(contact, { signal: alreadyCancelled.signal }),
-    { name: "AbortError" },
+    { name: 'AbortError' },
   );
   const controller = new AbortController();
   const pending = api.sendContact(contact, { signal: controller.signal });
   setTimeout(() => controller.abort(), 20);
-  await assert.rejects(pending, { name: "AbortError" });
+  await assert.rejects(pending, { name: 'AbortError' });
 });
 
-test("admin actions are isolated from the local public demo and cannot replace its cached data", async (context) => {
+test('admin actions are isolated from the local public demo and cannot replace its cached data', async (context) => {
   browser(context);
   const { api } = await loadApi();
   const plots = await api.getPlots();
   const settings = await api.getSettings();
   for (const action of [
-    () => api.login("demo", "demo"),
+    () => api.login('demo', 'demo'),
     () => api.logout(),
     () => api.getAdminPlots(),
     () => api.getAdminSettings(),
@@ -194,9 +195,9 @@ test("admin actions are isolated from the local public demo and cannot replace i
       api.updateSettings({
         promotion: { enabled: false, discountPercent: 50 },
       }),
-    () => api.createPlot({ id: "1-01" }),
+    () => api.createPlot({ id: '1-01' }),
     () => api.updatePlots([]),
-    () => api.updatePlot("1-01", {}),
+    () => api.updatePlot('1-01', {}),
   ]) {
     await assert.rejects(action(), { status: 403 });
   }
@@ -206,109 +207,110 @@ test("admin actions are isolated from the local public demo and cannot replace i
 
 for (const [scenario, env, hostname] of [
   [
-    "production even with a mock flag",
-    { DEV: false, VITE_USE_MOCK_DATA: "true" },
-    "localhost",
+    'production even with a mock flag',
+    { DEV: false, VITE_USE_MOCK_DATA: 'true' },
+    'localhost',
   ],
-  ["development without a mock flag", { DEV: true }, "localhost"],
+  ['development without a mock flag', { DEV: true }, 'localhost'],
   [
-    "development with a disabled mock flag",
-    { DEV: true, VITE_USE_MOCK_DATA: "false" },
-    "localhost",
+    'development with a disabled mock flag',
+    { DEV: true, VITE_USE_MOCK_DATA: 'false' },
+    'localhost',
   ],
   [
-    "development with a mock flag on a public host",
-    { DEV: true, VITE_USE_MOCK_DATA: "true" },
-    "demo.example.com",
+    'development with a mock flag on a public host',
+    { DEV: true, VITE_USE_MOCK_DATA: 'true' },
+    'demo.example.com',
   ],
 ]) {
   test(`${scenario} continues using real public and admin API requests`, async (context) => {
     const requested = [];
     const livePlot = {
-      id: "server-plot",
-      settlement: "Другие участки",
-      area: "9",
-      price: "2200000",
-      status: "Свободен",
+      id: 'server-plot',
+      settlement: 'Другие участки',
+      area: '9',
+      price: '2200000',
+      status: 'Свободен',
       street: null,
       description: null,
-      updatedAt: "2026-10-21 12:00:00",
+      updatedAt: '2026-10-21 12:00:00',
     };
     browser(context, {
       hostname,
       fetchImpl: async (url, options) => {
-        const path = new URL(url, "https://site.example.test").pathname;
+        const path = new URL(url, 'https://site.example.test').pathname;
         requested.push([url, options.credentials]);
         let payload;
-        if (path === "/api/plots" || path === "/api/admin/plots")
+        if (path === '/api/plots' || path === '/api/admin/plots') {
           payload = [livePlot];
-        else if (path === "/api/settings")
+        } else if (path === '/api/settings') {
           payload = { promotion: { enabled: false, discountPercent: 20 } };
-        else if (path === "/api/contact") payload = { ok: true };
-        else assert.fail(`Unexpected API request: ${path}`);
+        } else if (path === '/api/contact') {
+          payload = { ok: true };
+        } else {
+          assert.fail(`Unexpected API request: ${path}`);
+        }
         return new Response(JSON.stringify(payload), {
-          headers: { "Content-Type": "application/json" },
+          headers: { 'Content-Type': 'application/json' },
         });
       },
     });
     const { api } = await loadApi({
       ...env,
-      VITE_API_URL: "https://api.example.test",
+      VITE_API_URL: 'https://api.example.test',
     });
-    assert.equal((await api.getPlots())[0].id, "server-plot");
+    assert.equal((await api.getPlots())[0].id, 'server-plot');
     assert.deepEqual(await api.getSettings(), {
       promotion: { enabled: false, discountPercent: 20 },
     });
     assert.deepEqual(await api.sendContact(contact), { ok: true });
-    assert.equal((await api.getAdminPlots())[0].id, "server-plot");
-    const origin = env.DEV ? "https://api.example.test" : "";
+    assert.equal((await api.getAdminPlots())[0].id, 'server-plot');
+    const origin = env.DEV ? 'https://api.example.test' : '';
     assert.deepEqual(requested, [
-      [`${origin}/api/plots`, "omit"],
-      [`${origin}/api/settings`, "omit"],
-      [`${origin}/api/contact`, "omit"],
-      [`${origin}/api/admin/plots`, "include"],
+      [`${origin}/api/plots`, 'omit'],
+      [`${origin}/api/settings`, 'omit'],
+      [`${origin}/api/contact`, 'omit'],
+      [`${origin}/api/admin/plots`, 'include'],
     ]);
   });
 }
 
-test("production ignores a stale Cloudflare API URL and keeps public and admin requests on the website origin", async (context) => {
+test('production ignores a stale Cloudflare API URL and keeps public and admin requests on the website origin', async (context) => {
   const requested = [];
   browser(context, {
-    hostname: "hamper.example.ru",
+    hostname: 'hamper.example.ru',
     fetchImpl: async (url, options) => {
       requested.push([url, options.credentials]);
-      const pathname = new URL(url, "https://hamper.example.ru").pathname;
-      return Response.json(
-        pathname === "/api/admin/inquiries"
-          ? { items: [], nextCursor: null }
-          : pathname === "/api/contact"
-            ? { ok: true }
-            : [],
-      );
+      const pathname = new URL(url, 'https://hamper.example.ru').pathname;
+      const responses = {
+        '/api/admin/inquiries': { items: [], nextCursor: null },
+        '/api/contact': { ok: true },
+      };
+      return Response.json(responses[pathname] ?? []);
     },
   });
   const { api } = await loadApi({
     DEV: false,
-    VITE_USE_MOCK_DATA: "true",
-    VITE_API_URL: "https://former-hamper-api.example.workers.dev",
+    VITE_USE_MOCK_DATA: 'true',
+    VITE_API_URL: 'https://former-hamper-api.example.workers.dev',
   });
   await api.getPlots();
   await api.sendContact(contact);
   await api.getAdminPlots();
   await api.getAdminInquiries();
   assert.deepEqual(requested, [
-    ["/api/plots", "omit"],
-    ["/api/contact", "omit"],
-    ["/api/admin/plots", "include"],
-    ["/api/admin/inquiries?limit=50", "include"],
+    ['/api/plots', 'omit'],
+    ['/api/contact', 'omit'],
+    ['/api/admin/plots', 'include'],
+    ['/api/admin/inquiries?limit=50', 'include'],
   ]);
 });
 
-for (const hostname of ["127.0.0.1", "[::1]"]) {
+for (const hostname of ['127.0.0.1', '[::1]']) {
   test(`the explicit development demo also works on loopback ${hostname}`, async (context) => {
     browser(context, { hostname });
     const { api } = await loadApi();
     assert.equal((await api.getSettings()).promotion.enabled, true);
-    assert.equal((await api.getPlots())[0].fullPaymentPrice, "1300000");
+    assert.equal((await api.getPlots())[0].fullPaymentPrice, '1300000');
   });
 }

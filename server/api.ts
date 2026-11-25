@@ -62,7 +62,7 @@ function corsHeaders(request: Request, env: Env): HeadersInit {
       : "*",
     ...(adminRequest ? { "Access-Control-Allow-Credentials": "true" } : {}),
     "Access-Control-Allow-Headers": "Content-Type",
-    "Access-Control-Allow-Methods": "GET, POST, PUT, OPTIONS",
+    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -425,6 +425,33 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
     return json({ ok: true }, 200, request, env);
   }
 
+  const inquiryMatch = url.pathname.match(
+    /^\/api\/admin\/inquiries\/([1-9]\d*)(\/complete)?$/,
+  );
+  if (inquiryMatch) {
+    const id = Number(inquiryMatch[1]);
+    if (!Number.isSafeInteger(id))
+      throw new RequestError(400, "Некорректный номер заявки");
+    if (request.method === "POST" && inquiryMatch[2]) {
+      const row = await env.DB.prepare(
+        "UPDATE inquiries SET completed_at = COALESCE(completed_at, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) WHERE id = ? RETURNING id",
+      )
+        .bind(id)
+        .first();
+      if (!row) throw new RequestError(404, "Заявка не найдена");
+      return json({ success: true }, 200, request, env);
+    }
+    if (request.method === "DELETE" && !inquiryMatch[2]) {
+      const row = await env.DB.prepare(
+        "DELETE FROM inquiries WHERE id = ? RETURNING id",
+      )
+        .bind(id)
+        .first();
+      if (!row) throw new RequestError(404, "Заявка не найдена");
+      return json({ success: true }, 200, request, env);
+    }
+  }
+
   if (url.pathname === "/api/admin/inquiries" && request.method === "GET") {
     const limitText = url.searchParams.get("limit") ?? "50";
     const beforeText = url.searchParams.get("before");
@@ -442,15 +469,17 @@ async function handleRequest(request: Request, env: Env): Promise<Response> {
           before < 1))
     )
       throw new RequestError(400, "Некорректные параметры списка заявок");
+    const history = url.searchParams.get("status") === "completed";
+    const inquiryFilter = `inquiries.completed_at IS ${history ? "NOT NULL" : "NULL"}`;
     const inquirySelect =
-      "SELECT inquiries.*, COALESCE(delivery.status, 'not_configured') AS telegram_status, COALESCE(delivery.attempts, 0) AS telegram_attempts FROM inquiries LEFT JOIN inquiry_telegram_outbox AS delivery ON delivery.inquiry_id = inquiries.id";
+      "SELECT inquiries.id, inquiries.name, inquiries.phone, inquiries.project, inquiries.plot, inquiries.comment, inquiries.consent, inquiries.created_at, COALESCE(delivery.status, 'not_configured') AS telegram_status, COALESCE(delivery.attempts, 0) AS telegram_attempts FROM inquiries LEFT JOIN inquiry_telegram_outbox AS delivery ON delivery.inquiry_id = inquiries.id";
     const statement =
       before === null
         ? env.DB.prepare(
-            `${inquirySelect} ORDER BY inquiries.id DESC LIMIT ?`,
+            `${inquirySelect} WHERE ${inquiryFilter} ORDER BY inquiries.id DESC LIMIT ?`,
           ).bind(limit + 1)
         : env.DB.prepare(
-            `${inquirySelect} WHERE inquiries.id < ? ORDER BY inquiries.id DESC LIMIT ?`,
+            `${inquirySelect} WHERE ${inquiryFilter} AND inquiries.id < ? ORDER BY inquiries.id DESC LIMIT ?`,
           ).bind(before, limit + 1);
     const result = await statement.all<InquiryRow>();
     const page = result.results.slice(0, limit);

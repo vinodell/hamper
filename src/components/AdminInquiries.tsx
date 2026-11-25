@@ -82,6 +82,8 @@ export function AdminInquiries({
   onAuthenticationError,
   disabled = false,
 }: AdminInquiriesProps) {
+  const [status, setStatus] = useState<"active" | "completed">("active");
+  const [saving, setSaving] = useState(false);
   const [items, setItems] = useState<AdminInquiry[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,7 @@ export function AdminInquiries({
         const page = await api.getAdminInquiries({
           signal: controller.signal,
           before,
+          status,
         });
         if (controller.signal.aborted) return;
         setItems((current) =>
@@ -121,13 +124,38 @@ export function AdminInquiries({
         if (!controller.signal.aborted) setLoading(false);
       }
     },
-    [onAuthenticationError],
+    [onAuthenticationError, status],
   );
 
   useEffect(() => {
+    setItems([]);
+    setNextCursor(null);
     void load();
     return () => requestRef.current?.abort();
   }, [load]);
+
+  const updateInquiry = async (id: number, action: "complete" | "delete") => {
+    if (action === "delete" && !window.confirm("Удалить заявку безвозвратно?"))
+      return;
+    setSaving(true);
+    setError("");
+    requestRef.current?.abort();
+    try {
+      if (action === "complete") await api.completeInquiry(id);
+      else await api.deleteInquiry(id);
+      setItems((current) => current.filter((item) => item.id !== id));
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        onAuthenticationError();
+      } else
+        setError(
+          error instanceof Error ? error.message : "Не удалось изменить заявку",
+        );
+    } finally {
+      setSaving(false);
+      setLoading(false);
+    }
+  };
 
   return (
     <section
@@ -152,7 +180,7 @@ export function AdminInquiries({
         <button
           className="button button-dark admin-inquiries-refresh"
           type="button"
-          disabled={disabled || loading}
+          disabled={disabled || loading || saving}
           onClick={() => void load()}
         >
           <RefreshCw size="1rem" aria-hidden="true" />
@@ -160,6 +188,24 @@ export function AdminInquiries({
         </button>
       </header>
 
+      <div className="admin-inquiries-tabs" aria-label="Разделы заявок">
+        <button
+          type="button"
+          aria-pressed={status === "active"}
+          disabled={saving || disabled}
+          onClick={() => setStatus("active")}
+        >
+          Активные заявки
+        </button>
+        <button
+          type="button"
+          aria-pressed={status === "completed"}
+          disabled={saving || disabled}
+          onClick={() => setStatus("completed")}
+        >
+          История заявок
+        </button>
+      </div>
       {error && (
         <div className="admin-error" role="alert">
           {error}
@@ -217,33 +263,59 @@ export function AdminInquiries({
                       </a>
                     </div>
                   </div>
-                  {(inquiry.project || inquiry.plot) && (
-                    <dl className="admin-inquiry-details">
-                      {inquiry.project && (
-                        <div>
-                          <dt>Проект</dt>
-                          <dd>{inquiry.project}</dd>
+                  {status === "active" && (
+                    <>
+                      {(inquiry.project || inquiry.plot) && (
+                        <dl className="admin-inquiry-details">
+                          {inquiry.project && (
+                            <div>
+                              <dt>Проект</dt>
+                              <dd>{inquiry.project}</dd>
+                            </div>
+                          )}
+                          {inquiry.plot && (
+                            <div>
+                              <dt>Участок</dt>
+                              <dd>{inquiry.plot}</dd>
+                            </div>
+                          )}
+                        </dl>
+                      )}
+                      {inquiry.comment && (
+                        <div className="admin-inquiry-message">
+                          <MessageSquare size="1rem" aria-hidden="true" />
+                          <p className="admin-inquiry-comment">
+                            {inquiry.comment}
+                          </p>
                         </div>
                       )}
-                      {inquiry.plot && (
-                        <div>
-                          <dt>Участок</dt>
-                          <dd>{inquiry.plot}</dd>
-                        </div>
-                      )}
-                    </dl>
+                      <TelegramDelivery inquiry={inquiry} />
+                      <p className="admin-inquiry-consent">
+                        <CheckCheck size="1rem" aria-hidden="true" />
+                        Согласие на обработку данных получено
+                      </p>
+                    </>
                   )}
-                  {inquiry.comment && (
-                    <div className="admin-inquiry-message">
-                      <MessageSquare size="1rem" aria-hidden="true" />
-                      <p className="admin-inquiry-comment">{inquiry.comment}</p>
-                    </div>
-                  )}
-                  <TelegramDelivery inquiry={inquiry} />
-                  <p className="admin-inquiry-consent">
-                    <CheckCheck size="1rem" aria-hidden="true" />
-                    Согласие на обработку данных получено
-                  </p>
+                  <div className="admin-inquiry-actions">
+                    {status === "active" && (
+                      <button
+                        type="button"
+                        disabled={disabled || saving || loading}
+                        onClick={() =>
+                          void updateInquiry(inquiry.id, "complete")
+                        }
+                      >
+                        Подтвердить обработку
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      disabled={disabled || saving || loading}
+                      onClick={() => void updateInquiry(inquiry.id, "delete")}
+                    >
+                      Удалить
+                    </button>
+                  </div>
                 </li>
               ))}
             </ol>
@@ -253,7 +325,7 @@ export function AdminInquiries({
           <button
             className="button button-dark admin-inquiries-more"
             type="button"
-            disabled={disabled || loading}
+            disabled={disabled || loading || saving}
             onClick={() => void load(nextCursor)}
           >
             {loading ? "Загружаем…" : "Показать ещё"}

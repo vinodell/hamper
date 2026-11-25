@@ -8,11 +8,6 @@ export interface SiteSettings {
   };
 }
 
-/** An editor fallback only. Public promotions require a successful API read. */
-export const DEFAULT_SITE_SETTINGS: SiteSettings = {
-  promotion: { enabled: false, discountPercent: 10 },
-};
-
 export function isValidSiteSettings(value: unknown): value is SiteSettings {
   if (typeof value !== "object" || value === null || Array.isArray(value))
     return false;
@@ -32,7 +27,7 @@ export function isValidSiteSettings(value: unknown): value is SiteSettings {
   );
 }
 
-export interface SiteSettingsSnapshot {
+interface SiteSettingsSnapshot {
   settings: SiteSettings | null;
   loading: boolean;
   error: string;

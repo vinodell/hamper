@@ -6,8 +6,7 @@ import {
   type KeyboardEvent,
   type ClipboardEvent,
 } from "react";
-import { formatPhone } from "../hooks/setMobilePhone";
-import { PHONE_PATTERN } from "../lib/constants";
+import { formatPhone, PHONE_PATTERN } from "../lib/phone";
 
 interface PhoneInputProps {
   value: string;

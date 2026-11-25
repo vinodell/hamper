@@ -1,38 +1,38 @@
-import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { createHmac, pbkdf2Sync } from "node:crypto";
-import test from "node:test";
-import { fileURLToPath } from "node:url";
-import { importServerModule } from "./server-test-loader.mjs";
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { createHmac, pbkdf2Sync } from 'node:crypto';
+import test from 'node:test';
+import { fileURLToPath } from 'node:url';
+import { importServerModule } from './server-test-loader.mjs';
 const {
   ADMIN_COOKIE,
   ADMIN_COOKIE_TTL_SECONDS,
   PASSWORD_HASH_ITERATIONS,
   PASSWORD_HASH_ALGORITHM,
-} = await importServerModule("constants.ts");
-const { default: worker } = await importServerModule("api.ts");
+} = await importServerModule('constants.ts');
+const { default: worker } = await importServerModule('api.ts');
 
-const login = "test-admin";
-const password = "local-test-password";
+const login = 'test-admin';
+const password = 'local-test-password';
 function passwordHash(value) {
-  const salt = Buffer.from("local-auth-test-salt");
+  const salt = Buffer.from('local-auth-test-salt');
   const hash = pbkdf2Sync(
     value,
     salt,
     PASSWORD_HASH_ITERATIONS,
     32,
-    PASSWORD_HASH_ALGORITHM.replace("-", "").toLowerCase(),
+    PASSWORD_HASH_ALGORITHM.replace('-', '').toLowerCase(),
   );
-  return `${salt.toString("base64url")}:${hash.toString("base64url")}`;
+  return `${salt.toString('base64url')}:${hash.toString('base64url')}`;
 }
 const hash = passwordHash(password);
 const plot = {
-  id: "fixture-1",
-  area: "10",
-  status: "Свободен",
-  price: "500000",
-  street: "Тестовая улица",
-  description: "Тестовый участок",
+  id: 'fixture-1',
+  area: '10',
+  status: 'Свободен',
+  price: '500000',
+  street: 'Тестовая улица',
+  description: 'Тестовый участок',
 };
 
 function fixture() {
@@ -42,13 +42,13 @@ function fixture() {
       plot.id,
       {
         ...plot,
-        settlement: "Тестовый посёлок",
+        settlement: 'Тестовый посёлок',
         cadastral_number: null,
         gpzu_done: 0,
         building_permit_done: 0,
         mortgage_url: null,
         full_payment_price: null,
-        updated_at: "2026-01-01 00:00:00",
+        updated_at: '2026-01-01 00:00:00',
       },
     ],
   ]);
@@ -66,7 +66,7 @@ function fixture() {
             /^SELECT id, full_payment_price FROM plots WHERE id IN \(\?(?:, \?)*\)$/.test(
               sql,
             )
-          )
+          ) {
             return {
               results: values.flatMap((id) => {
                 const row = rows.get(id);
@@ -80,25 +80,26 @@ function fixture() {
                   : [];
               }),
             };
+          }
           assert.ok(
             [
-              "SELECT * FROM plots ORDER BY settlement, id",
-              "SELECT id, settlement, area, status, price, full_payment_price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id",
+              'SELECT * FROM plots ORDER BY settlement, id',
+              'SELECT id, settlement, area, status, price, full_payment_price, street, description, cadastral_number, gpzu_done, building_permit_done, mortgage_url FROM plots ORDER BY settlement, id',
             ].includes(sql),
           );
           return { results: [...rows.values()] };
         },
         async first() {
-          if (sql === "SELECT full_payment_price FROM plots WHERE id = ?") {
+          if (sql === 'SELECT full_payment_price FROM plots WHERE id = ?') {
             const row = rows.get(values[0]);
             return row
               ? { full_payment_price: row.full_payment_price ?? null }
               : null;
           }
-          if (sql.startsWith("INSERT INTO plots")) {
+          if (sql.startsWith('INSERT INTO plots')) {
             const columns = sql
               .match(/^INSERT INTO plots \(([^)]+)\)/)[1]
-              .split(", ");
+              .split(', ');
             const inserted = Object.fromEntries(
               columns.map((column, index) => [column, values[index]]),
             );
@@ -106,12 +107,12 @@ function fixture() {
             if (rows.has(id)) return null;
             const row = {
               ...inserted,
-              updated_at: "2026-01-01 00:00:00",
+              updated_at: '2026-01-01 00:00:00',
             };
             rows.set(id, row);
             return row;
           }
-          assert.ok(sql.startsWith("UPDATE plots SET"));
+          assert.ok(sql.startsWith('UPDATE plots SET'));
           const id = values.at(-1);
           const existing = rows.get(id);
           if (!existing) return null;
@@ -130,7 +131,7 @@ function fixture() {
       };
     },
     async batch(statements) {
-      calls.push("batch");
+      calls.push('batch');
       return Promise.all(
         statements.map(async (statement) => {
           const row = await statement.first();
@@ -146,20 +147,20 @@ function fixture() {
       DB,
       ADMIN_LOGIN: login,
       ADMIN_PASSWORD_HASH: hash,
-      PUBLIC_ORIGIN: "https://site.test",
+      PUBLIC_ORIGIN: 'https://site.test',
     },
   };
 }
 
-function request(path, { method = "GET", body, headers = {} } = {}) {
+function request(path, { method = 'GET', body, headers = {} } = {}) {
   return new Request(`https://worker.test${path}`, {
     method,
     headers: {
-      Origin: "https://site.test",
-      ...(body === undefined ? {} : { "Content-Type": "application/json" }),
+      Origin: 'https://site.test',
+      ...body === undefined ? {} : { 'Content-Type': 'application/json' },
       ...headers,
     },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    ...body === undefined ? {} : { body: JSON.stringify(body) },
   });
 }
 
@@ -169,151 +170,153 @@ function signedCookie(
 ) {
   const payload = `v1.${expiresAt}.00000000-0000-4000-8000-000000000000`;
   const signature = createHmac(
-    "sha256",
+    'sha256',
     env.SESSION_SECRET || env.ADMIN_PASSWORD_HASH,
   )
     .update(
       `hamper-admin-v1\n${env.ADMIN_LOGIN}\n${env.ADMIN_PASSWORD_HASH}\n${payload}`,
     )
-    .digest("base64url");
+    .digest('base64url');
   return `${ADMIN_COOKIE}=${payload}.${signature}`;
 }
 
 async function loginCookie(env) {
   const response = await worker.fetch(
-    request("/api/admin/login", {
-      method: "POST",
+    request('/api/admin/login', {
+      method: 'POST',
       body: { login: env.ADMIN_LOGIN, password },
     }),
     env,
   );
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
-  return response.headers.get("Set-Cookie").split(";")[0];
+  return response.headers.get('Set-Cookie').split(';')[0];
 }
 
 const operations = [
-  ["read", "/api/admin/plots", { method: "GET" }],
+  ['read', '/api/admin/plots', { method: 'GET' }],
   [
-    "create",
-    "/api/admin/plots",
-    { method: "POST", body: { ...plot, id: "new-1" } },
+    'create',
+    '/api/admin/plots',
+    { method: 'POST', body: { ...plot, id: 'new-1' } },
   ],
   [
-    "bulk update",
-    "/api/admin/plots",
+    'bulk update',
+    '/api/admin/plots',
     {
-      method: "PUT",
-      body: { plots: [{ ...plot, area: "12", status: "Продан" }] },
+      method: 'PUT',
+      body: { plots: [{ ...plot, area: '12', status: 'Продан' }] },
     },
   ],
   [
-    "single update",
+    'single update',
     `/api/admin/plots/${plot.id}`,
     {
-      method: "PUT",
-      body: { ...plot, price: "600000", description: "Обновлено" },
+      method: 'PUT',
+      body: { ...plot, price: '600000', description: 'Обновлено' },
     },
   ],
 ];
 
-test("login verifies credentials once and grants a signed HttpOnly cookie for one day", async () => {
+test('login verifies credentials once and grants a signed HttpOnly cookie for one day', async () => {
   const { env, calls } = fixture();
   const response = await worker.fetch(
-    request("/api/admin/login", {
-      method: "POST",
+    request('/api/admin/login', {
+      method: 'POST',
       body: { login, password },
     }),
     env,
   );
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
-  const cookie = response.headers.get("Set-Cookie");
+  const cookie = response.headers.get('Set-Cookie');
   for (const attribute of [
-    "HttpOnly",
-    "Secure",
-    "SameSite=Lax",
-    "Path=/api/admin",
-    "Max-Age=86400",
-  ])
+    'HttpOnly',
+    'Secure',
+    'SameSite=Lax',
+    'Path=/api/admin',
+    'Max-Age=86400',
+  ]) {
     assert.ok(cookie.includes(attribute), attribute);
+  }
   assert.equal(cookie.includes(login), false);
   assert.equal(cookie.includes(password), false);
   assert.equal(
-    response.headers.get("Access-Control-Allow-Credentials"),
-    "true",
+    response.headers.get('Access-Control-Allow-Credentials'),
+    'true',
   );
   assert.equal(
-    response.headers.get("Access-Control-Allow-Origin"),
+    response.headers.get('Access-Control-Allow-Origin'),
     env.PUBLIC_ORIGIN,
   );
   assert.deepEqual(calls, []);
 });
 
-test("invalid login does not issue a cookie or access the database", async (t) => {
+test('invalid login does not issue a cookie or access the database', async (t) => {
   for (const body of [
-    { login: "wrong-login", password },
-    { login, password: "wrong-password" },
-    { login, password: "" },
+    { login: 'wrong-login', password },
+    { login, password: 'wrong-password' },
+    { login, password: '' },
     { login },
-    { login, password: "a".repeat(4097) },
-  ])
+    { login, password: 'a'.repeat(4097) },
+  ]) {
     await t.test(JSON.stringify(body).slice(0, 80), async () => {
       const { env, calls } = fixture();
       const response = await worker.fetch(
-        request("/api/admin/login", { method: "POST", body }),
+        request('/api/admin/login', { method: 'POST', body }),
         env,
       );
       assert.equal(response.status, 401);
-      assert.equal(response.headers.has("Set-Cookie"), false);
+      assert.equal(response.headers.has('Set-Cookie'), false);
       assert.deepEqual(calls, []);
     });
+  }
   const { env, calls } = fixture();
   const response = await worker.fetch(
-    new Request("https://worker.test/api/admin/login", {
-      method: "POST",
+    new Request('https://worker.test/api/admin/login', {
+      method: 'POST',
       headers: {
         Origin: env.PUBLIC_ORIGIN,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
-      body: "{broken",
+      body: '{broken',
     }),
     env,
   );
   assert.equal(response.status, 400);
-  assert.equal(response.headers.has("Set-Cookie"), false);
+  assert.equal(response.headers.has('Set-Cookie'), false);
   assert.deepEqual(calls, []);
 });
 
-test("JSON login accepts UTF-8 and colons without retaining credentials", async () => {
+test('JSON login accepts UTF-8 and colons without retaining credentials', async () => {
   const { env } = fixture();
-  env.ADMIN_LOGIN = "админ:владелец";
-  const secret = "пароль:🔐";
+  env.ADMIN_LOGIN = 'админ:владелец';
+  const secret = 'пароль:🔐';
   env.ADMIN_PASSWORD_HASH = passwordHash(secret);
   const response = await worker.fetch(
-    request("/api/admin/login", {
-      method: "POST",
+    request('/api/admin/login', {
+      method: 'POST',
       body: { login: env.ADMIN_LOGIN, password: secret },
     }),
     env,
   );
   assert.equal(response.status, 200);
-  const cookie = response.headers.get("Set-Cookie").split(";")[0];
+  const cookie = response.headers.get('Set-Cookie').split(';')[0];
   const read = await worker.fetch(
-    request("/api/admin/plots", { headers: { Cookie: cookie } }),
+    request('/api/admin/plots', { headers: { Cookie: cookie } }),
     env,
   );
   assert.equal(read.status, 200);
 });
 
-test("password hash CLI produces hashes accepted by admin login at valid password boundaries", async () => {
+test('password hash CLI produces hashes accepted by admin login at valid password boundaries', async () => {
   const script = fileURLToPath(
-    new URL("create-password-hash.mjs", import.meta.url),
+    new URL('create-password-hash.mjs', import.meta.url),
   );
-  for (const secret of ["x", "пароль:🔐", "x".repeat(4096)]) {
+  for (const secret of ['x', 'пароль:🔐', 'x'.repeat(4096)]) {
     const generated = spawnSync(process.execPath, [script], {
       input: `${secret}\n`,
-      encoding: "utf8",
+      encoding: 'utf8',
     });
     assert.equal(generated.status, 0);
     const encoded = generated.stdout.match(
@@ -323,37 +326,37 @@ test("password hash CLI produces hashes accepted by admin login at valid passwor
     const { env } = fixture();
     env.ADMIN_PASSWORD_HASH = encoded;
     const response = await worker.fetch(
-      request("/api/admin/login", {
-        method: "POST",
+      request('/api/admin/login', {
+        method: 'POST',
         body: { login, password: secret },
       }),
       env,
     );
     assert.equal(response.status, 200);
-    assert.ok(response.headers.get("Set-Cookie"));
+    assert.ok(response.headers.get('Set-Cookie'));
   }
 });
 
-test("every protected read and write rejects invalid cookies before accessing the database", async (t) => {
+test('every protected read and write rejects invalid cookies before accessing the database', async (t) => {
   for (const [operation, path, options] of operations) {
     const { env, calls } = fixture();
     const valid = signedCookie(env);
     for (const [reason, headers] of [
-      ["missing", {}],
+      ['missing', {}],
       [
-        "former Basic credentials",
+        'former Basic credentials',
         {
-          Authorization: `Basic ${Buffer.from(`${login}:${password}`).toString("base64")}`,
+          Authorization: `Basic ${Buffer.from(`${login}:${password}`).toString('base64')}`,
         },
       ],
-      ["former session cookie", { Cookie: "hamper_session=old-value" }],
-      ["malformed", { Cookie: `${ADMIN_COOKIE}=malformed` }],
+      ['former session cookie', { Cookie: 'hamper_session=old-value' }],
+      ['malformed', { Cookie: `${ADMIN_COOKIE}=malformed` }],
       [
-        "expired",
+        'expired',
         { Cookie: signedCookie(env, Math.floor(Date.now() / 1000) - 1) },
       ],
       [
-        "future beyond one day",
+        'future beyond one day',
         {
           Cookie: signedCookie(
             env,
@@ -361,24 +364,25 @@ test("every protected read and write rejects invalid cookies before accessing th
           ),
         },
       ],
-      ["forged signature", { Cookie: `${valid.slice(0, -3)}xxx` }],
-      ["oversized", { Cookie: `${ADMIN_COOKIE}=${"x".repeat(1000)}` }],
-    ])
+      ['forged signature', { Cookie: `${valid.slice(0, -3)}xxx` }],
+      ['oversized', { Cookie: `${ADMIN_COOKIE}=${'x'.repeat(1000)}` }],
+    ]) {
       await t.test(`${operation}: ${reason}`, async () => {
         const response = await worker.fetch(
           request(path, { ...options, headers }),
           env,
         );
         assert.equal(response.status, 401);
-        assert.equal(typeof (await response.json()).error, "string");
-        assert.ok(response.headers.get("Set-Cookie").includes("Max-Age=0"));
+        assert.equal(typeof(await response.json()).error, 'string');
+        assert.ok(response.headers.get('Set-Cookie').includes('Max-Age=0'));
         assert.deepEqual(calls, []);
       });
+    }
   }
 });
 
-test("cookie established by login permits all admin operations without password verification", async (t) => {
-  for (const [operation, path, options] of operations)
+test('cookie established by login permits all admin operations without password verification', async (t) => {
+  for (const [operation, path, options] of operations) {
     await t.test(operation, async () => {
       const { env, calls, rows } = fixture();
       const cookie = await loginCookie(env);
@@ -386,53 +390,56 @@ test("cookie established by login permits all admin operations without password 
         request(path, { ...options, headers: { Cookie: cookie } }),
         env,
       );
-      assert.equal(response.status, options.method === "POST" ? 201 : 200);
+      assert.equal(response.status, options.method === 'POST' ? 201 : 200);
       const result = await response.json();
       const returned = Array.isArray(result) ? result[0] : result;
       const expected = options.body?.plots?.[0] ?? options.body ?? plot;
-      assert.equal(returned.id, options.method === "POST" ? "new-1" : plot.id);
-      for (const key of ["status", "area", "price", "description"])
+      assert.equal(returned.id, options.method === 'POST' ? 'new-1' : plot.id);
+      for (const key of ['status', 'area', 'price', 'description']) {
         assert.equal(returned[key], expected[key]);
-      assert.equal(typeof returned.updatedAt, "string");
+      }
+      assert.equal(typeof returned.updatedAt, 'string');
       assert.ok(calls.length > 0);
-      if (options.method === "POST") assert.ok(rows.has("new-1"));
-      if (operation === "bulk update") assert.ok(calls.includes("batch"));
-      assert.equal(response.headers.has("Set-Cookie"), false);
+      if (options.method === 'POST') assert.ok(rows.has('new-1'));
+      if (operation === 'bulk update') assert.ok(calls.includes('batch'));
+      assert.equal(response.headers.has('Set-Cookie'), false);
     });
+  }
 });
 
-test("changed login, password hash or optional signing secret invalidates earlier cookies", async (t) => {
-  for (const key of ["ADMIN_LOGIN", "ADMIN_PASSWORD_HASH", "SESSION_SECRET"])
+test('changed login, password hash or optional signing secret invalidates earlier cookies', async (t) => {
+  for (const key of ['ADMIN_LOGIN', 'ADMIN_PASSWORD_HASH', 'SESSION_SECRET']) {
     await t.test(key, async () => {
       const { env, calls } = fixture();
-      env.SESSION_SECRET = "existing-optional-test-signing-secret";
+      env.SESSION_SECRET = 'existing-optional-test-signing-secret';
       const cookie = await loginCookie(env);
       env[key] =
-        key === "ADMIN_PASSWORD_HASH"
-          ? passwordHash("new-password")
-          : "new-value";
+        key === 'ADMIN_PASSWORD_HASH'
+          ? passwordHash('new-password')
+          : 'new-value';
       const response = await worker.fetch(
-        request("/api/admin/plots", { headers: { Cookie: cookie } }),
+        request('/api/admin/plots', { headers: { Cookie: cookie } }),
         env,
       );
       assert.equal(response.status, 401);
       assert.deepEqual(calls, []);
     });
+  }
 });
 
-test("foreign and missing Origin cannot log in, log out or mutate data", async (t) => {
+test('foreign and missing Origin cannot log in, log out or mutate data', async (t) => {
   const { env, calls } = fixture();
   const cookie = await loginCookie(env);
-  for (const origin of ["https://attacker.test", "null", ""]) {
+  for (const origin of ['https://attacker.test', 'null', '']) {
     for (const [path, options] of [
-      ["/api/admin/login", { method: "POST", body: { login, password } }],
-      ["/api/admin/logout", { method: "POST" }],
+      ['/api/admin/login', { method: 'POST', body: { login, password } }],
+      ['/api/admin/logout', { method: 'POST' }],
       ...operations
-        .filter(([, , { method }]) => method !== "GET")
+        .filter(([, , { method }]) => method !== 'GET')
         .map(([, path, options]) => [path, options]),
-    ])
+    ]) {
       await t.test(
-        `${origin || "missing"}: ${path} ${options.method}`,
+        `${origin || 'missing'}: ${path} ${options.method}`,
         async () => {
           const response = await worker.fetch(
             request(path, {
@@ -442,64 +449,65 @@ test("foreign and missing Origin cannot log in, log out or mutate data", async (
             env,
           );
           assert.equal(response.status, 403);
-          assert.equal(response.headers.has("Set-Cookie"), false);
+          assert.equal(response.headers.has('Set-Cookie'), false);
           assert.deepEqual(calls, []);
         },
       );
+    }
   }
 });
 
-test("admin CORS permits only the configured frontend and has no Authorization header", async () => {
+test('admin CORS permits only the configured frontend and has no Authorization header', async () => {
   const { env, calls } = fixture();
   const allowed = await worker.fetch(
-    request("/api/admin/plots", { method: "OPTIONS" }),
+    request('/api/admin/plots', { method: 'OPTIONS' }),
     env,
   );
   assert.equal(allowed.status, 200);
   assert.equal(
-    allowed.headers.get("Access-Control-Allow-Origin"),
+    allowed.headers.get('Access-Control-Allow-Origin'),
     env.PUBLIC_ORIGIN,
   );
-  assert.equal(allowed.headers.get("Access-Control-Allow-Credentials"), "true");
+  assert.equal(allowed.headers.get('Access-Control-Allow-Credentials'), 'true');
   assert.equal(
-    allowed.headers.get("Access-Control-Allow-Headers"),
-    "Content-Type",
+    allowed.headers.get('Access-Control-Allow-Headers'),
+    'Content-Type',
   );
   const denied = await worker.fetch(
-    request("/api/admin/plots", {
-      method: "OPTIONS",
-      headers: { Origin: "https://attacker.test" },
+    request('/api/admin/plots', {
+      method: 'OPTIONS',
+      headers: { Origin: 'https://attacker.test' },
     }),
     env,
   );
   assert.equal(denied.status, 403);
   assert.notEqual(
-    denied.headers.get("Access-Control-Allow-Origin"),
-    "https://attacker.test",
+    denied.headers.get('Access-Control-Allow-Origin'),
+    'https://attacker.test',
   );
   assert.deepEqual(calls, []);
 });
 
-test("unset PUBLIC_ORIGIN trusts same origin, never reflects a foreign site", async () => {
+test('unset PUBLIC_ORIGIN trusts same origin, never reflects a foreign site', async () => {
   const { env, calls } = fixture();
   delete env.PUBLIC_ORIGIN;
   const response = await worker.fetch(
-    request("/api/admin/login", {
-      method: "POST",
+    request('/api/admin/login', {
+      method: 'POST',
       body: { login, password },
     }),
     env,
   );
   assert.equal(response.status, 403);
   assert.equal(
-    response.headers.get("Access-Control-Allow-Origin"),
-    "https://worker.test",
+    response.headers.get('Access-Control-Allow-Origin'),
+    'https://worker.test',
   );
   const sameOrigin = await worker.fetch(
-    request("/api/admin/login", {
-      method: "POST",
+    request('/api/admin/login', {
+      method: 'POST',
       body: { login, password },
-      headers: { Origin: "https://worker.test" },
+      headers: { Origin: 'https://worker.test' },
     }),
     env,
   );
@@ -507,12 +515,12 @@ test("unset PUBLIC_ORIGIN trusts same origin, never reflects a foreign site", as
   assert.deepEqual(calls, []);
 });
 
-test("logout expires the browser cookie using the same path and attributes", async () => {
+test('logout expires the browser cookie using the same path and attributes', async () => {
   const { env, calls } = fixture();
   const cookie = await loginCookie(env);
   const response = await worker.fetch(
-    request("/api/admin/logout", {
-      method: "POST",
+    request('/api/admin/logout', {
+      method: 'POST',
       headers: { Cookie: cookie },
     }),
     env,
@@ -520,67 +528,67 @@ test("logout expires the browser cookie using the same path and attributes", asy
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { ok: true });
   assert.equal(
-    response.headers.get("Set-Cookie"),
+    response.headers.get('Set-Cookie'),
     `${ADMIN_COOKIE}=; Path=/api/admin; HttpOnly; Max-Age=0; Secure; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT`,
   );
-  const afterLogout = await worker.fetch(request("/api/admin/plots"), env);
+  const afterLogout = await worker.fetch(request('/api/admin/plots'), env);
   assert.equal(afterLogout.status, 401);
   assert.deepEqual(calls, []);
 });
 
-test("HTTP localhost uses a Lax HttpOnly cookie for local development", async () => {
+test('HTTP localhost uses a Lax HttpOnly cookie for local development', async () => {
   const { env } = fixture();
-  env.PUBLIC_ORIGIN = "http://localhost:5173";
+  env.PUBLIC_ORIGIN = 'http://localhost:5173';
   const response = await worker.fetch(
-    new Request("http://localhost:8787/api/admin/login", {
-      method: "POST",
+    new Request('http://localhost:8787/api/admin/login', {
+      method: 'POST',
       headers: {
         Origin: env.PUBLIC_ORIGIN,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({ login, password }),
     }),
     env,
   );
   assert.equal(response.status, 200);
-  const cookie = response.headers.get("Set-Cookie");
-  assert.ok(cookie.includes("HttpOnly"));
-  assert.ok(cookie.includes("SameSite=Lax"));
-  assert.equal(cookie.includes("Secure"), false);
-  assert.equal(cookie.includes("Partitioned"), false);
+  const cookie = response.headers.get('Set-Cookie');
+  assert.ok(cookie.includes('HttpOnly'));
+  assert.ok(cookie.includes('SameSite=Lax'));
+  assert.equal(cookie.includes('Secure'), false);
+  assert.equal(cookie.includes('Partitioned'), false);
 });
 
-test("public requests remain cookie-free and work without authentication", async () => {
+test('public requests remain cookie-free and work without authentication', async () => {
   const { env } = fixture();
   const response = await worker.fetch(
-    request("/api/plots", {
+    request('/api/plots', {
       headers: { Cookie: `${ADMIN_COOKIE}=invalid` },
     }),
     env,
   );
   assert.equal(response.status, 200);
-  assert.equal(response.headers.has("Set-Cookie"), false);
-  assert.equal(response.headers.has("Access-Control-Allow-Credentials"), false);
-  assert.equal(response.headers.get("Access-Control-Allow-Origin"), "*");
+  assert.equal(response.headers.has('Set-Cookie'), false);
+  assert.equal(response.headers.has('Access-Control-Allow-Credentials'), false);
+  assert.equal(response.headers.get('Access-Control-Allow-Origin'), '*');
   const data = await response.json();
   assert.equal(data[0].id, plot.id);
   assert.equal(data[0].street, plot.street);
-  assert.equal("updatedAt" in data[0], false);
+  assert.equal('updatedAt' in data[0], false);
 });
 
-test("admin validation preserves atomic bulk saves and reports missing/duplicate plots", async (t) => {
+test('admin validation preserves atomic bulk saves and reports missing/duplicate plots', async (t) => {
   for (const [name, body, status] of [
-    ["invalid numeric value", { plots: [{ ...plot, area: "-1" }] }, 400],
-    ["duplicate IDs", { plots: [plot, plot] }, 400],
-    ["missing ID", { plots: [{ ...plot, id: "missing" }] }, 404],
-    ["empty batch", { plots: [] }, 400],
-  ])
+    ['invalid numeric value', { plots: [{ ...plot, area: '-1' }] }, 400],
+    ['duplicate IDs', { plots: [plot, plot] }, 400],
+    ['missing ID', { plots: [{ ...plot, id: 'missing' }] }, 404],
+    ['empty batch', { plots: [] }, 400],
+  ]) {
     await t.test(name, async () => {
       const { env, calls, rows } = fixture();
       const before = structuredClone([...rows]);
       const response = await worker.fetch(
-        request("/api/admin/plots", {
-          method: "PUT",
+        request('/api/admin/plots', {
+          method: 'PUT',
           body,
           headers: { Cookie: await loginCookie(env) },
         }),
@@ -588,26 +596,28 @@ test("admin validation preserves atomic bulk saves and reports missing/duplicate
       );
       assert.equal(response.status, status);
       assert.deepEqual([...rows], before);
-      assert.equal(calls.includes("batch"), false);
+      assert.equal(calls.includes('batch'), false);
     });
+  }
 });
 
-test("bulk saves accept complete plot descriptions larger than the single-request limit", async () => {
+test('bulk saves accept complete plot descriptions larger than the single-request limit', async () => {
   const { env, rows } = fixture();
   const updates = Array.from({ length: 5 }, (_, index) => ({
     ...plot,
     id: `bulk-${index}`,
-    description: "я".repeat(4000),
+    description: 'я'.repeat(4000),
   }));
-  for (const update of updates)
+  for (const update of updates) {
     rows.set(update.id, {
       ...update,
-      settlement: "Тестовый посёлок",
-      updated_at: "2026-01-01 00:00:00",
+      settlement: 'Тестовый посёлок',
+      updated_at: '2026-01-01 00:00:00',
     });
+  }
   const response = await worker.fetch(
-    request("/api/admin/plots", {
-      method: "PUT",
+    request('/api/admin/plots', {
+      method: 'PUT',
       body: { plots: updates },
       headers: { Cookie: await loginCookie(env) },
     }),
@@ -619,41 +629,41 @@ test("bulk saves accept complete plot descriptions larger than the single-reques
   assert.equal(saved[0].description, updates[0].description);
 });
 
-test("admin login and individual mutations reject oversized JSON with credentialed CORS", async () => {
+test('admin login and individual mutations reject oversized JSON with credentialed CORS', async () => {
   for (const [path, method, data] of [
-    ["/api/admin/login", "POST", { login, password }],
-    ["/api/admin/plots", "POST", { ...plot, id: "new-1" }],
-    [`/api/admin/plots/${plot.id}`, "PUT", plot],
+    ['/api/admin/login', 'POST', { login, password }],
+    ['/api/admin/plots', 'POST', { ...plot, id: 'new-1' }],
+    [`/api/admin/plots/${plot.id}`, 'PUT', plot],
   ]) {
     const { env, calls } = fixture();
     const response = await worker.fetch(
       request(path, {
         method,
-        body: { ...data, padding: "x".repeat(32_769) },
+        body: { ...data, padding: 'x'.repeat(32_769) },
         headers: { Cookie: signedCookie(env) },
       }),
       env,
     );
     assert.equal(response.status, 413);
-    assert.equal(typeof (await response.json()).error, "string");
+    assert.equal(typeof(await response.json()).error, 'string');
     assert.equal(
-      response.headers.get("Access-Control-Allow-Origin"),
+      response.headers.get('Access-Control-Allow-Origin'),
       env.PUBLIC_ORIGIN,
     );
     assert.equal(
-      response.headers.get("Access-Control-Allow-Credentials"),
-      "true",
+      response.headers.get('Access-Control-Allow-Credentials'),
+      'true',
     );
     assert.deepEqual(calls, []);
   }
 });
 
-test("bulk saves reject JSON above their larger request limit", async () => {
+test('bulk saves reject JSON above their larger request limit', async () => {
   const { env, calls } = fixture();
   const response = await worker.fetch(
-    request("/api/admin/plots", {
-      method: "PUT",
-      body: { plots: [plot], padding: "x".repeat(12 * 1024 * 1024) },
+    request('/api/admin/plots', {
+      method: 'PUT',
+      body: { plots: [plot], padding: 'x'.repeat(12 * 1024 * 1024) },
       headers: { Cookie: signedCookie(env) },
     }),
     env,

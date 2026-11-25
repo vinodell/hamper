@@ -1,20 +1,20 @@
-import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
-import test from "node:test";
-import { transformWithOxc } from "vite";
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+import { transformWithOxc } from 'vite';
 
 const moduleUrl = (code) =>
-  `data:text/javascript;base64,${Buffer.from(code).toString("base64")}`;
-const root = new URL("../", import.meta.url);
+  `data:text/javascript;base64,${Buffer.from(code).toString('base64')}`;
+const root = new URL('../', import.meta.url);
 const routes = await transformWithOxc(
-  await readFile(new URL("src/lib/routes.ts", root), "utf8"),
-  "routes.ts",
+  await readFile(new URL('src/lib/routes.ts', root), 'utf8'),
+  'routes.ts',
 );
 const routesUrl = moduleUrl(routes.code);
 const { adminPath, projectRoutes } = await import(routesUrl);
 const config = await transformWithOxc(
-  await readFile(new URL("vite.config.ts", root), "utf8"),
-  "vite.config.ts",
+  await readFile(new URL('vite.config.ts', root), 'utf8'),
+  'vite.config.ts',
 );
 const { default: createConfig } = await import(
   moduleUrl(
@@ -22,7 +22,7 @@ const { default: createConfig } = await import(
       /(from\s+)(["'])([^"']+)\2/g,
       (_match, prefix, _quote, path) =>
         `${prefix}${JSON.stringify(
-          path === "./src/lib/routes.ts"
+          path === './src/lib/routes.ts'
             ? routesUrl
             : import.meta.resolve(path),
         )}`,
@@ -30,20 +30,20 @@ const { default: createConfig } = await import(
   )
 );
 
-test("Hostland serves navigation from the domain root without a separate API URL", () => {
+test('Hostland serves navigation from the domain root without a separate API URL', () => {
   const savedApiUrl = process.env.VITE_API_URL;
   delete process.env.VITE_API_URL;
   try {
-    const pagesConfig = createConfig({ command: "build", mode: "production" });
-    assert.equal(pagesConfig.base, "/");
+    const pagesConfig = createConfig({ command: 'build', mode: 'production' });
+    assert.equal(pagesConfig.base, '/');
     const plugin = pagesConfig.plugins.find(
-      (entry) => entry.name === "static-app-routes",
+      (entry) => entry.name === 'static-app-routes',
     );
     assert.ok(
       plugin,
-      "The build emits documents for direct project/admin navigation",
+      'The build emits documents for direct project/admin navigation',
     );
-    const source = "<!doctype html><div id=root></div>";
+    const source = '<!doctype html><div id=root></div>';
     const files = [];
     plugin.generateBundle.handler.call(
       {
@@ -53,13 +53,13 @@ test("Hostland serves navigation from the domain root without a separate API URL
         },
       },
       {},
-      { "index.html": { type: "asset", source } },
+      { 'index.html': { type: 'asset', source } },
     );
 
     const expectedPages = [
-      ["/admin/", "admin/index.html"],
-      ["/projects/oynelovskie-dali/", "projects/oynelovskie-dali/index.html"],
-      ["/projects/drugie-uchastki/", "projects/drugie-uchastki/index.html"],
+      ['/admin/', 'admin/index.html'],
+      ['/projects/oynelovskie-dali/', 'projects/oynelovskie-dali/index.html'],
+      ['/projects/drugie-uchastki/', 'projects/drugie-uchastki/index.html'],
     ];
     assert.deepEqual(
       [adminPath, ...projectRoutes.map(({ path }) => path)],
@@ -67,7 +67,7 @@ test("Hostland serves navigation from the domain root without a separate API URL
     );
     assert.deepEqual(
       files.map(({ fileName }) => fileName),
-      ["404.html", ...expectedPages.map(([, fileName]) => fileName)],
+      ['404.html', ...expectedPages.map(([, fileName]) => fileName)],
     );
     assert.ok(files.every((asset) => asset.source === source));
   } finally {

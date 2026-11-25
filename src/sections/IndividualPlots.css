@@ -11,11 +11,15 @@
     width: 100%;
     min-width: 0;
     min-height: 3.25rem;
-    padding: 0.75rem;
+    appearance: none;
+    padding: 0.75rem 3rem 0.75rem 0.75rem;
     font-size: 1rem;
     border: 0.0625rem solid var(--line);
     border-radius: var(--radius);
-    background: var(--paper);
+    background-color: var(--paper);
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
     color: var(--ink);
 }
 
@@ -36,8 +40,6 @@
 }
 
 .individual-plot-details h3 {
-    font-size: clamp(1.5rem, 3vw, 2.25rem);
-    line-height: 1.2;
     margin: 0;
     overflow-wrap: anywhere;
 }
@@ -86,5 +88,12 @@
 @media (max-width:56.25rem) {
     .individual-plot {
         grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (forced-colors: active) {
+    .individual-plots-picker select {
+        appearance: auto;
+        background-image: none;
     }
 }

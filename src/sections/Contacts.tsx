@@ -1,11 +1,15 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { ArrowUpRight, Check, Mail, ShieldCheck } from "lucide-react";
-import { formatPhone, usePlots } from "../hooks";
+import { usePlots } from "../hooks";
 import { ContactPeople } from "../components/ContactPeople";
 import { PhoneInput } from "../components/PhoneInput";
 import { siteConfig, type Plot } from "../lib";
 import { api } from "../lib/api";
-import { isValidRussianPhone, PHONE_REQUIRED_MESSAGE } from "../lib/phone";
+import {
+  formatPhone,
+  isValidRussianPhone,
+  PHONE_REQUIRED_MESSAGE,
+} from "../lib/phone";
 
 import "./Contacts.css";
 import "../components/ContactDialog.css";

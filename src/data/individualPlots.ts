@@ -1,4 +1,4 @@
-export type PlotCategory = "ИЖС" | "Дачка";
+type PlotCategory = "ИЖС" | "Дачка";
 
 export interface PlotPhoto {
   src: string;

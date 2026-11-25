@@ -1,3 +1,4 @@
+import { parsePlotNumber } from "../lib/plotNumbers";
 import type { Plot, PlotStatus } from "../lib/constants";
 import type { MapZone, ZoneStatus } from "./Interactive.types";
 import { mapZones } from "./MapZones";
@@ -23,10 +24,10 @@ export function resolveMapZones(plots: Plot[]): MapZone[] {
     return {
       ...zone,
       status: statuses[plot.status],
-      area: Number(plot.area.replace(",", ".")),
-      price: Number(plot.price.replace(",", ".")),
+      area: parsePlotNumber(plot.area),
+      price: parsePlotNumber(plot.price),
       ...(plot.fullPaymentPrice?.trim()
-        ? { fullPaymentPrice: Number(plot.fullPaymentPrice.replace(",", ".")) }
+        ? { fullPaymentPrice: parsePlotNumber(plot.fullPaymentPrice) }
         : {}),
       description: plot.description ?? undefined,
       street: plot.street,

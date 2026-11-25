@@ -16,6 +16,6 @@ export const BULK_PLOTS_MAX_LENGTH = 500;
 export const REQUEST_BODY_MAX_BYTES = 32 * 1024;
 export const BULK_REQUEST_BODY_MAX_BYTES = 12 * 1024 * 1024;
 
-export const plotStatuses = ["Свободен", "Забронирован", "Продан"] as const;
+const plotStatuses = ["Свободен", "Забронирован", "Продан"] as const;
 export type PlotStatus = (typeof plotStatuses)[number];
 export const allowedStatuses: ReadonlySet<PlotStatus> = new Set(plotStatuses);

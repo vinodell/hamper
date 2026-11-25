@@ -60,7 +60,10 @@ function statusMessage(status: number) {
 
 async function request(
   path: string,
-  options: RequestOptions & { method?: "POST" | "PUT"; body?: string } = {},
+  options: RequestOptions & {
+    method?: "POST" | "PUT" | "DELETE";
+    body?: string;
+  } = {},
 ): Promise<unknown> {
   const adminRequest = path.startsWith("/api/admin/");
   if (options.signal?.aborted)
@@ -479,11 +482,25 @@ export const api = {
     replaceCachedPlots(plots.map(toPublicPlot), revision);
     return plots;
   },
+  completeInquiry: (id: number) =>
+    request(`/api/admin/inquiries/${id}/complete`, { method: "POST" }),
+  deleteInquiry: (id: number) =>
+    request(`/api/admin/inquiries/${id}`, { method: "DELETE" }),
   getAdminInquiries: async (
-    options: RequestOptions & { limit?: number; before?: number } = {},
+    options: RequestOptions & {
+      limit?: number;
+      before?: number;
+      status?: "active" | "completed";
+    } = {},
   ) => {
-    const { limit = 50, before, ...requestOptions } = options;
+    const {
+      limit = 50,
+      before,
+      status = "active",
+      ...requestOptions
+    } = options;
     const query = new URLSearchParams({ limit: String(limit) });
+    if (status === "completed") query.set("status", status);
     if (before !== undefined) query.set("before", String(before));
     const page = parseAdminInquiries(
       await request(`/api/admin/inquiries?${query}`, requestOptions),

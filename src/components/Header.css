@@ -7,7 +7,7 @@ body.menu-open {
   min-height: var(--site-header-height);
   background: var(--bg);
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: clamp(1rem, 2vw, 2rem);
   padding: 0.75rem

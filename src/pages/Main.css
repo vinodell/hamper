@@ -1,53 +1,150 @@
 .project-heading {
-    position: relative;
-    padding: 4.25rem 0 4.75rem;
-    background: url("/bg-pic-oinelovo.webp") center / cover;
-    color: white;
+  position: relative;
+  min-height: var(--project-hero-height);
+  padding: 4.25rem 0 4.75rem;
+  overflow: hidden;
+  background: var(--pine);
+  color: white;
 }
 
 .project-heading::after {
-    content: "";
-    position: absolute;
-    inset: 0;
+  content: "";
+  position: absolute;
+  inset: 0;
 
-    background: linear-gradient(to right,
-            #0f261f 0%,
-            #0f261f, 20%,
-            transparent 30%,
-            transparent 70%,
-            #0f261f 90%,
-            #0f261f 100%);
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--ink) 85%, transparent),
+    color-mix(in srgb, var(--ink) 30%, transparent)
+  );
 
-    pointer-events: none;
+  pointer-events: none;
 }
 
-.project-heading>* {
-    position: relative;
-    z-index: 1;
+.project-heading > .container {
+  position: relative;
+  z-index: 1;
 }
 
 .project-heading h1 {
-    max-width: 56.25rem;
-    margin: 1rem 0 0;
-    font-size: clamp(2.25rem, 7vw, 5.625rem);
+  max-width: 56.25rem;
+  margin: 1rem 0 0;
+  font-size: clamp(3rem, 4.6vw, 4.625rem);
+  line-height: 0.99;
+  letter-spacing: -0.02em;
 }
 
 .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 3.25rem;
-    color: #e2bf84;
-    font-size: 0.875rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 3.25rem;
+  color: #e2bf84;
+  font-size: 0.875rem;
 }
 
 @media (max-width: 47.5rem) {
+  .project-heading {
+    padding: 3rem 0 3.5rem;
+  }
 
-    .project-heading {
-        padding: 3rem 0 3.5rem;
-    }
+  .back-link {
+    margin-bottom: 2.375rem;
+  }
+}
 
-    .back-link {
-        margin-bottom: 2.375rem;
-    }
+.project-contacts {
+  padding: 3rem 0;
+  background: var(--bg);
+}
+.project-contacts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: 2rem;
+}
+.project-contacts h2 {
+  max-width: 30rem;
+}
+.project-contacts p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.project-contacts-card small {
+  color: var(--muted);
+}
+@media (max-width: 47.5rem) {
+  .project-contacts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.project-page .section-heading {
+  margin-bottom: 2rem;
+}
+.project-page main :is(h1, h2) em {
+  font-style: normal;
+}
+@media (max-width: 47.5rem) {
+  .project-heading h1 {
+    font-size: clamp(2.75rem, 12vw, 4rem);
+  }
+}
+
+.project-page main > .section {
+  padding-block: 3rem;
+}
+.project-page main > section > .container {
+  width: min(90%, 84rem);
+}
+.project-page .section-heading > p:last-child {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.project-page .eyebrow {
+  font-size: 0.625rem;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+}
+.project-page .individual-plot {
+  border-color: color-mix(in srgb, var(--line) 16%, transparent);
+  border-radius: 0.625rem;
+  overflow: hidden;
+}
+.project-page .individual-plot-details :is(dt, dd),
+.project-page .individual-plots-picker {
+  font-size: 0.75rem;
+}
+.project-page .individual-plot-description {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.project-page .plots-table-wrap {
+  border-radius: 0.625rem;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.project-page .plots-table-wrap table {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+}
+.project-page .back-link {
+  font-size: 0.6875rem;
+}
+.project-page .project-contacts-card {
+  font-size: 0.75rem;
+}
+
+@media (max-width: 47.5em) {
+  .project-page main > section > .container { width: calc(100% - 2.5rem); }
+}
+
+.project-heading-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

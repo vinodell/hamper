@@ -1,3 +1,4 @@
+import { parsePlotNumber } from "./plotNumbers";
 import type { Plot } from "./constants";
 
 interface PlotSummary {
@@ -20,7 +21,7 @@ export function summarizePlots(
   };
 
   for (const plot of plots) {
-    const area = Number(plot.area.replace(",", "."));
+    const area = parsePlotNumber(plot.area);
     summary.minimumArea = Math.min(summary.minimumArea ?? area, area);
     summary.maximumArea = Math.max(summary.maximumArea ?? area, area);
     if (plot.status !== "Свободен") continue;
@@ -29,7 +30,7 @@ export function summarizePlots(
       priceSource === "full-payment"
         ? (plot.fullPaymentPrice ?? plot.price)
         : plot.price;
-    const price = Number(priceText.replace(",", "."));
+    const price = parsePlotNumber(priceText);
     if (
       summary.minimumAvailablePrice === null ||
       price < summary.minimumAvailablePrice

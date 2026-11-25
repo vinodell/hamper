@@ -1,13 +1,13 @@
-import assert from "node:assert/strict";
-import { createHmac } from "node:crypto";
-import { readFile } from "node:fs/promises";
-import { DatabaseSync } from "node:sqlite";
-import test from "node:test";
-import { importServerModule } from "./server-test-loader.mjs";
+import assert from 'node:assert/strict';
+import { createHmac } from 'node:crypto';
+import { readFile } from 'node:fs/promises';
+import { DatabaseSync } from 'node:sqlite';
+import test from 'node:test';
+import { importServerModule } from './server-test-loader.mjs';
 
-const root = new URL("../", import.meta.url);
-const { default: worker } = await importServerModule("api.ts");
-const schema = await readFile(new URL("server/schema.sql", root), "utf8");
+const root = new URL('../', import.meta.url);
+const { default: worker } = await importServerModule('api.ts');
+const schema = await readFile(new URL('server/schema.sql', root), 'utf8');
 
 function d1Adapter(database, { afterQuery } = {}) {
   return {
@@ -32,13 +32,13 @@ function d1Adapter(database, { afterQuery } = {}) {
       };
     },
     async batch(statements) {
-      database.exec("BEGIN");
+      database.exec('BEGIN');
       try {
         const results = await Promise.all(statements.map((item) => item.all()));
-        database.exec("COMMIT");
+        database.exec('COMMIT');
         return results;
       } catch (error) {
-        database.exec("ROLLBACK");
+        database.exec('ROLLBACK');
         throw error;
       }
     },
@@ -46,40 +46,40 @@ function d1Adapter(database, { afterQuery } = {}) {
 }
 
 function fixture(context, initialSchema = schema, databaseOptions) {
-  const database = new DatabaseSync(":memory:");
+  const database = new DatabaseSync(':memory:');
   database.exec(initialSchema);
   context.after(() => database.close());
   const env = {
     DB: d1Adapter(database, databaseOptions),
-    ADMIN_LOGIN: "sales-admin",
-    ADMIN_PASSWORD_HASH: "local-test-hash",
-    PUBLIC_ORIGIN: "https://site.test",
+    ADMIN_LOGIN: 'sales-admin',
+    ADMIN_PASSWORD_HASH: 'local-test-hash',
+    PUBLIC_ORIGIN: 'https://site.test',
   };
   const payload = `v1.${Math.floor(Date.now() / 1000) + 86400}.00000000-0000-4000-8000-000000000000`;
-  const signature = createHmac("sha256", env.ADMIN_PASSWORD_HASH)
+  const signature = createHmac('sha256', env.ADMIN_PASSWORD_HASH)
     .update(
       `hamper-admin-v1\n${env.ADMIN_LOGIN}\n${env.ADMIN_PASSWORD_HASH}\n${payload}`,
     )
-    .digest("base64url");
+    .digest('base64url');
   return {
     database,
     async request(
       path,
-      { method = "GET", body, admin = false, origin = env.PUBLIC_ORIGIN } = {},
+      { method = 'GET', body, admin = false, origin = env.PUBLIC_ORIGIN } = {},
     ) {
       return worker.fetch(
         new Request(`https://worker.test${path}`, {
           method,
           headers: {
             Origin: origin,
-            ...(admin
+            ...admin
               ? { Cookie: `hamper_admin=${payload}.${signature}` }
-              : {}),
-            ...(body === undefined
+              : {},
+            ...body === undefined
               ? {}
-              : { "Content-Type": "application/json" }),
+              : { 'Content-Type': 'application/json' },
           },
-          ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+          ...body === undefined ? {} : { body: JSON.stringify(body) },
         }),
         env,
       );
@@ -88,174 +88,175 @@ function fixture(context, initialSchema = schema, databaseOptions) {
 }
 
 const plot = {
-  id: "sales-1",
-  area: "10",
-  status: "Свободен",
-  price: "1500000",
-  street: "Служебная улица",
-  description: "Участок у леса",
+  id: 'sales-1',
+  area: '10',
+  status: 'Свободен',
+  price: '1500000',
+  street: 'Служебная улица',
+  description: 'Участок у леса',
 };
 const salesFields = {
-  cadastralNumber: "47:07:1044001:123",
+  cadastralNumber: '47:07:1044001:123',
   gpzuDone: true,
   buildingPermitDone: false,
-  mortgageUrl: "https://spb.domclick.ru/card/sale__lot__123456",
+  mortgageUrl: 'https://spb.domclick.ru/card/sale__lot__123456',
 };
 
-test("admin can set, publish and clear the optional full-payment price", async (context) => {
+test('admin can set, publish and clear the optional full-payment price', async (context) => {
   const { request } = fixture(context);
-  const created = await request("/api/admin/plots", {
-    method: "POST",
+  const created = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
-    body: { ...plot, fullPaymentPrice: "1200000,50" },
+    body: { ...plot, fullPaymentPrice: '1200000,50' },
   });
   assert.equal(created.status, 201);
-  assert.equal((await created.json()).fullPaymentPrice, "1200000.50");
-  const [visible] = await (await request("/api/plots")).json();
+  assert.equal((await created.json()).fullPaymentPrice, '1200000.50');
+  const [visible] = await (await request('/api/plots')).json();
   assert.equal(visible.price, plot.price);
-  assert.equal(visible.fullPaymentPrice, "1200000.50");
+  assert.equal(visible.fullPaymentPrice, '1200000.50');
   const updated = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { ...plot, fullPaymentPrice: "1100000" },
+    body: { ...plot, fullPaymentPrice: '1100000' },
   });
   assert.equal(updated.status, 200);
-  assert.equal((await updated.json()).fullPaymentPrice, "1100000");
+  assert.equal((await updated.json()).fullPaymentPrice, '1100000');
   const cleared = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { ...plot, fullPaymentPrice: "   " },
+    body: { ...plot, fullPaymentPrice: '   ' },
   });
   assert.equal(cleared.status, 200);
   assert.equal((await cleared.json()).fullPaymentPrice, null);
   const [withoutOffer] = await (
-    await request("/api/admin/plots", { admin: true })
+    await request('/api/admin/plots', { admin: true })
   ).json();
   assert.equal(withoutOffer.fullPaymentPrice, null);
 });
 
-test("full-payment prices must be positive decimals below the base price", async (context) => {
+test('full-payment prices must be positive decimals below the base price', async (context) => {
   const { request } = fixture(context);
   for (const fullPaymentPrice of [
-    "1500000",
-    "1500000.01",
-    "0",
-    "-1",
-    "1.001",
-    "NaN",
-    "Infinity",
+    '1500000',
+    '1500000.01',
+    '0',
+    '-1',
+    '1.001',
+    'NaN',
+    'Infinity',
     1200000,
     true,
     {},
     [],
   ]) {
-    const rejected = await request("/api/admin/plots", {
-      method: "POST",
+    const rejected = await request('/api/admin/plots', {
+      method: 'POST',
       admin: true,
       body: { ...plot, fullPaymentPrice },
     });
     assert.equal(rejected.status, 400, JSON.stringify(fullPaymentPrice));
   }
-  assert.deepEqual(await (await request("/api/plots")).json(), []);
+  assert.deepEqual(await (await request('/api/plots')).json(), []);
 });
 
-test("legacy plot saves preserve full-payment prices and validate a changed base price", async (context) => {
+test('legacy plot saves preserve full-payment prices and validate a changed base price', async (context) => {
   const { request } = fixture(context);
-  const created = await request("/api/admin/plots", {
-    method: "POST",
+  const created = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
-    body: { ...plot, fullPaymentPrice: "1200000" },
+    body: { ...plot, fullPaymentPrice: '1200000' },
   });
   assert.equal(created.status, 201);
   const legacy = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { ...plot, price: "1600000" },
+    body: { ...plot, price: '1600000' },
   });
   assert.equal(legacy.status, 200);
-  assert.equal((await legacy.json()).fullPaymentPrice, "1200000");
+  assert.equal((await legacy.json()).fullPaymentPrice, '1200000');
   const invalidBase = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { ...plot, price: "1200000" },
+    body: { ...plot, price: '1200000' },
   });
   assert.equal(invalidBase.status, 400);
-  const [unchanged] = await (await request("/api/plots")).json();
-  assert.equal(unchanged.price, "1600000");
-  assert.equal(unchanged.fullPaymentPrice, "1200000");
+  const [unchanged] = await (await request('/api/plots')).json();
+  assert.equal(unchanged.price, '1600000');
+  assert.equal(unchanged.fullPaymentPrice, '1200000');
   const cleared = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { ...plot, price: "1100000", fullPaymentPrice: null },
+    body: { ...plot, price: '1100000', fullPaymentPrice: null },
   });
   assert.equal(cleared.status, 200);
   assert.equal((await cleared.json()).fullPaymentPrice, null);
-  const withoutOffer = await request("/api/admin/plots", {
-    method: "POST",
+  const withoutOffer = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
-    body: { ...plot, id: "without-offer" },
+    body: { ...plot, id: 'without-offer' },
   });
   assert.equal(withoutOffer.status, 201);
   assert.equal((await withoutOffer.json()).fullPaymentPrice, null);
 });
 
-test("bulk full-payment saves preserve omitted offers and reject invalid base changes atomically", async (context) => {
+test('bulk full-payment saves preserve omitted offers and reject invalid base changes atomically', async (context) => {
   const { request } = fixture(context);
-  for (const id of [plot.id, "sales-2"])
+  for (const id of [plot.id, 'sales-2']) {
     assert.equal(
       (
-        await request("/api/admin/plots", {
-          method: "POST",
+        await request('/api/admin/plots', {
+          method: 'POST',
           admin: true,
           body: { ...plot, id },
         })
       ).status,
       201,
     );
-  const offered = await request("/api/admin/plots", {
-    method: "PUT",
+  }
+  const offered = await request('/api/admin/plots', {
+    method: 'PUT',
     admin: true,
     body: {
       plots: [
-        { ...plot, fullPaymentPrice: "1100000" },
-        { ...plot, id: "sales-2", fullPaymentPrice: "1150000" },
+        { ...plot, fullPaymentPrice: '1100000' },
+        { ...plot, id: 'sales-2', fullPaymentPrice: '1150000' },
       ],
     },
   });
   assert.equal(offered.status, 200);
-  const invalid = await request("/api/admin/plots", {
-    method: "PUT",
+  const invalid = await request('/api/admin/plots', {
+    method: 'PUT',
     admin: true,
     body: {
       plots: [
-        { ...plot, price: "1300000" },
-        { ...plot, id: "sales-2", price: "1150000" },
+        { ...plot, price: '1300000' },
+        { ...plot, id: 'sales-2', price: '1150000' },
       ],
     },
   });
   assert.equal(invalid.status, 400);
-  const unchanged = await (await request("/api/plots")).json();
+  const unchanged = await (await request('/api/plots')).json();
   assert.equal(unchanged[0].price, plot.price);
   assert.equal(unchanged[1].price, plot.price);
-  assert.equal(unchanged[0].fullPaymentPrice, "1100000");
-  assert.equal(unchanged[1].fullPaymentPrice, "1150000");
-  const valid = await request("/api/admin/plots", {
-    method: "PUT",
+  assert.equal(unchanged[0].fullPaymentPrice, '1100000');
+  assert.equal(unchanged[1].fullPaymentPrice, '1150000');
+  const valid = await request('/api/admin/plots', {
+    method: 'PUT',
     admin: true,
     body: {
       plots: [
-        { ...plot, price: "1300000" },
-        { ...plot, id: "sales-2", price: "1100000", fullPaymentPrice: null },
+        { ...plot, price: '1300000' },
+        { ...plot, id: 'sales-2', price: '1100000', fullPaymentPrice: null },
       ],
     },
   });
   assert.equal(valid.status, 200);
   const saved = await valid.json();
-  assert.equal(saved[0].fullPaymentPrice, "1100000");
+  assert.equal(saved[0].fullPaymentPrice, '1100000');
   assert.equal(saved[1].fullPaymentPrice, null);
 });
 
-test("concurrent legacy price changes and offer saves retain valid prices and atomic bulk results", async (context) => {
+test('concurrent legacy price changes and offer saves retain valid prices and atomic bulk results', async (context) => {
   for (const bulk of [false, true]) {
     let pauseNextDatabaseResponse = false;
     let readStarted;
@@ -268,126 +269,130 @@ test("concurrent legacy price changes and offer saves retain valid prices and at
     });
     context.after(() => releaseRead());
     const { request } = fixture(context, schema, {
-      afterQuery() {
+      async afterQuery() {
         if (!pauseNextDatabaseResponse) return;
         pauseNextDatabaseResponse = false;
         readStarted();
-        return delayedResponse;
+        await delayedResponse;
       },
     });
-    await request("/api/admin/plots", {
-      method: "POST",
+    await request('/api/admin/plots', {
+      method: 'POST',
       admin: true,
-      body: { ...plot, fullPaymentPrice: "1000000" },
+      body: { ...plot, fullPaymentPrice: '1000000' },
     });
-    await request("/api/admin/plots", {
-      method: "POST",
+    await request('/api/admin/plots', {
+      method: 'POST',
       admin: true,
-      body: { ...plot, id: "sales-2" },
+      body: { ...plot, id: 'sales-2' },
     });
     // Delay the database response, as a network round trip would, while another
     // admin saves a new offer. Assertions stay at the public HTTP boundary.
     pauseNextDatabaseResponse = true;
     const legacyPending = request(
-      bulk ? "/api/admin/plots" : `/api/admin/plots/${plot.id}`,
+      bulk ? '/api/admin/plots' : `/api/admin/plots/${plot.id}`,
       {
-        method: "PUT",
+        method: 'PUT',
         admin: true,
         body: bulk
           ? {
               plots: [
-                { ...plot, price: "1100000" },
-                { ...plot, id: "sales-2", price: "1300000" },
+                { ...plot, price: '1100000' },
+                { ...plot, id: 'sales-2', price: '1300000' },
               ],
             }
-          : { ...plot, price: "1100000" },
+          : { ...plot, price: '1100000' },
       },
     );
     await pendingRead;
     const offer = await request(`/api/admin/plots/${plot.id}`, {
-      method: "PUT",
+      method: 'PUT',
       admin: true,
-      body: { ...plot, fullPaymentPrice: "1200000" },
+      body: { ...plot, fullPaymentPrice: '1200000' },
     });
     releaseRead();
     const legacy = await legacyPending;
     assert.equal(legacy.status, 400);
     assert.equal(offer.status, 200);
-    const visible = await (await request("/api/plots")).json();
-    assert.equal(visible[0].fullPaymentPrice, "1200000");
+    const visible = await (await request('/api/plots')).json();
+    assert.equal(visible[0].fullPaymentPrice, '1200000');
     assert.equal(visible[0].price, plot.price);
     if (bulk) assert.equal(visible[1].price, plot.price);
   }
 });
 
-test("admin can create plot documents and a mortgage listing visible in the public catalogue", async (context) => {
+test('admin can create plot documents and a mortgage listing visible in the public catalogue', async (context) => {
   const { request } = fixture(context);
-  const created = await request("/api/admin/plots", {
-    method: "POST",
+  const created = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: { ...plot, ...salesFields },
   });
   assert.equal(created.status, 201);
   const saved = await created.json();
-  for (const [key, value] of Object.entries(salesFields))
+  for (const [key, value] of Object.entries(salesFields)) {
     assert.equal(saved[key], value, key);
-  const catalogue = await request("/api/plots");
+  }
+  const catalogue = await request('/api/plots');
   assert.equal(catalogue.status, 200);
   const [visible] = await catalogue.json();
-  for (const [key, value] of Object.entries(salesFields))
+  for (const [key, value] of Object.entries(salesFields)) {
     assert.equal(visible[key], value, key);
+  }
   assert.equal(visible.street, plot.street);
-  assert.equal("updatedAt" in visible, false);
+  assert.equal('updatedAt' in visible, false);
 });
 
-test("admin can edit sales details and older single-plot saves preserve those details", async (context) => {
+test('admin can edit sales details and older single-plot saves preserve those details', async (context) => {
   const { request } = fixture(context);
-  await request("/api/admin/plots", {
-    method: "POST",
+  await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: { ...plot, ...salesFields },
   });
   const changed = {
-    cadastralNumber: "47:07:1044001:456",
+    cadastralNumber: '47:07:1044001:456',
     gpzuDone: false,
     buildingPermitDone: true,
-    mortgageUrl: "https://domclick.ru/card/sale__lot__789",
+    mortgageUrl: 'https://domclick.ru/card/sale__lot__789',
   };
   const updated = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
     body: { ...plot, ...changed },
   });
   assert.equal(updated.status, 200);
   const saved = await updated.json();
-  for (const [key, value] of Object.entries(changed))
+  for (const [key, value] of Object.entries(changed)) {
     assert.equal(saved[key], value, key);
+  }
   const legacy = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { area: "11", status: "Свободен", price: "1600000" },
+    body: { area: '11', status: 'Свободен', price: '1600000' },
   });
   assert.equal(legacy.status, 200);
   const preserved = await legacy.json();
-  for (const [key, value] of Object.entries(changed))
+  for (const [key, value] of Object.entries(changed)) {
     assert.equal(preserved[key], value, key);
+  }
   assert.equal(preserved.street, plot.street);
   assert.equal(preserved.description, plot.description);
-  const [publicPlot] = await (await request("/api/plots")).json();
-  assert.equal(publicPlot.price, "1600000");
+  const [publicPlot] = await (await request('/api/plots')).json();
+  assert.equal(publicPlot.price, '1600000');
   assert.equal(publicPlot.gpzuDone, false);
   assert.equal(publicPlot.buildingPermitDone, true);
 });
 
-test("promotion settings persist independently of plot saves and are readable publicly", async (context) => {
+test('promotion settings persist independently of plot saves and are readable publicly', async (context) => {
   const { request } = fixture(context);
-  const initial = await request("/api/settings");
+  const initial = await request('/api/settings');
   assert.equal(initial.status, 200);
   assert.deepEqual(await initial.json(), {
     promotion: { enabled: true, discountPercent: 10 },
   });
-  const saved = await request("/api/admin/settings", {
-    method: "PUT",
+  const saved = await request('/api/admin/settings', {
+    method: 'PUT',
     admin: true,
     body: { promotion: { enabled: false, discountPercent: 23 } },
   });
@@ -395,13 +400,13 @@ test("promotion settings persist independently of plot saves and are readable pu
   assert.deepEqual(await saved.json(), {
     promotion: { enabled: false, discountPercent: 23 },
   });
-  await request("/api/admin/plots", {
-    method: "POST",
+  await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: plot,
   });
-  for (const path of ["/api/settings", "/api/admin/settings"]) {
-    const response = await request(path, { admin: path.includes("/admin/") });
+  for (const path of ['/api/settings', '/api/admin/settings']) {
+    const response = await request(path, { admin: path.includes('/admin/') });
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), {
       promotion: { enabled: false, discountPercent: 23 },
@@ -409,18 +414,18 @@ test("promotion settings persist independently of plot saves and are readable pu
   }
 });
 
-test("existing databases migrate without losing plots and receive safe sales defaults", async (context) => {
+test('existing databases migrate without losing plots and receive safe sales defaults', async (context) => {
   const initial = await readFile(
-    new URL("server/migrations/0000_initial.sql", root),
-    "utf8",
+    new URL('server/migrations/0000_initial.sql', root),
+    'utf8',
   );
   const migration = await readFile(
-    new URL("server/migrations/0001_sales_features.sql", root),
-    "utf8",
+    new URL('server/migrations/0001_sales_features.sql', root),
+    'utf8',
   );
   const fullPayment = await readFile(
-    new URL("server/migrations/0002_full_payment_price.sql", root),
-    "utf8",
+    new URL('server/migrations/0002_full_payment_price.sql', root),
+    'utf8',
   );
   const legacySchema = `
     CREATE TABLE plots (
@@ -436,130 +441,131 @@ test("existing databases migrate without losing plots and receive safe sales def
     context,
     legacySchema + initial + migration + fullPayment,
   );
-  const catalogue = await request("/api/plots");
+  const catalogue = await request('/api/plots');
   assert.equal(catalogue.status, 200);
   const [existing] = await catalogue.json();
-  assert.equal(existing.description, "Существующий участок");
+  assert.equal(existing.description, 'Существующий участок');
   assert.equal(existing.cadastralNumber, null);
   assert.equal(existing.gpzuDone, false);
   assert.equal(existing.buildingPermitDone, false);
   assert.equal(existing.mortgageUrl, null);
   assert.equal(existing.fullPaymentPrice, null);
-  const settings = await request("/api/settings");
+  const settings = await request('/api/settings');
   assert.equal(settings.status, 200);
   assert.deepEqual(await settings.json(), {
     promotion: { enabled: true, discountPercent: 10 },
   });
   const updated = await request(`/api/admin/plots/${plot.id}`, {
-    method: "PUT",
+    method: 'PUT',
     admin: true,
-    body: { ...plot, ...salesFields, fullPaymentPrice: "1200000" },
+    body: { ...plot, ...salesFields, fullPaymentPrice: '1200000' },
   });
   assert.equal(updated.status, 200);
   const saved = await updated.json();
   assert.equal(saved.cadastralNumber, salesFields.cadastralNumber);
-  assert.equal(saved.fullPaymentPrice, "1200000");
+  assert.equal(saved.fullPaymentPrice, '1200000');
 });
 
-test("the complete migration chain initializes an empty database for sales requests", async (context) => {
+test('the complete migration chain initializes an empty database for sales requests', async (context) => {
   const initial = await readFile(
-    new URL("server/migrations/0000_initial.sql", root),
-    "utf8",
+    new URL('server/migrations/0000_initial.sql', root),
+    'utf8',
   );
   const sales = await readFile(
-    new URL("server/migrations/0001_sales_features.sql", root),
-    "utf8",
+    new URL('server/migrations/0001_sales_features.sql', root),
+    'utf8',
   );
   const fullPayment = await readFile(
-    new URL("server/migrations/0002_full_payment_price.sql", root),
-    "utf8",
+    new URL('server/migrations/0002_full_payment_price.sql', root),
+    'utf8',
   );
   const { request } = fixture(context, initial + sales + fullPayment);
-  const settings = await request("/api/settings");
+  const settings = await request('/api/settings');
   assert.equal(settings.status, 200);
   assert.deepEqual(await settings.json(), {
     promotion: { enabled: true, discountPercent: 10 },
   });
-  const created = await request("/api/admin/plots", {
-    method: "POST",
+  const created = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
-    body: { ...plot, ...salesFields, fullPaymentPrice: "1250000" },
+    body: { ...plot, ...salesFields, fullPaymentPrice: '1250000' },
   });
   assert.equal(created.status, 201);
-  const catalogue = await request("/api/plots");
+  const catalogue = await request('/api/plots');
   assert.equal(catalogue.status, 200);
   const [visible] = await catalogue.json();
   assert.equal(visible.id, plot.id);
-  assert.equal(visible.fullPaymentPrice, "1250000");
-  for (const [key, value] of Object.entries(salesFields))
+  assert.equal(visible.fullPaymentPrice, '1250000');
+  for (const [key, value] of Object.entries(salesFields)) {
     assert.equal(visible[key], value, key);
+  }
 });
 
-test("mortgage listings reject invalid hosts and unsafe URL schemes without creating a plot", async (context) => {
+test('mortgage listings reject invalid hosts and unsafe URL schemes without creating a plot', async (context) => {
   const { request } = fixture(context);
   for (const mortgageUrl of [
-    "https://.domclick.ru/card/123",
-    "https://fake..domclick.ru/card/123",
-    "https://domclick.ru.attacker.test/card/123",
-    "https://fakedomclick.ru/card/123",
-    "http://domclick.ru/card/123",
-    "javascript:alert(1)",
-    "https://admin:secret@domclick.ru/card/123",
-    "https://domclick.ru:8443/card/123",
-    "https://domclick.ru/" + "x".repeat(2048),
+    'https://.domclick.ru/card/123',
+    'https://fake..domclick.ru/card/123',
+    'https://domclick.ru.attacker.test/card/123',
+    'https://fakedomclick.ru/card/123',
+    'http://domclick.ru/card/123',
+    'javascript:alert(1)',
+    'https://admin:secret@domclick.ru/card/123',
+    'https://domclick.ru:8443/card/123',
+    `https://domclick.ru/${'x'.repeat(2048)}`,
     42,
   ]) {
-    const response = await request("/api/admin/plots", {
-      method: "POST",
+    const response = await request('/api/admin/plots', {
+      method: 'POST',
       admin: true,
       body: { ...plot, mortgageUrl },
     });
     assert.equal(response.status, 400, String(mortgageUrl).slice(0, 120));
   }
-  assert.deepEqual(await (await request("/api/plots")).json(), []);
+  assert.deepEqual(await (await request('/api/plots')).json(), []);
 });
 
-test("mortgage URL limits include percent encoding so saved plots remain readable", async (context) => {
+test('mortgage URL limits include percent encoding so saved plots remain readable', async (context) => {
   const { request } = fixture(context);
-  const oversized = await request("/api/admin/plots", {
-    method: "POST",
+  const oversized = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: {
       ...plot,
-      mortgageUrl: "https://domclick.ru/card/" + "я".repeat(500),
+      mortgageUrl: `https://domclick.ru/card/${'я'.repeat(500)}`,
     },
   });
   assert.equal(oversized.status, 400);
-  assert.deepEqual(await (await request("/api/plots")).json(), []);
-  const accepted = await request("/api/admin/plots", {
-    method: "POST",
+  assert.deepEqual(await (await request('/api/plots')).json(), []);
+  const accepted = await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: {
       ...plot,
-      mortgageUrl: "https://domclick.ru/card/" + "я".repeat(300),
+      mortgageUrl: `https://domclick.ru/card/${'я'.repeat(300)}`,
     },
   });
   assert.equal(accepted.status, 201);
-  const expected = "https://domclick.ru/card/" + "%D1%8F".repeat(300);
+  const expected = `https://domclick.ru/card/${'%D1%8F'.repeat(300)}`;
   assert.equal((await accepted.json()).mortgageUrl, expected);
-  const [visible] = await (await request("/api/plots")).json();
+  const [visible] = await (await request('/api/plots')).json();
   assert.equal(visible.mortgageUrl, expected);
 });
 
-test("bulk plot edits save document flags and preserve omitted details across older bulk requests", async (context) => {
+test('bulk plot edits save document flags and preserve omitted details across older bulk requests', async (context) => {
   const { request } = fixture(context);
-  await request("/api/admin/plots", {
-    method: "POST",
+  await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: { ...plot, ...salesFields },
   });
-  await request("/api/admin/plots", {
-    method: "POST",
+  await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
-    body: { ...plot, id: "sales-2" },
+    body: { ...plot, id: 'sales-2' },
   });
-  const saved = await request("/api/admin/plots", {
-    method: "PUT",
+  const saved = await request('/api/admin/plots', {
+    method: 'PUT',
     admin: true,
     body: {
       plots: [
@@ -567,10 +573,10 @@ test("bulk plot edits save document flags and preserve omitted details across ol
           ...plot,
           gpzuDone: false,
           buildingPermitDone: true,
-          cadastralNumber: "",
+          cadastralNumber: '',
           mortgageUrl: null,
         },
-        { ...plot, id: "sales-2", ...salesFields },
+        { ...plot, id: 'sales-2', ...salesFields },
       ],
     },
   });
@@ -581,77 +587,77 @@ test("bulk plot edits save document flags and preserve omitted details across ol
   assert.equal(cleared.gpzuDone, false);
   assert.equal(cleared.buildingPermitDone, true);
   assert.equal(second.gpzuDone, true);
-  const legacy = await request("/api/admin/plots", {
-    method: "PUT",
+  const legacy = await request('/api/admin/plots', {
+    method: 'PUT',
     admin: true,
     body: {
       plots: [
-        { id: plot.id, area: "12", price: "1800000", status: "Свободен" },
-        { id: "sales-2", area: "13", price: "2000000", status: "Свободен" },
+        { id: plot.id, area: '12', price: '1800000', status: 'Свободен' },
+        { id: 'sales-2', area: '13', price: '2000000', status: 'Свободен' },
       ],
     },
   });
   assert.equal(legacy.status, 200);
-  const catalogue = await (await request("/api/plots")).json();
+  const catalogue = await (await request('/api/plots')).json();
   assert.equal(catalogue[0].buildingPermitDone, true);
   assert.equal(catalogue[0].description, plot.description);
   assert.equal(catalogue[1].cadastralNumber, salesFields.cadastralNumber);
   assert.equal(catalogue[1].mortgageUrl, salesFields.mortgageUrl);
 });
 
-test("malformed cadastral numbers or document flags reject a complete bulk save atomically", async (context) => {
+test('malformed cadastral numbers or document flags reject a complete bulk save atomically', async (context) => {
   const { request } = fixture(context);
-  await request("/api/admin/plots", {
-    method: "POST",
+  await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
     body: { ...plot, ...salesFields },
   });
-  await request("/api/admin/plots", {
-    method: "POST",
+  await request('/api/admin/plots', {
+    method: 'POST',
     admin: true,
-    body: { ...plot, id: "sales-2" },
+    body: { ...plot, id: 'sales-2' },
   });
   for (const invalid of [
-    { cadastralNumber: "47:7:1044001:123" },
-    { cadastralNumber: "47:07:10440:123" },
-    { cadastralNumber: "x".repeat(81) },
+    { cadastralNumber: '47:7:1044001:123' },
+    { cadastralNumber: '47:07:10440:123' },
+    { cadastralNumber: 'x'.repeat(81) },
     { cadastralNumber: 123 },
-    { gpzuDone: "true" },
+    { gpzuDone: 'true' },
     { gpzuDone: null },
     { buildingPermitDone: 1 },
-    { mortgageUrl: "https://example.com/" },
+    { mortgageUrl: 'https://example.com/' },
   ]) {
-    const response = await request("/api/admin/plots", {
-      method: "PUT",
+    const response = await request('/api/admin/plots', {
+      method: 'PUT',
       admin: true,
       body: {
         plots: [
-          { ...plot, price: "9999999", gpzuDone: false },
-          { ...plot, id: "sales-2", ...invalid },
+          { ...plot, price: '9999999', gpzuDone: false },
+          { ...plot, id: 'sales-2', ...invalid },
         ],
       },
     });
     assert.equal(response.status, 400, JSON.stringify(invalid));
   }
-  const [unchanged] = await (await request("/api/plots")).json();
+  const [unchanged] = await (await request('/api/plots')).json();
   assert.equal(unchanged.price, plot.price);
   assert.equal(unchanged.gpzuDone, true);
 });
 
-test("promotion settings require the admin cookie, trusted Origin and strictly valid values", async (context) => {
+test('promotion settings require the admin cookie, trusted Origin and strictly valid values', async (context) => {
   const { request } = fixture(context);
   const valid = { promotion: { enabled: true, discountPercent: 25 } };
-  for (const method of ["GET", "PUT"]) {
-    const unauthenticated = await request("/api/admin/settings", {
+  for (const method of ['GET', 'PUT']) {
+    const unauthenticated = await request('/api/admin/settings', {
       method,
-      ...(method === "PUT" ? { body: valid } : {}),
+      ...method === 'PUT' ? { body: valid } : {},
     });
     assert.equal(unauthenticated.status, 401);
-    const foreign = await request("/api/admin/settings", {
+    const foreign = await request('/api/admin/settings', {
       method,
       admin: true,
-      origin: "https://attacker.test",
-      ...(method === "PUT" ? { body: valid } : {}),
+      origin: 'https://attacker.test',
+      ...method === 'PUT' ? { body: valid } : {},
     });
     assert.equal(foreign.status, 403);
   }
@@ -659,23 +665,23 @@ test("promotion settings require the admin cookie, trusted Origin and strictly v
     null,
     [],
     {},
-    { enabled: "true", discountPercent: 25 },
-    { enabled: false, discountPercent: "25" },
+    { enabled: 'true', discountPercent: 25 },
+    { enabled: false, discountPercent: '25' },
     { enabled: true, discountPercent: 0 },
     { enabled: true, discountPercent: 101 },
     { enabled: true, discountPercent: 1.5 },
     { enabled: true },
   ]) {
-    const invalid = await request("/api/admin/settings", {
-      method: "PUT",
+    const invalid = await request('/api/admin/settings', {
+      method: 'PUT',
       admin: true,
       body: { promotion },
     });
     assert.equal(invalid.status, 400, JSON.stringify(promotion));
   }
-  const publicSettings = await request("/api/settings");
-  assert.equal(publicSettings.headers.get("Access-Control-Allow-Origin"), "*");
-  assert.equal(publicSettings.headers.has("Set-Cookie"), false);
+  const publicSettings = await request('/api/settings');
+  assert.equal(publicSettings.headers.get('Access-Control-Allow-Origin'), '*');
+  assert.equal(publicSettings.headers.has('Set-Cookie'), false);
   assert.deepEqual(await publicSettings.json(), {
     promotion: { enabled: true, discountPercent: 10 },
   });

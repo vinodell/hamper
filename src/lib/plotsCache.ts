@@ -105,7 +105,7 @@ export function mergeSavedPlots(plots: Plot[]) {
   publishReadyPlots([...merged, ...saved.values()]);
 }
 
-export function invalidatePlotsCache() {
+function invalidatePlotsCache() {
   revision += 1;
   updatedAt = 0;
   if (pending) refreshQueued = true;

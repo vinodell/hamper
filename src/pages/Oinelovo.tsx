@@ -10,8 +10,8 @@ import {
   Clock3,
   Fence,
   MapPin,
-  Navigation,
   Plus,
+  Navigation,
   Ruler,
   ShoppingBag,
   Trees,
@@ -293,7 +293,7 @@ export function Oinelovo() {
   }, []);
 
   return (
-    <div className="oinelovo-page">
+    <div className="oinelovo-page project-typography">
       <OinelovoHeader onInquiry={openInquiry} />
       <PromotionBanner />
       <main>
@@ -741,7 +741,7 @@ export function Oinelovo() {
                     актуальных ценах и ответим на все вопросы.
                   </p>
                   <button
-                    className="oinelovo-button"
+                    className="inquiry-button"
                     type="button"
                     onClick={openInquiry}
                   >
@@ -749,7 +749,7 @@ export function Oinelovo() {
                   </button>
                 </div>
               </div>
-              <address className="oinelovo-contact-card">
+              <address className="project-contact-card oinelovo-contact-card">
                 <ContactPeople className="oinelovo-contact__people" />
                 {contactPeople.length === 0 && (
                   <button

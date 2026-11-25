@@ -243,3 +243,18 @@
     transition: none;
   }
 }
+
+.project-dialog.contact-dialog .contact-form select {
+  appearance: none;
+  padding-right: 3rem;
+  background-image: var(--select-chevron);
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+}
+
+@media (forced-colors: active) {
+  .project-dialog.contact-dialog .contact-form select {
+    appearance: auto;
+    background-image: none;
+  }
+}

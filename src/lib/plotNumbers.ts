@@ -10,9 +10,14 @@ export function normalizePlotNumber(value: string): string {
     .replace(",", ".");
 }
 
+/** Parse a validated API/editor value without changing its stored text. */
+export function parsePlotNumber(value: string): number {
+  return Number(value.replace(",", "."));
+}
+
 export function isValidPlotNumber(value: string): boolean {
   if (!/^\d+(?:[.,]\d{1,2})?$/.test(value)) return false;
-  const number = Number(value.replace(",", "."));
+  const number = parsePlotNumber(value);
   return Number.isFinite(number) && number > 0;
 }
 
@@ -33,5 +38,5 @@ export function isValidFullPaymentPrice(
 
 export function formatPlotNumber(value: string): string {
   // Public values have already been normalized and validated by the API.
-  return plotNumberFormatter.format(Number(value.replace(",", ".")));
+  return plotNumberFormatter.format(parsePlotNumber(value));
 }
